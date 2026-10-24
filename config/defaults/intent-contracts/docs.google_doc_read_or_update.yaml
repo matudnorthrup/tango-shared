@@ -1,0 +1,22 @@
+id: docs.google_doc_read_or_update
+domain: docs
+display_name: Read Or Update Google Doc
+description: Read, summarize, or update a Google Doc with a clear document target and objective.
+mode: mixed
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: doc_query
+    required: true
+    inferable: false
+  - name: change_request
+    required: false
+    inferable: true
+examples:
+  - Read the shared Google Doc and summarize it.
+  - Update the project doc with today's notes.
+  - Insert this summary into the meeting doc.
+classifier_hints:
+  - Use for Google Doc read/update requests with a clear document target.
+  - Prefer notes.note_read for Obsidian notes and recipe.update for wellness.db recipes, and notes.note_update for local markdown notes.

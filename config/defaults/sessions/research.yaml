@@ -1,0 +1,21 @@
+id: project:research
+type: project
+agent: sierra
+channels:
+  - discord:100000000000000003
+orchestrator_continuity: stateless
+memory:
+  max_context_tokens: 60000
+  zones:
+    pinned: 0.05
+    summary: 0.15
+    memories: 0.30
+    recent: 0.50
+  summarize_window: 6
+  memory_limit: 150
+  importance_threshold: 0.2
+  retrieval_weights:
+    recency: 1.0
+    importance: 1.0
+    relevance: 2.0
+    source: 0.5

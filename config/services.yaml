@@ -1,0 +1,13 @@
+# Generic examples only. Add machine-specific services in <profile>/config/services.yaml.
+# All repository examples observe existing services and never launch or signal them.
+services:
+  - id: loom
+    name: Loom
+    group: Runtime
+    mode: observe
+    health:
+      http: http://127.0.0.1:9420/health
+      intervalSeconds: 10
+      graceSeconds: 10
+    adopt:
+      launchd: com.tango.loom

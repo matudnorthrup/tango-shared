@@ -1,0 +1,62 @@
+id: manual-test-nightly-email-unsubscribe-review
+display_name: Manual Test Email Unsubscribe Review
+description: >
+  Manual validation clone of the nightly email unsubscribe review. It scans for
+  candidates and reports them without performing unsubscribe actions.
+enabled: false
+runtime: v2
+
+schedule:
+  cron: "0 16 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - email.subscription_review
+  deterministic_agent_id: watson
+  task: |
+    Run a manual validation of the nightly email unsubscribe review. Follow
+    agents/skills/email-subscription-cleanup.md.
+
+    This is discovery-only. Scan all accessible Gmail accounts for recent
+    newsletters, subscriptions, marketing mail, and noisy notification lists.
+    Do not click unsubscribe links, submit preference forms, send unsubscribe
+    emails, archive threads, delete mail, or mutate preferences.
+
+    Use the vault note `References/Email Triage Rules.md` and the tracking note
+    at `Records/Finance/Email Subscriptions.md`. Return the same summary shape
+    as production, including **Flagged:** candidate bullets only when the user
+    should confirm unsubscribes.
+  timeout_seconds: 540
+
+provider:
+  model: claude-opus-5-5
+  reasoning_effort: medium
+
+delivery:
+  channel_id: "100000000000001001"
+  agent_id: watson
+
+completion:
+  workflow_id: manual-test-nightly-email-unsubscribe-review
+  scope: daily
+  check_before_run: false
+  mark_on_success: false
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-test-tasks
+  priority: 5
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - email
+  - manual-test
+  - subscriptions

@@ -1,0 +1,5 @@
+# Personal topic terms that tag a memory with the "relationships" domain
+# (one per line, case-insensitive substring match).
+# The public repo ships no entries. Add person-specific terms in the profile
+# layer: ~/.tango/profiles/<profile>/config/memory/personal-topic-terms.txt
+# Overrides: TANGO_MEMORY_PERSONAL_TOPIC_TERMS (comma list) or *_FILE (path).

@@ -1,0 +1,5 @@
+id: sierra-ollama
+type: persistent
+agent: sierra-ollama
+channels:
+  - "discord:100000000000000003"

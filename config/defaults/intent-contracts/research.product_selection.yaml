@@ -1,0 +1,51 @@
+id: research.product_selection
+domain: research
+display_name: Product Selection
+description: Research a product category or lineup, compare relevant options, and recommend the best fit for the user's constraints.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: product_family
+    required: true
+    inferable: false
+    description: The product category, brand lineup, or option set that should be narrowed down.
+  - name: constraints
+    required: false
+    inferable: true
+    description: Preferences or requirements that should change the recommendation.
+  - name: comparison_targets
+    required: false
+    inferable: true
+    description: Named models, series, or variants to compare directly.
+  - name: focus
+    required: false
+    inferable: true
+    description: The decision the answer should resolve, such as best fit, shortlist, or lineup explanation.
+evaluation:
+  task_class: decision_support
+  success_criteria:
+    - Recommend a best-fit option or shortlist instead of listing models without judgment.
+    - Tie the recommendation to the user's stated constraints and preserved preferences.
+    - Surface any important tradeoffs or unclear model differences before closing.
+  must_answer:
+    - Which option or shortlist is the strongest fit for the user's needs?
+    - What tradeoffs most change that recommendation?
+  comparison_axes:
+    - fit_for_constraints
+    - features
+    - tradeoffs
+  required_fields:
+    - source_urls
+    - rationale
+    - caveats
+examples:
+  - Help me choose the right Keychron keyboard model for me
+  - Compare the current Synology 4-bay NAS lineup and tell me which one I should get
+  - I need help figuring out which standing desk model is the best fit for my setup
+can_run_in_parallel: true
+classifier_hints:
+  - Use for model-selection, shortlist, lineup navigation, or best-fit recommendation requests within a product category or brand.
+  - Prefer this over research.deep_research for ordinary product-shopping decisions that one strong research pass can answer.
+  - Prefer shopping.browser_order_action when the user asks to add, buy, order, or otherwise mutate cart/order state after the recommendation.

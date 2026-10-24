@@ -1,0 +1,129 @@
+id: charlie-ollama
+enabled: true
+display_name: Charlie (Ollama)
+type: quick
+
+# System prompt = personality + domain + rules
+system_prompt_file: agents/assistants/charlie/soul.md
+
+# MCP servers this agent can access
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+    env:
+      ALLOWED_TOOL_IDS: "memory_search"
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: obsidian
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "obsidian"]
+    env:
+      ALLOWED_TOOL_IDS: "obsidian"
+  - name: exa
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "exa"]
+    env:
+      ALLOWED_TOOL_IDS: "exa_search,exa_answer"
+  - name: location
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "location"]
+    env:
+      ALLOWED_TOOL_IDS: "location_read"
+  - name: agent-docs
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "agent-docs"]
+    env:
+      ALLOWED_TOOL_IDS: "agent_docs"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+  - name: screen
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "screen"]
+    env:
+      ALLOWED_TOOL_IDS: "screen"
+  - name: desk-mail
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "desk-mail"]
+    env:
+      ALLOWED_TOOL_IDS: "desk_mail"
+
+# Runtime configuration
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  fallback: codex
+  # Operating rule (2026-06-09): defaults are the dependability tier; downgrades
+  # require evidence. flash never earned default status and carries adverse
+  # evidence (intermittent fabrication on travel.diesel, 0.60 rubric on the
+  # write-chain fixture). flash stays available for per-task pins it earns.
+  model: role:failover-general
+  reasoning_effort: low
+  idle_timeout_hours: 4
+  context_reset_threshold: 0.50
+
+# Memory configuration — NO writes
+memory:
+  post_turn_extraction: disabled
+  canonical_agent_id: charlie
+  alias_agent_ids:
+    - charlie
+    - charlie-ollama
+  extraction_provider: ollama
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.9
+  scheduled_reflection: disabled
+
+# Discord routing
+discord:
+  default_channel_id: "100000000000000007"
+  smoke_test_channel_id: "100000000000001008" # charlie-test (placeholder; real id in profile overlay)
+
+# Restrict this clone to its own channel plus its persona's -test smoke channel
+access:
+  mode: allowlist
+  allowlist_channel_ids:
+    - "100000000000000007"
+    - "100000000000001008" # charlie-test smoke channel (placeholder; real id in profile overlay)
+
+# Legacy registry fields
+avatar_path: agents/assistants/charlie/avatar.png
+default_project: personal
+response_mode: concise
+
+provider:
+  default: ollama
+  model: role:failover-general
+  reasoning_effort: low
+  fallback: []
+
+tools:
+  mode: allowlist
+  allowlist:
+    - WebSearch
+    - WebFetch
+
+deterministic_routing:
+  enabled: false
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex
+
+# Addressing: the bare name routes to the original Claude agent (TGO-809);
+# "Bravo Charlie" and "Zulu Charlie" address this clone by name.
+voice:
+  call_signs:
+    - "Bravo Charlie"
+    - "Zulu Charlie"
+  default_channel_id: "100000000000000007"
+  smoke_test_channel_id: "100000000000001008" # charlie-test (placeholder; real id in profile overlay)

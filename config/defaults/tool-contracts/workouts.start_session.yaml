@@ -1,0 +1,25 @@
+id: workouts.start_session
+family: workouts
+description: Start a new workout session in the legacy Postgres workout tracker.
+owner_worker: workout-recorder
+mode: write
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: true
+integration:
+  system: postgres
+  target: workouts
+input_fields:
+  - workout_type
+  - bodyweight_lbs?
+output_fields:
+  - workout_id
+legacy:
+  commands:
+    - ~/.tango/tools/workout-tracker/workout.sh start <push|pull|legs|full_body|other> [bodyweight_lbs]
+  read_paths:
+    - ~/.tango/tools/workout-tracker/workout.sh
+    - "Postgres tables: workouts, exercises, sets"
+  write_paths:
+    - "Postgres table: workouts"

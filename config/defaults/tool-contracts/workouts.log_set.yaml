@@ -1,0 +1,35 @@
+id: workouts.log_set
+family: workouts
+description: Log a single workout set into the legacy Postgres workout tracker.
+owner_worker: workout-recorder
+mode: write
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: true
+integration:
+  system: postgres
+  target: sets
+input_fields:
+  - workout_id
+  - exercise_id
+  - exercise_order
+  - set_number
+  - weight_lbs
+  - reps
+  - rpe?
+  - notes?
+output_fields:
+  - set_id
+  - set_number
+  - weight_lbs
+  - reps
+  - volume
+legacy:
+  commands:
+    - ~/.tango/tools/workout-tracker/workout.sh log <workout_id> <exercise_id> <exercise_order> <set_number> <weight_lbs> <reps> [rpe] [notes]
+  read_paths:
+    - ~/.tango/tools/workout-tracker/workout.sh
+    - "Postgres tables: exercises, workouts"
+  write_paths:
+    - "Postgres table: sets"

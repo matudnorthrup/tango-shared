@@ -1,0 +1,5 @@
+# Gmail accounts Piper's email tools must never touch (one per line).
+# The public repo ships no entries. Add the real firewalled accounts in the
+# profile layer: ~/.tango/profiles/<profile>/config/email/piper-firewalled-accounts.txt
+# Entries from env (TANGO_PIPER_FIREWALLED_GMAIL_ACCOUNTS / *_FILE), repo
+# defaults, and profile are unioned, so the firewall can only grow stricter.

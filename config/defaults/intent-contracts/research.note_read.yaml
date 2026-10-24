@@ -1,0 +1,20 @@
+id: research.note_read
+domain: research
+display_name: Read Research Note
+description: Read, inspect, summarize, or quote an Obsidian note, project note, or local research document.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: note_query
+    required: true
+    inferable: false
+examples:
+  - Read the Obsidian note titled Large Desk OpenGrid and Underware Project
+  - Summarize the Print Summary section from my desk project note
+  - What does my Chipotle ordering note say?
+can_run_in_parallel: true
+classifier_hints:
+  - Use when the request is primarily about reading or summarizing an existing note, file, or project document.
+  - Prefer this over web lookup when the user explicitly mentions Obsidian, a note title, a file path, or an existing local document.

@@ -1,0 +1,5 @@
+id: watson-ollama
+type: persistent
+agent: watson-ollama
+channels:
+  - "discord:100000000000000041"

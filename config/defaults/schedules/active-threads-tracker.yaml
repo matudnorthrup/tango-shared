@@ -1,0 +1,29 @@
+id: active-threads-tracker
+display_name: Active Threads Tracker
+description: >
+  Scans Discord for active threads/forum posts and appends them to the
+  Obsidian daily note In Progress section. Silent — output is the note.
+enabled: true
+
+schedule:
+  every_seconds: 180
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: active-threads-tracker
+  timeout_seconds: 30
+
+delivery:
+  mode: none
+
+policy:
+  max_consecutive_failures: 5
+  alert_channel_id: "100000000000000010"
+  backoff:
+    enabled: false
+
+tags:
+  - obsidian
+  - threads
+  - tracker

@@ -1,0 +1,28 @@
+id: nutrition.log_repair
+domain: wellness
+display_name: Repair Nutrition Log
+description: Repair, reconcile, deduplicate, or retry an existing nutrition diary entry or meal log after a missing, partial, or incorrect write.
+mode: write
+route:
+  kind: worker
+  target_id: nutrition-logger
+slots:
+  - name: repair_scope
+    required: false
+    inferable: true
+  - name: meal
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: correction
+    required: false
+    inferable: true
+examples:
+  - That lunch didn't log. Please repair it.
+  - Remove the duplicate banana entry from today.
+  - Reconcile lunch and dinner because the write failed earlier.
+classifier_hints:
+  - Use for requests to fix, retry, deduplicate, reconcile, or repair existing diary entries rather than logging a brand-new meal from scratch.
+  - Prefer this over nutrition.log_food or nutrition.log_recipe when the user is referring to an earlier failed or incorrect logging attempt.

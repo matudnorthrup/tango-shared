@@ -1,0 +1,90 @@
+criteria:
+  - Prefer on-topic memories over archive noise.
+  - Avoid obvious cross-domain bleed between health, planning, and technical/product work.
+  - If no strong memory exists, little or no memory is better than weak matches.
+  - Prefer durable decisions, active projects, and recurring preferences over generic advice.
+  - Warm-start context should stay concise and avoid redundant or repetitive memories.
+
+sample_audit:
+  sample_size: 3
+  lookback_hours: 72
+  include_failed: false
+  candidate_limit: 80
+  max_memories_per_sample: 5
+  max_recent_messages_per_sample: 4
+  max_summaries_per_sample: 2
+  max_pinned_facts_per_sample: 5
+
+benchmarks:
+  - id: watson-weekly-review
+    description: Watson should retrieve durable weekly planning and review context.
+    agent_id: watson
+    query: What did we decide about weekly reviews and productivity cadence?
+    expected_terms:
+      - weekly
+      - review
+      - productivity
+    forbidden_terms:
+      - yogurt
+      - protein
+      - fitness
+    expected_sources:
+      - reflection
+
+  - id: malibu-health-fitness
+    description: Malibu should retrieve health and exercise context without planning noise.
+    agent_id: malibu
+    query: What recurring health and fitness themes have come up recently?
+    expected_terms:
+      - health
+      - exercise
+      - fitness
+    forbidden_terms:
+      - atlas
+      - migration
+      - voyage
+    expected_sources:
+      - reflection
+
+  - id: watson-voice-migration
+    description: Watson should retrieve voice migration and orchestration project context.
+    agent_id: watson
+    query: What have we been working on around the voice migration and Watson voice?
+    expected_terms:
+      - migration
+      - voice
+      - watson voice
+    forbidden_terms:
+      - yogurt
+      - pocketsmith
+    expected_sources:
+      - reflection
+
+  - id: watson-work-messaging
+    description: Watson should retrieve work messaging and positioning context.
+    agent_id: watson
+    query: What messaging or positioning work has been happening around our work projects?
+    expected_terms:
+      - messaging
+      - positioning
+      - work
+    forbidden_terms:
+      - fitness
+      - yogurt
+    expected_sources:
+      - reflection
+
+  - id: malibu-protein-yogurt
+    description: Malibu should retrieve protein and yogurt meal context cleanly.
+    agent_id: malibu
+    query: What meal or nutrition context do we have about protein, yogurt, or bowls?
+    expected_terms:
+      - protein
+      - yogurt
+      - bowl
+    forbidden_terms:
+      - atlas
+      - migration
+      - debugging
+    expected_sources:
+      - reflection

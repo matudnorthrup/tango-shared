@@ -1,0 +1,21 @@
+id: engineering.repo_status
+domain: engineering
+display_name: Review Repo Status
+description: Read and summarize the current Tango repo state, such as git status, branch state, dirty files, or recent local changes.
+mode: read
+route:
+  kind: worker
+  target_id: dev-assistant
+slots:
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - What's the current git status for the repo?
+  - Is the Tango repo clean right now?
+  - Summarize the current branch state and working tree changes
+can_run_in_parallel: true
+classifier_hints:
+  - Use for requests about git status, branch state, dirty files, diffs, uncommitted changes, or overall repo cleanliness.
+  - Prefer this over engineering.codebase_read when the user is asking about repo state rather than the contents of a specific file or code area.
+  - If the same message also asks to read or summarize a specific file or code area, return engineering.repo_status as a separate intent alongside engineering.codebase_read.

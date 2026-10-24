@@ -1,0 +1,133 @@
+id: manual-test-receipt-cataloger
+display_name: Manual Test Receipt Cataloger
+description: >
+  Manual deterministic validation clone of the receipt cataloger.
+enabled: false
+runtime: v2
+
+schedule:
+  cron: "0 2 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: conditional-agent
+  pre_check:
+    handler: foxtrot-receipt-catalog-candidates
+  deterministic_agent_id: foxtrot
+  worker_id: personal-assistant
+  intent_ids:
+    - finance.receipt_catalog
+  task_template: |
+    Daily receipt cataloging task.
+
+    The scheduler pre-check found {{totalRetailerCandidateCount}} recent
+    retailer transactions missing linked receipt notes between {{startDate}} and {{endDate}},
+    plus {{reimbursementGapCandidateCount}} reimbursement gap candidate(s).
+    Process ONLY the {{retailerCandidateCount}} receipt candidate(s) and the
+    reimbursement gap candidates listed below in this run.
+    Remaining missing-receipt transactions after this batch: {{remainingRetailerCandidateCount}}.
+
+    Candidate transactions:
+    {{candidateDetails}}
+
+    Reimbursement gap candidates:
+    {{reimbursementGapDetails}}
+
+    Receipt notes whose suggested categories aren't Lunch Money categories ({{invalidCategoryNoteCount}}):
+    {{invalidCategoryDetails}}
+
+    1. Check Lunch Money for recent Amazon, Walmart, Costco, Venmo, and configured recurring vendors,
+       and Factor
+       transactions for exactly that date window.
+    1a. Focus on the candidate transactions above, even if they are already
+        categorized or cleared/pending rather than unreviewed.
+    1b. If a matching receipt note already exists for an order but is missing
+        one or more linked transaction IDs, update that note instead of creating
+        a duplicate.
+    1c. If the follow-up fetch unexpectedly returns zero missing-receipt candidates,
+        there are no reimbursement gap candidates to repair, and no notes with invalid
+        suggested categories are listed above, return EXACTLY the text "__NO_OUTPUT__"
+        and nothing else.
+    1d. If reimbursement gap candidates are listed above, repair those receipt notes
+        in the same run even if no new retailer receipt file needs to be created.
+    1e. If notes with invalid suggested categories are listed above, rewrite each listed
+        Suggested Category cell to a valid category from step 4 in the same run, even if
+        nothing else needs doing. Change nothing else in those notes, except that a doubt
+        about the new category may be added as a line in the note's ## Notes section.
+    2. For each missing-receipt retailer transaction or reimbursement gap candidate,
+       look up or repair the receipt:
+       - **Amazon / Walmart / Costco**: Use the browser to look up the
+         matching order on the retailer's website. Use 1Password for
+         credentials if login is needed.
+       - **Venmo**: Use gog_email to search Gmail for the Venmo payment
+         confirmation email matching the amount and approximate date.
+         Venmo emails contain the recipient, note, and payment details.
+       - **Recurring reimbursable vendors (from reimbursement config)**: When found in Lunch Money, use gog_email
+         to find the matching Gmail invoice or receipt email and create the
+         receipt from that invoice or attachment.
+    3. Create or update the Obsidian receipt file following the receipt_logging
+       skill format at Records/Finance/Receipts/{Retailer}/. Every receipt
+       note must include frontmatter with `date`, `types: ["[[Receipt]]"]`,
+       and `areas: ["[[Finance]]"]`. Do not write frontmatter `categories`
+       or scalar `type`/`types`/`areas` fields.
+    4. The deterministic pre-check successfully read the categorization rules
+       from the vault-relative path {{categorizationRulesPath}}. Use the exact
+       verified content below to suggest categories for non-grocery items; do
+       not attempt another path lookup or fall back to a default category.
+
+       <finance-categorization-rules>
+       {{categorizationRules}}
+       </finance-categorization-rules>
+
+       Every Suggested Category must be EXACTLY one of these Lunch Money categories,
+       copied character for character (if the block says the list is unavailable,
+       follow its fallback instruction instead):
+
+       <lunch-money-categories>
+       {{validCategories}}
+       </lunch-money-categories>
+
+       Never write any other name, a parenthetical ("Personal Spending (vehicle care)"),
+       a combined label, or "needs review". When a rule says to ask first or the item is
+       ambiguous, still pick the single most likely category from the list and put the
+       question in the note's ## Notes section.
+    5. For any reimbursable vendor receipt created, add or repair the
+       frontmatter plus ## Reimbursement Tracking section using the
+       receipt_registry upsert_reimbursement action.
+
+    If a login page appears, use 1Password to retrieve credentials and
+    log in (item names: "Amazon" for Amazon, "Walmart" for Walmart).
+    If 2FA is prompted or login fails after entering credentials, report
+    the error clearly and stop — don't retry.
+
+    If the browser tool itself fails to connect (e.g. no browser running),
+    report the error and stop.
+
+    Summarize what was processed or say "No receipt or reimbursement tracking tasks."
+  timeout_seconds: 900
+
+provider:
+  model: claude-opus-5-5
+
+delivery:
+  channel_id: "100000000000001001"
+  agent_id: foxtrot
+
+completion:
+  workflow_id: manual-test-receipt-cataloger
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: ledger-test-tasks
+  priority: 2
+  backoff:
+    enabled: true
+    initial_seconds: 300
+    max_seconds: 7200
+
+tags:
+  - foxtrot
+  - finance
+  - manual-test

@@ -1,0 +1,66 @@
+id: evening-review
+display_name: Evening Review Backstop
+description: >
+  Run the evening review if the user hasn't already done it manually.
+  Summarizes the day's accomplishments and plans for tomorrow.
+enabled: false  # disabled 2026-04-13 per user request — re-enable when planning flow is hardened
+runtime: v2
+
+schedule:
+  cron: "30 20 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - planning.evening_review
+  task: |
+    Run the evening check-in. Follow the daily_planning skill guidance
+    for Evening Check-in steps.
+
+    Since this is a backstop (not interactive), complete what you can
+    autonomously:
+
+    1. Read today's daily note from Obsidian (Planning/Daily/YYYY-MM-DD.md).
+    2. Check today's calendar to see what events occurred.
+    3. Compare planned tasks vs calendar activity to infer completions.
+    4. Fetch tomorrow's calendar to preview what's ahead.
+    5. Update daily notes with targeted `section` or `frontmatter` writes
+       only. Do NOT use `create --overwrite` on an existing daily note.
+       Mark completed tasks only after preserving current section content.
+       Add an "Energy Reflection" placeholder only if the section is empty,
+       and write a brief "Notes from Last Night" section in tomorrow's
+       daily note only after reading it first.
+    6. Preserve human-owned sections exactly unless explicitly appending a
+       new entry: "Other Work", "Notes", "Interstitial
+       Log", "Energy Reflection", and "Notes from Last Night".
+
+    Present a concise summary of the day's status and tomorrow's outlook.
+  timeout_seconds: 300
+
+provider:
+  model: claude-sonnet-5
+
+delivery:
+  channel_id: "100000000000000025"
+  agent_id: watson
+
+completion:
+  workflow_id: evening-review
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  priority: 5
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - evening
+  - planning

@@ -1,0 +1,13 @@
+# AI-related Slack channel names for the AI intelligence briefing filter.
+# Generic starter set. Add your installation's real channel names in the profile
+# overlay at ~/.tango/profiles/<profile>/config/slack/ai-channels.txt (these are
+# unioned with this list), or via the TANGO_SLACK_AI_CHANNELS env var.
+# One channel name per line; comments and blank lines are ignored.
+ai
+ai-tools
+agents
+team-news
+team-learning
+ai-news
+ai-updates
+ai-lab

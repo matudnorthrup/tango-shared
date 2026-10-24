@@ -1,0 +1,5 @@
+PRODUCT_BUNDLE_IDENTIFIER = org.example.TangoDesk
+DEVELOPMENT_TEAM =
+DESK_URL =
+TANGO_APS_ENTITLEMENT = development
+#include? "Local.xcconfig"

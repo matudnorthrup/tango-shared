@@ -1,0 +1,32 @@
+id: linear
+family: project_management
+description: Query and update Linear projects, issues, comments, documents, milestones, and workflow state through the Linear GraphQL API.
+owner_worker: operations-assistant
+mode: read_write
+status: implemented
+confirmation_required: true
+live_execution:
+  enabled: true
+  write_enabled: true
+integration:
+  system: linear
+  target: Example HQ / Tango team
+input_fields:
+  - query
+  - variables? (optional GraphQL variables)
+output_fields:
+  - data
+  - errors
+  - _rateLimitRemaining?
+legacy:
+  commands:
+    - GraphQL query
+    - GraphQL mutation
+  read_paths:
+    - Linear API
+  write_paths:
+    - Linear API
+  notes:
+    - Read current Linear state before mutating existing projects, issues, documents, or comments.
+    - Use Linear for durable long-running operational projects and issue tracking.
+    - External or consequential actions still require user approval.

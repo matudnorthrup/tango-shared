@@ -1,0 +1,31 @@
+id: nutrition.check_budget
+domain: wellness
+display_name: Nutrition Budget Check
+description: Read current nutrition diary state and activity context to answer calorie, protein, or room-left questions about the day.
+mode: read
+route:
+  kind: workflow
+  target_id: wellness.check_nutrition_budget
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: meal
+    required: false
+    inferable: true
+  - name: planned_item
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+  - name: goal
+    required: false
+    inferable: true
+examples:
+  - Do I still have room for yogurt tonight?
+  - How many calories do I have left today?
+  - Am I on pace for protein after today's activity?
+classifier_hints:
+  - Use when the user asks how much room is left for food, calories, protein, or a planned snack or meal.
+  - Prefer this over nutrition.day_summary when the request is about what still fits the day, not just what has already been logged.

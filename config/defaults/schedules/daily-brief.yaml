@@ -1,0 +1,41 @@
+id: daily-brief
+display_name: Daily Brief
+description: >
+  Morning aggregator that reads all domain job logs from the past 24 hours,
+  collects flagged items, fetches calendar events, writes a consolidated
+  brief file in Obsidian, and posts a single Discord ping.
+enabled: true
+runtime: v2
+
+schedule:
+  cron: "0 5 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: daily-brief-aggregate
+  timeout_seconds: 120
+
+delivery:
+  channel_id: "100000000000000025"
+  agent_id: watson
+
+completion:
+  workflow_id: daily-brief
+  scope: daily
+
+policy:
+  max_consecutive_failures: 1
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  priority: 10
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - planning
+  - daily
+  - brief

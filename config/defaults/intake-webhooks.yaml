@@ -1,0 +1,7 @@
+# Authorized website-form intake webhooks. These publishable values are
+# placeholders; replace the entire list in the active profile overlay.
+intake_webhooks:
+  - webhook_id: "100000000000000101"
+    channel_id: "100000000000000102"
+    agent_id: papa
+    label: form-intake

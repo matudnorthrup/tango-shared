@@ -1,0 +1,29 @@
+id: memory-reflections
+display_name: Memory Reflections
+description: >
+  Generate durable reflection memories from recent high-signal memories so
+  recurring themes, preferences, and decisions stay retrievable.
+enabled: true
+
+schedule:
+  cron: "30 5 * * *"
+  timezone: America/Los_Angeles
+  # Runs daily; handler now generates per-agent reflections with 48h lookback
+
+execution:
+  mode: deterministic
+  handler: memory-reflect
+  timeout_seconds: 60
+
+delivery:
+  mode: none
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 0
+
+tags:
+  - memory
+  - reflections
+  - daily

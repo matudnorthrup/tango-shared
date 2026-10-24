@@ -1,0 +1,21 @@
+id: planning.current_time_read
+domain: planning
+display_name: Read Current Time
+description: Read the current local time or date for the requested timezone.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: timezone
+    required: false
+    inferable: true
+examples:
+  - What time is it?
+  - What's the current time right now?
+  - What time is it in New York?
+  - What's today's date?
+can_run_in_parallel: true
+classifier_hints:
+  - Use for direct questions about the current time, date, or timezone-relative current local time.
+  - Do not use for calendar events, schedule review, or availability questions. Those belong to planning.calendar_review.

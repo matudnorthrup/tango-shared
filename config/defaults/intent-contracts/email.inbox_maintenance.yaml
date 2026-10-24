@@ -1,0 +1,24 @@
+id: email.inbox_maintenance
+domain: email
+display_name: Maintain Inbox
+description: Review inbox mail, triage it, archive low-value messages, and surface the actionable items that still need attention.
+mode: mixed
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: account_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Run the daily email review and clean up the inbox.
+  - Triage today's email, archive the low-value stuff, and tell me what still matters.
+classifier_hints:
+  - Use for inbox-maintenance requests that combine read/write actions such as triage plus archive or cleanup.
+  - Prefer email.inbox_review when the request is only to summarize or identify actionable messages without changing mailbox state.

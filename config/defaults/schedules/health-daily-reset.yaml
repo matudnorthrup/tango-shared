@@ -1,0 +1,18 @@
+id: health-daily-reset
+display_name: Health Bot Daily Reset
+description: Reset daily health tracking counters at midnight. Pure deterministic — no LLM needed.
+enabled: true
+
+schedule:
+  cron: "0 0 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: health-daily-reset
+  timeout_seconds: 30
+
+tags:
+  - malibu
+  - health
+  - daily

@@ -1,0 +1,25 @@
+id: finance.receipt_lookup
+domain: finance
+display_name: Look Up Receipt Or Order
+description: Look up receipt, order, or merchant-detail information tied to a financial transaction without yet committing note or catalog writes.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: transaction_scope
+    required: false
+    inferable: true
+  - name: merchant_scope
+    required: false
+    inferable: true
+  - name: receipt_query
+    required: false
+    inferable: true
+examples:
+  - Can you look up what that Amazon charge was for?
+  - Find the Walmart receipt for this transaction.
+  - Check the order details for my most recent Costco purchase.
+classifier_hints:
+  - Use for finance-grounded receipt or order lookup tied to a transaction, charge, or merchant question.
+  - Prefer shopping.browser_order_lookup for broader shopping/order-state lookups that are not primarily anchored to a finance or transaction review flow.

@@ -1,0 +1,462 @@
+{
+  "latest": {
+    "when": "2026-09-25T13:08:12.711Z",
+    "harnessVersion": "2.0.0",
+    "fixtureSource": "model-bakeoff/tasks/state-reconciler.json",
+    "runsPerCandidate": 3,
+    "judges": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ],
+    "verdict": {
+      "fixtureId": "state.reconciler.typed-diff",
+      "passRateThreshold": 0.8,
+      "rubricThreshold": 0.7,
+      "rubricFloor": 0.6,
+      "recommendation": "claude-sonnet-5",
+      "reason": "claude-sonnet-5 beats incumbent deepseek-v4-pro:cloud (passRate 100% vs 100%, 117 out-tok/success (price unknown) vs 322 out-tok/success (price unknown))",
+      "winner": "claude-sonnet-5",
+      "incumbent": "deepseek-v4-pro:cloud",
+      "eligible": [
+        "claude-sonnet-5",
+        "claude-opus-5-5",
+        "deepseek-v4.1-flash",
+        "kimi-k3",
+        "deepseek-v4-pro:cloud",
+        "glm-5.3",
+        "claude-haiku-4-5"
+      ],
+      "infraIncomplete": false
+    },
+    "candidates": [
+      {
+        "model": "claude-opus-5-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.9999999999999999,
+        "rubricMin": 0.9999999999999999,
+        "rubricStdDev": 0,
+        "rubricByJudge": {
+          "sonnet": 0.9999999999999999,
+          "deepseek-v4-pro": 0.9999999999999999
+        },
+        "meanSeconds": 4.332333333333334,
+        "meanOutputTokens": 120,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-sonnet-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.99125,
+        "rubricMin": 0.9737499999999999,
+        "rubricStdDev": 0.01237436867076458,
+        "rubricByJudge": {
+          "sonnet": 0.9824999999999999,
+          "deepseek-v4-pro": 0.9999999999999999
+        },
+        "meanSeconds": 4.545333333333333,
+        "meanOutputTokens": 117.33333333333333,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-haiku-4-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.955,
+        "rubricMin": 0.9324999999999999,
+        "rubricStdDev": 0.020716338157760104,
+        "rubricByJudge": {
+          "sonnet": 0.9766666666666666,
+          "deepseek-v4-pro": 0.9333333333333332
+        },
+        "meanSeconds": 9.848666666666666,
+        "meanOutputTokens": 951,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4-pro:cloud",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.9970833333333333,
+        "rubricMin": 0.99125,
+        "rubricStdDev": 0.004124789556921491,
+        "rubricByJudge": {
+          "sonnet": 0.9941666666666666,
+          "deepseek-v4-pro": 0.9999999999999999
+        },
+        "meanSeconds": 2.8983333333333334,
+        "meanOutputTokens": 322,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "glm-5.3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.9649999999999999,
+        "rubricMin": 0.9299999999999999,
+        "rubricStdDev": 0.02857738033247039,
+        "rubricByJudge": {
+          "sonnet": 0.93,
+          "deepseek-v4-pro": 0.9999999999999999
+        },
+        "meanSeconds": 2.7586666666666666,
+        "meanOutputTokens": 387,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "kimi-k3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.9999999999999999,
+        "rubricMin": 0.9999999999999999,
+        "rubricStdDev": 0,
+        "rubricByJudge": {
+          "sonnet": 0.9999999999999999,
+          "deepseek-v4-pro": 0.9999999999999999
+        },
+        "meanSeconds": 5.843666666666667,
+        "meanOutputTokens": 306,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4.1-flash",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.9999999999999999,
+        "rubricMin": 0.9999999999999999,
+        "rubricStdDev": 0,
+        "rubricByJudge": {
+          "sonnet": 0.9999999999999999,
+          "deepseek-v4-pro": 0.9999999999999999
+        },
+        "meanSeconds": 1.3253333333333333,
+        "meanOutputTokens": 182.66666666666666,
+        "meanCostUsd": null,
+        "gateFailures": []
+      }
+    ]
+  },
+  "history": [
+    {
+      "when": "2026-07-17T19:28:17.659Z",
+      "harnessVersion": "2.0.0",
+      "fixtureSource": "model-bakeoff/tasks/state-reconciler.json",
+      "runsPerCandidate": 3,
+      "verdict": {
+        "fixtureId": "state.reconciler.typed-diff",
+        "passRateThreshold": 0.8,
+        "rubricThreshold": 0.7,
+        "rubricFloor": 0.6,
+        "recommendation": "claude-opus-4-8",
+        "reason": "claude-opus-4-8 beats incumbent deepseek-v4-pro:cloud (passRate 100% vs 100%, 120 out-tok/success (price unknown) vs 433 out-tok/success (price unknown))",
+        "winner": "claude-opus-4-8",
+        "incumbent": "deepseek-v4-pro:cloud",
+        "eligible": [
+          "claude-opus-4-8",
+          "claude-sonnet-5",
+          "deepseek-v4-pro:cloud",
+          "claude-haiku-4-5"
+        ],
+        "infraIncomplete": false
+      },
+      "candidates": [
+        {
+          "model": "deepseek-v4-pro:cloud",
+          "benchmarkOnly": false,
+          "validRuns": 3,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.9999999999999999,
+          "rubricMin": 0.9999999999999999,
+          "rubricStdDev": 0,
+          "meanSeconds": 5.615666666666667,
+          "meanOutputTokens": 433.3333333333333,
+          "meanCostUsd": null,
+          "gateFailures": []
+        },
+        {
+          "model": "claude-haiku-4-5",
+          "benchmarkOnly": false,
+          "validRuns": 3,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.9291666666666666,
+          "rubricMin": 0.885,
+          "rubricStdDev": 0.05059369745553508,
+          "meanSeconds": 8.954333333333333,
+          "meanOutputTokens": 446,
+          "meanCostUsd": null,
+          "gateFailures": []
+        },
+        {
+          "model": "claude-sonnet-5",
+          "benchmarkOnly": false,
+          "validRuns": 3,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.9999999999999999,
+          "rubricMin": 0.9999999999999999,
+          "rubricStdDev": 0,
+          "meanSeconds": 6.927333333333333,
+          "meanOutputTokens": 363.6666666666667,
+          "meanCostUsd": null,
+          "gateFailures": []
+        },
+        {
+          "model": "claude-opus-4-8",
+          "benchmarkOnly": false,
+          "validRuns": 3,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.9999999999999999,
+          "rubricMin": 0.9999999999999999,
+          "rubricStdDev": 0,
+          "meanSeconds": 5.126,
+          "meanOutputTokens": 120,
+          "meanCostUsd": null,
+          "gateFailures": []
+        }
+      ]
+    },
+    {
+      "when": "2026-07-17T17:04:28.768Z",
+      "harnessVersion": "2.0.0",
+      "fixtureSource": "model-bakeoff/tasks/state-reconciler.json",
+      "runsPerCandidate": 2,
+      "verdict": {
+        "fixtureId": "state.reconciler.typed-diff",
+        "passRateThreshold": 0.8,
+        "rubricThreshold": 0.7,
+        "rubricFloor": 0.6,
+        "recommendation": "minimax-m2.5",
+        "reason": "minimax-m2.5 beats incumbent deepseek-v4-pro:cloud (passRate 100% vs 100%, 246 out-tok/success (price unknown) vs 601 out-tok/success (price unknown))",
+        "winner": "minimax-m2.5",
+        "incumbent": "deepseek-v4-pro:cloud",
+        "eligible": [
+          "minimax-m2.5",
+          "deepseek-v4-pro:cloud"
+        ],
+        "infraIncomplete": false
+      },
+      "candidates": [
+        {
+          "model": "deepseek-v4-pro:cloud",
+          "benchmarkOnly": false,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.9999999999999999,
+          "rubricMin": 0.9999999999999999,
+          "rubricStdDev": 0,
+          "meanSeconds": 10.3915,
+          "meanOutputTokens": 601,
+          "meanCostUsd": null,
+          "gateFailures": []
+        },
+        {
+          "model": "minimax-m2.5",
+          "benchmarkOnly": false,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.9824999999999999,
+          "rubricMin": 0.965,
+          "rubricStdDev": 0.01749999999999996,
+          "meanSeconds": 3.106,
+          "meanOutputTokens": 246,
+          "meanCostUsd": null,
+          "gateFailures": []
+        },
+        {
+          "model": "claude:haiku",
+          "benchmarkOnly": true,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.9199999999999999,
+          "rubricMin": 0.9199999999999999,
+          "rubricStdDev": 0,
+          "meanSeconds": 8.4535,
+          "meanOutputTokens": 575.5,
+          "meanCostUsd": null,
+          "gateFailures": []
+        }
+      ]
+    },
+    {
+      "when": "2026-07-17T17:01:45.380Z",
+      "harnessVersion": "2.0.0",
+      "fixtureSource": "model-bakeoff/tasks/state-reconciler.json",
+      "runsPerCandidate": 2,
+      "verdict": {
+        "fixtureId": "state.reconciler.typed-diff",
+        "passRateThreshold": 0.8,
+        "rubricThreshold": 0.7,
+        "rubricFloor": 0.6,
+        "recommendation": null,
+        "reason": "no candidate met the reliability bar",
+        "winner": null,
+        "incumbent": "deepseek-v4-pro:cloud",
+        "eligible": [],
+        "infraIncomplete": false
+      },
+      "candidates": [
+        {
+          "model": "deepseek-v4-pro:cloud",
+          "benchmarkOnly": false,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.50125,
+          "rubricMin": 0.36,
+          "rubricStdDev": 0.14125,
+          "meanSeconds": 6.2755,
+          "meanOutputTokens": 608.5,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "output:matches: \\\"action\\\"\\s*:\\s*\\\"update\\\"",
+            "output:matches: \\\"action\\\"\\s*:\\s*\\\"update\\\""
+          ]
+        },
+        {
+          "model": "minimax-m2.5",
+          "benchmarkOnly": false,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.3625,
+          "rubricMin": 0.3075,
+          "rubricStdDev": 0.05499999999999999,
+          "meanSeconds": 6.1805,
+          "meanOutputTokens": 505.5,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "output:matches: \\\"action\\\"\\s*:\\s*\\\"update\\\"",
+            "output:matches: \\\"progress_pct\\\"\\s*:\\s*25",
+            "output:matches: \\\"action\\\"\\s*:\\s*\\\"update\\\""
+          ]
+        },
+        {
+          "model": "claude:haiku",
+          "benchmarkOnly": true,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.6087500000000001,
+          "rubricMin": 0.56,
+          "rubricStdDev": 0.04875000000000002,
+          "meanSeconds": 12.8755,
+          "meanOutputTokens": 942.5,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "output:matches: \\\"action\\\"\\s*:\\s*\\\"update\\\"",
+            "output:matches: \\\"action\\\"\\s*:\\s*\\\"update\\\""
+          ]
+        }
+      ]
+    },
+    {
+      "when": "2026-07-17T15:54:27.236Z",
+      "harnessVersion": "2.0.0",
+      "fixtureSource": "model-bakeoff/tasks/state-reconciler.json",
+      "runsPerCandidate": 2,
+      "verdict": {
+        "fixtureId": "state.reconciler.typed-diff",
+        "passRateThreshold": 0.8,
+        "rubricThreshold": 0.7,
+        "rubricFloor": 0.6,
+        "recommendation": "deepseek-v4-pro:cloud",
+        "reason": "cheapest reliable candidate (passRate 100%, 837 out-tok/success (price unknown))",
+        "winner": "deepseek-v4-pro:cloud",
+        "incumbent": "deepseek-v4-pro:cloud",
+        "eligible": [
+          "deepseek-v4-pro:cloud",
+          "minimax-m2.5"
+        ],
+        "infraIncomplete": false
+      },
+      "candidates": [
+        {
+          "model": "deepseek-v4-pro:cloud",
+          "benchmarkOnly": false,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.9662499999999998,
+          "rubricMin": 0.9324999999999999,
+          "rubricStdDev": 0.03375,
+          "meanSeconds": 6.1145,
+          "meanOutputTokens": 837,
+          "meanCostUsd": null,
+          "gateFailures": []
+        },
+        {
+          "model": "glm-5",
+          "benchmarkOnly": false,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": null,
+          "rubricMin": null,
+          "rubricStdDev": null,
+          "meanSeconds": 0.3125,
+          "meanOutputTokens": null,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "completion: Ollama request failed: status=410 body={\"error\":\"glm-5 was retired at 2026-07-15 00:00:00 -0700 PDT (ref: f363f1d3-7cd9-4d03-bbc7-4da12c11d9c4)\"}\n",
+            "completion: Ollama request failed: status=410 body={\"error\":\"glm-5 was retired at 2026-07-15 00:00:00 -0700 PDT (ref: 72eba038-d31b-42c9-b15e-43a9089d744a)\"}\n"
+          ]
+        },
+        {
+          "model": "minimax-m2.5",
+          "benchmarkOnly": false,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.8324999999999999,
+          "rubricMin": 0.6649999999999999,
+          "rubricStdDev": 0.16749999999999998,
+          "meanSeconds": 12.5485,
+          "meanOutputTokens": 1150.5,
+          "meanCostUsd": null,
+          "gateFailures": []
+        },
+        {
+          "model": "claude:haiku",
+          "benchmarkOnly": true,
+          "validRuns": 2,
+          "infraRuns": 0,
+          "passRate": 1,
+          "rubricMean": 0.5175000000000001,
+          "rubricMin": 0.4525,
+          "rubricStdDev": 0.065,
+          "meanSeconds": 9.350999999999999,
+          "meanOutputTokens": 916,
+          "meanCostUsd": null,
+          "gateFailures": []
+        }
+      ]
+    }
+  ]
+}

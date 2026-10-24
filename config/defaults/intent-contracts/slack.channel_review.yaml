@@ -1,0 +1,22 @@
+id: slack.channel_review
+domain: slack
+display_name: Review Slack Channel
+description: Read and summarize a Slack channel or thread with a targeted catch-up or digest objective.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: channel_query
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+examples:
+  - Catch me up on Slack.
+  - Summarize what happened in ai-tools today.
+  - Review the latest thread in product-design.
+classifier_hints:
+  - Use for Slack catch-up or channel-summary requests.
+  - Prefer research.web_lookup or notes.note_read when the request is not about Slack content specifically.

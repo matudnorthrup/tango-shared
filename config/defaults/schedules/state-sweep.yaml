@@ -1,0 +1,40 @@
+id: state-sweep
+display_name: State Lifecycle Sweep
+description: >
+  Reconcile state staleness and lifecycle policies, retry linked Obsidian
+  bodies, import Health Auto Export observations, classify memory
+  supersession candidates, and issue due state check-ins.
+enabled: true
+
+schedule:
+  cron: "*/10 * * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: state-sweep
+  timeout_seconds: 180
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: state-sweep
+  scope: daily
+  # This is recurring maintenance, not a once-per-day workflow. Keep the
+  # completion record for observability while allowing every cron tick to run.
+  check_before_run: false
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 0
+  backoff:
+    enabled: true
+    initial_seconds: 60
+    max_seconds: 900
+
+tags:
+  - state
+  - lifecycle
+  - maintenance

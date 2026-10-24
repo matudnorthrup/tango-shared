@@ -1,0 +1,64 @@
+id: research.deep_research
+domain: research
+display_name: Deep Research
+description: Investigate a topic through multiple search angles or source categories, then synthesize the findings.
+mode: read
+route:
+  kind: worker
+  target_id: research-coordinator
+slots:
+  - name: topic
+    required: true
+    inferable: false
+    description: Primary topic, product set, claim family, or subject to investigate.
+  - name: focus
+    required: false
+    inferable: true
+    description: The specific angle, outcome, or sub-problem the user cares about most.
+  - name: comparison_targets
+    required: false
+    inferable: true
+    description: Named options, products, vendors, or source families that should be compared directly.
+  - name: task_class
+    required: false
+    inferable: true
+    description: Research shape such as decision support, fact verification, shortlist generation, or open exploration.
+  - name: constraints
+    required: false
+    inferable: true
+    description: User constraints or decision filters that should change the recommendation.
+  - name: success_criteria
+    required: false
+    inferable: true
+    description: What a good answer must include to feel complete and actionable.
+  - name: must_answer
+    required: false
+    inferable: true
+    description: The concrete questions the final answer must resolve.
+evaluation:
+  task_class: decision_support
+  success_criteria:
+    - Lead with the conclusion or shortlist, not just collected facts.
+    - Tie the recommendation to the user's constraints and the strongest current evidence.
+    - Surface missing data, contradictions, freshness limits, and tradeoffs before closing.
+  must_answer:
+    - What is the strongest current conclusion or shortlist?
+    - What tradeoffs or constraints most change the recommendation?
+  comparison_axes:
+    - fit_for_constraints
+    - evidence_strength
+    - tradeoffs
+  required_fields:
+    - source_urls
+    - rationale
+    - caveats
+  quality_gate_required: true
+examples:
+  - Do a deep dive on PLA food safety
+  - Research the best budget filament dryers under fifty dollars thoroughly
+  - Compare Bambu Lab A1 vs Prusa MK4S vs Creality K1C in detail
+can_run_in_parallel: false
+classifier_hints:
+  - Use when the request says deep dive, research thoroughly, investigate, compare in detail, or otherwise implies broad coverage.
+  - Prefer this over research.web_lookup when the answer should combine multiple independent search angles or sources.
+  - Prefer research.product_selection when the user mainly wants help choosing the right product model or navigating a lineup for a purchase decision.

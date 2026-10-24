@@ -1,0 +1,5 @@
+id: smoke-testing-echo
+type: project
+agent: echo
+channels:
+  - discord:100000000000001031

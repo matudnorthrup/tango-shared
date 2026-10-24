@@ -1,0 +1,90 @@
+{
+  "id": "state.reconciler.typed-diff",
+  "title": "State Reconciler: grounded typed changeset",
+  "category": "state",
+  "source": "docs/specs/state-management.md sections 9 and 17; synthetic privacy-safe labeled fixture",
+  "ownerAgent": "watson-ollama",
+  "worker": "state-reconciler",
+  "taskShape": "structured_extraction",
+  "safetyTier": "read_only_judgment",
+  "tools": false,
+  "candidateModels": [
+    "claude-opus-5-5",
+    "claude-sonnet-5",
+    "claude-haiku-4-5",
+    "deepseek-v4-pro:cloud",
+    "glm-5.3",
+    "kimi-k3",
+    "minimax-m3",
+    "deepseek-v4.1-flash",
+    "glm-5.3-flash"
+  ],
+  "benchmarkModels": [],
+  "outputAssertions": [
+    {
+      "type": "matches",
+      "value": "\\\"action\\\"\\s*:\\s*\\\"update\\\""
+    },
+    {
+      "type": "matches",
+      "value": "project:fixture-launch"
+    },
+    {
+      "type": "matches",
+      "value": "\\\"progress_pct\\\"\\s*:\\s*25"
+    },
+    {
+      "type": "matches",
+      "value": "Launch Fixture"
+    },
+    {
+      "type": "notMatches",
+      "value": "\\\"action\\\"\\s*:\\s*\\\"new_entity\\\""
+    }
+  ],
+  "incumbentModel": "deepseek-v4-pro:cloud",
+  "system": "You are Tango's State Reconciler. Do bookkeeping only. Return ONLY one JSON object, with no prose or code fence, using exactly this shape: {\"changes\":[{\"action\":\"update\",\"entity_id\":\"project:fixture-launch\",\"aliases\":[\"Launch Fixture\"],\"attributes\":{\"progress_pct\":25},\"evidence\":\"exact quote\"}],\"engaged_entity_ids\":[\"project:fixture-launch\"]}. Every proposal must cite one exact evidence quote from the completed turn. Never invent a value, never emit an unchanged value, prefer an existing entity from the full name index, treat corrections as updates, and add a new name as an alias on the same entity rather than renaming or duplicating it. 'Undo that' is a revert of the prior state-changing turn.",
+  "prompt": "Current entity name index: [{\"id\":\"project:fixture-launch\",\"typeId\":\"project\",\"title\":\"Fixture Launch\",\"aliases\":[]}]. Current state: [{\"id\":\"project:fixture-launch\",\"status\":\"active\",\"attributes\":{\"progress_pct\":10}}]. Type catalog: project.progress_pct is a number from 0 to 100. Completed turn \u2014 User: Correction: Fixture Launch is at 25 percent, and call it Launch Fixture. Assistant: Got it. Return only the proposed JSON changeset.",
+  "successCriteria": [
+    "Returns parseable JSON with no prose or code fence.",
+    "Targets project:fixture-launch instead of creating a duplicate entity.",
+    "Updates progress_pct to 25 and adds Launch Fixture as an alias.",
+    "Cites exact evidence from the supplied user turn and invents no values.",
+    "Does not emit unchanged status=active as a change."
+  ],
+  "knownFailureModes": [
+    "Creates a second project instead of resolving the existing entity.",
+    "Omits or paraphrases the evidence quote.",
+    "Returns prose around the JSON.",
+    "Re-emits unchanged status or progress values.",
+    "Invents a target date or other missing field."
+  ],
+  "rubric": [
+    {
+      "name": "grounding",
+      "weight": 0.35,
+      "description": "Every proposal is supported by an exact quote and contains no invented values."
+    },
+    {
+      "name": "entity_resolution",
+      "weight": 0.3,
+      "description": "The existing entity is targeted and the alternate name becomes an alias, with no duplicate."
+    },
+    {
+      "name": "typed_diff",
+      "weight": 0.25,
+      "description": "Only progress_pct=25 and the alias are proposed; unchanged fields are omitted."
+    },
+    {
+      "name": "format",
+      "weight": 0.1,
+      "description": "Output is a single parseable changeset JSON object."
+    }
+  ],
+  "judge": {
+    "models": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ]
+  }
+}

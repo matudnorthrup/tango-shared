@@ -1,0 +1,10 @@
+id: personal
+display_name: Personal
+aliases:
+  - personal default
+default_agent: watson
+provider:
+  default: claude-oauth
+  fallback:
+    - claude-oauth-secondary
+    - codex

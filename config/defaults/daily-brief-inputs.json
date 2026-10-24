@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "lookbackHours": 24,
+  "inputs": [
+    {
+      "scheduleId": "nightly-transaction-categorizer",
+      "displayName": "Nightly Transaction Categorizer",
+      "domain": "Finance",
+      "logPath": "Records/Jobs/Finance/YYYY-MM.md",
+      "critical": true,
+      "sections": ["flagged", "overnightJobs"]
+    },
+    {
+      "scheduleId": "receipt-cataloger",
+      "displayName": "Receipt Cataloger",
+      "domain": "Finance",
+      "logPath": "Records/Jobs/Finance/YYYY-MM.md",
+      "critical": true,
+      "sections": ["flagged", "overnightJobs"]
+    },
+    {
+      "scheduleId": "kilo-ledger-monitor",
+      "displayName": "Kilo Ledger Monitor",
+      "domain": "Finance",
+      "logPath": "Records/Jobs/Finance/YYYY-MM.md",
+      "critical": true,
+      "sections": ["flagged", "overnightJobs"]
+    },
+    {
+      "scheduleId": "daily-email-review",
+      "displayName": "Daily Email Review",
+      "domain": "Email",
+      "logPath": "Records/Jobs/Email/YYYY-MM.md",
+      "critical": true,
+      "sections": ["flagged", "overnightJobs"]
+    },
+    {
+      "scheduleId": "nightly-email-unsubscribe-review",
+      "displayName": "Email Unsubscribe Review",
+      "domain": "Email",
+      "logPath": "Records/Jobs/Email/YYYY-MM.md",
+      "critical": true,
+      "sections": ["flagged", "overnightJobs"]
+    },
+    {
+      "scheduleId": "slack-saved-review",
+      "displayName": "Slack Saved Items Review",
+      "domain": "Slack",
+      "logPath": "Records/Jobs/Slack/YYYY-MM.md",
+      "critical": true,
+      "sections": ["flagged", "items", "overnightJobs"]
+    },
+    {
+      "scheduleId": "vault-daily-check",
+      "displayName": "Vault Audit",
+      "domain": "Vault",
+      "logPath": "Records/Jobs/Vault/YYYY-MM.md",
+      "critical": true,
+      "sections": ["flagged", "overnightJobs"]
+    },
+    {
+      "scheduleId": "daily-brief",
+      "displayName": "Daily Brief",
+      "domain": "Planning",
+      "logPath": "Records/Jobs/Planning/YYYY-MM.md",
+      "critical": true,
+      "sections": ["overnightJobs"]
+    },
+    {
+      "scheduleId": "morning-planning",
+      "displayName": "Morning Planning",
+      "domain": "Planning",
+      "logPath": "Records/Jobs/Planning/YYYY-MM.md",
+      "critical": true,
+      "sections": ["overnightJobs"]
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+id: slack-saved-review
+display_name: Slack Saved Items Review
+description: >
+  Review Slack saved items, summarize each, and write them to the domain log
+  at Records/Jobs/Slack/ for daily brief aggregation.
+enabled: true
+runtime: v2
+
+schedule:
+  cron: "45 4 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: research-assistant
+  intent_ids:
+    - productivity.slack_saved_review
+  deterministic_agent_id: watson
+  task: |
+    Review the owner's Slack saved items.
+
+    1. Use the slack tool with action "saved_items" and since_hours: 48
+       to get recent saved messages. Do not include older recurring saved
+       items in the daily review unless explicitly requested.
+
+    2. For each saved message:
+       - Resolve the user ID to a display name using slack action "user_info"
+       - Write a one-line summary of what the message is about
+       - Include the permalink
+
+    3. Write to the domain log at Records/Jobs/Slack/YYYY-MM.md
+       using direct filesystem I/O (NOT obsidian-cli).
+       - Determine today's date and time in America/Los_Angeles timezone
+       - Append a new entry with this format:
+
+         ## YYYY-MM-DD HH:MM — Slack Saved Items Review
+         **Status:** Done — N items found
+         **Items:**
+         - [ ] [Summary of item](permalink) — #channel-name
+         - [ ] [Summary of item](permalink) — #channel-name
+
+       - If no saved items are found, write:
+
+         ## YYYY-MM-DD HH:MM — Slack Saved Items Review
+         **Status:** Done — 0 items found
+
+    4. For each processed item, call the slack tool with action
+       "remove_star", channel_id set to the item's channel_id, and
+       timestamp set to the item's ts. This prevents items from
+       repeating in the next daily run. If the tool returns missing_scope
+       for stars:write, continue the job and include a brief **Note:** in
+       the domain log; do not fail the review because cleanup could not run.
+
+    Do NOT write to the daily note (Planning/Daily/). The daily-brief
+    aggregator will pull Slack items from this domain log.
+  timeout_seconds: 180
+
+provider:
+  model: role:job-planning
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: slack-saved-review
+  scope: daily
+
+policy:
+  max_consecutive_failures: 1
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  backoff:
+    enabled: true
+    initial_seconds: 300
+    max_seconds: 3600
+
+tags:
+  - watson
+  - slack
+  - daily

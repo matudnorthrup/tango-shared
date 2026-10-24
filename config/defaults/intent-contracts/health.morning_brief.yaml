@@ -1,0 +1,26 @@
+id: health.morning_brief
+domain: health
+display_name: Morning Health Brief
+description: Read and summarize the morning health briefing, including sleep, recovery, activity, or short-term trends.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: mode
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: days
+    required: false
+    inferable: true
+examples:
+  - Give me my morning health briefing
+  - How's my recovery today?
+  - Show my health trend for the last 7 days
+can_run_in_parallel: true
+classifier_hints:
+  - Use for Watson requests about a morning health briefing, recovery check-in, HRV and RHR summary, or short trend review from the health_morning tool.
+  - Prefer wellness sleep analysis only when the request belongs to Malibu's wellness project path rather than Watson's personal-assistant tools.

@@ -1,0 +1,27 @@
+id: workouts.exercise_history
+family: workouts
+description: Read recent workout history or exercise-specific volume trends.
+owner_worker: workout-recorder
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: postgres
+  target: workouts
+input_fields:
+  - exercise_name?
+  - limit?
+output_fields:
+  - workouts
+  - history
+  - volume_trend
+legacy:
+  commands:
+    - ~/.tango/tools/workout-tracker/workout.sh history [exercise_name] [limit]
+    - ~/.tango/tools/workout-tracker/workout.sh volume-trend "exercise_name"
+  read_paths:
+    - "Postgres tables: workouts, sets, exercises"
+  write_paths:
+    - none (legacy flow was read-only)

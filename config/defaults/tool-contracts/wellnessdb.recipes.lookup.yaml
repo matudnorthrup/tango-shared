@@ -1,0 +1,21 @@
+id: wellnessdb.recipes.lookup
+family: wellnessdb.recipes
+description: Resolve recipes from wellness.db using wellnessdb_search_recipe / wellnessdb_get_recipe_detail.
+owner_worker: recipe-librarian
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: sqlite
+  target: recipes
+input_fields:
+  - query
+output_fields:
+  - recipe
+  - ingredients
+  - aliases
+legacy:
+  read_paths:
+    - "<profile>/wellness/wellness.db"

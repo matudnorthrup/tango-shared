@@ -1,0 +1,12 @@
+--- a/tshare
++++ b/tshare
+@@ -62,5 +62,9 @@
+ cmd_port() {
+   [ $# -eq 1 ] || die "usage: tshare port <localport>"
+   local p="$1"
++  case "${TANGO_DESK_ITEM:-}" in
++    loom:*) loom resource port "$p"; return $? ;;
++  esac
++
+   case "$p" in ''|*[!0-9]*) die "port must be numeric: $p";; esac
+   [ "$p" -ge 1 ] && [ "$p" -le 65535 ] || die "port out of range: $p"

@@ -1,0 +1,7 @@
+id: piper
+type: operations
+display_name: Piper
+provider:
+  default: claude-oauth
+default_project: operations
+response_mode: concise

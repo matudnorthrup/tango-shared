@@ -1,0 +1,41 @@
+{
+  "note": "RESOLVED 2026-06-10: Ollama Cloud is SUBSCRIPTION-priced (Free / Pro $20mo / Max $100mo with usage multipliers), NOT per-token \u2014 ollama.com/cloud explicitly: 'Ollama doesn't cap you at a set number of tokens', no per-Mtoken price sheet exists. Marginal per-run cost is ~$0 within plan limits; the constrained resource is USAGE VOLUME, so the harness's tokens-per-success ranking is the correct economics, not a fallback. inputPerMTokUSD/outputPerMTokUSD stay null for subscription models BY DESIGN; only fill them for true pay-per-token providers. UPDATED 2026-07-17: Claude models run on the Claude Code subscription, confirmed unmetered for headless use \u2014 now ASSIGNABLE candidates (same subscription economics, prices stay null); if Anthropic ever meters the headless path, fill real per-MTok prices here and re-rank before trusting cost-based assignments.",
+  "models": {
+    "claude-opus-4-8": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    },
+    "claude-sonnet-4-6": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    },
+    "claude-sonnet-5": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    },
+    "claude-haiku-4-5": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    },
+    "deepseek-v4-pro:cloud": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    },
+    "deepseek-v4-flash": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    },
+    "minimax-m2.5": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    },
+    "kimi-k2.6": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    },
+    "glm-5": {
+      "inputPerMTokUSD": null,
+      "outputPerMTokUSD": null
+    }
+  }
+}

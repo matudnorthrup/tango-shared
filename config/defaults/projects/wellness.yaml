@@ -1,0 +1,38 @@
+id: wellness
+display_name: Wellness
+aliases:
+  - wellness project
+  - health and nutrition
+  - malibu wellness
+default_agent: malibu
+provider:
+  default: claude-oauth
+  fallback:
+    - claude-oauth-secondary
+    - codex
+worker_ids:
+  - health-analyst
+  - nutrition-logger
+  - recipe-librarian
+  - workout-recorder
+  - note-librarian
+tool_contract_ids:
+  - healthdb.today_summary
+  - healthdb.sleep_summary
+  - healthdb.activity_summary
+  - healthdb.recovery_summary
+  - healthdb.weekly_trends
+  - fatsecret.search_food
+  - fatsecret.log_food
+  - fatsecret.day_summary
+  - wellnessdb.recipes.lookup
+  - wellnessdb.ingredients.lookup
+  - obsidian
+  - workouts.start_session
+  - workouts.log_set
+  - workouts.finish_session
+  - workouts.today_summary
+  - workouts.exercise_history
+policies:
+  topic_mode: optional
+  write_confirmation: on-ambiguity

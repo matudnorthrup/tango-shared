@@ -1,0 +1,4703 @@
+{
+ "builtFrom": "desk snapshot 2026-10-18 08:08 PDT, 48 rows judged by hand (status audit); strings scrubbed",
+ "cases": [
+  {
+   "id": "oracle-01",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-01",
+    "kind": "thread",
+    "createdAt": 1790438846069
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "contentKey": "k",
+     "lastOwnerRequest": {
+      "at": 1792331917223,
+      "filedAt": 1792331925950,
+      "text": "x"
+     },
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "lastGoodStep": null,
+     "workNotes": [
+      {
+       "at": 1792332308401,
+       "text": "x"
+      },
+      {
+       "at": 1792332315461,
+       "text": "x"
+      },
+      {
+       "at": 1792332323762,
+       "text": "x"
+      },
+      {
+       "at": 1792332380617,
+       "text": "x"
+      },
+      {
+       "at": 1792332396750,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "tagsSeeded": true,
+     "background": null,
+     "setup": null,
+     "linkedPullRequests": null,
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792332407284,
+      "filedAt": 1792332415732
+     }
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792332432952,
+     "version": 11,
+     "notesAt": 1792332396750,
+     "askKind": "todo",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792334328658,
+    "lastOwnerMessageAt": 1792331917235,
+    "lastAgentAt": 1792332407284,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792332407284
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-02",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-02",
+    "kind": "thread",
+    "createdAt": 1791086694823
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792184913215,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "lastGoodStep": null,
+     "tagsSeeded": true
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792184997772,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "todo",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792184937683,
+    "lastOwnerMessageAt": 1792184913215,
+    "lastAgentAt": 1792184937683,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792184937683
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-03",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-03",
+    "kind": "thread",
+    "createdAt": 1791083945584
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792285587021,
+      "filedAt": 1792285597413,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "tagsSeeded": true,
+     "projectId": "x",
+     "projectPickedUpAt": 1792284010252,
+     "failed": null,
+     "running": null,
+     "lastGoodStep": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [
+      "o0",
+      "o1"
+     ],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792285654202,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "todo",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792285638013,
+    "lastOwnerMessageAt": 1792285587208,
+    "lastAgentAt": 1792285638013,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792285638013
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-04",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-04",
+    "kind": "thread",
+    "createdAt": 1790386847520
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792332152805,
+      "filedAt": 1792332189879,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "lastGoodStep": null,
+     "tagsSeeded": true,
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792332229988,
+      "filedAt": 1792332234616
+     }
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792332251069,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "todo",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792332229988,
+    "lastOwnerMessageAt": 1792332153043,
+    "lastAgentAt": 1792332229988,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792332229988
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-05",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-05",
+    "kind": "thread",
+    "createdAt": 1788818754330
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "contentKey": "k",
+     "tagsSeeded": true
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792274810459,
+     "version": 11,
+     "notesAt": null,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792274760612,
+    "lastOwnerMessageAt": null,
+    "lastAgentAt": 1792274760612,
+    "handoff": null,
+    "standing": null,
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-06",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "STALE",
+   "why": "An ask that expired, was answered elsewhere, or was superseded",
+   "pending": "ask-identity: the same ask in other words on another thread, or answered elsewhere; needs matching by meaning",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-06",
+    "kind": "thread",
+    "createdAt": 1787852759560
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "contentKey": "k",
+     "lastOwnerRequest": {
+      "at": 1792266966425,
+      "filedAt": 1792266971753,
+      "text": "x"
+     },
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": {
+      "url": "https://example.invalid/pr/15126",
+      "number": 15126
+     },
+     "lastGoodStep": null,
+     "prReview": {
+      "state": "changes_requested",
+      "reviewers": [
+       "r0"
+      ],
+      "number": 15126,
+      "since": 1791924608299,
+      "decidedAt": 1791924476000
+     },
+     "workNotes": null,
+     "setup": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "tagsSeeded": true,
+     "type": "bug",
+     "prReviews": [
+      {
+       "state": "changes_requested",
+       "reviewers": [
+        "r0"
+       ],
+       "number": 15126,
+       "since": 1791924608299,
+       "decidedAt": 1791924476000,
+       "url": "https://example.invalid/pr"
+      }
+     ],
+     "linkedPullRequests": null,
+     "prChecks": {
+      "state": "passing",
+      "number": 15126
+     },
+     "prChecksAll": [
+      {
+       "state": "passing",
+       "number": 15126,
+       "url": "https://example.invalid/pr"
+      }
+     ]
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792280713680,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792306090388,
+    "lastOwnerMessageAt": 1792266966425,
+    "lastAgentAt": 1792266979534,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792266979534
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-07",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-07",
+    "kind": "thread",
+    "createdAt": 1788453477930
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792085520805,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "lastGoodStep": null,
+     "workNotes": [
+      {
+       "at": 1792087724277,
+       "text": "x"
+      },
+      {
+       "at": 1792087768536,
+       "text": "x"
+      },
+      {
+       "at": 1792088420092,
+       "text": "x"
+      },
+      {
+       "at": 1792088444214,
+       "text": "x"
+      },
+      {
+       "at": 1792088466415,
+       "text": "x"
+      }
+     ],
+     "setup": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "tagsSeeded": true,
+     "stage": "feedback",
+     "linkedPullRequests": null,
+     "prReviews": null,
+     "prReview": null,
+     "prChecks": null,
+     "prChecksAll": null,
+     "type": "enh",
+     "prWatches": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176320430,
+     "version": 11,
+     "notesAt": 1792088466415,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792168039897,
+    "lastOwnerMessageAt": 1792085520805,
+    "lastAgentAt": 1792088494973,
+    "handoff": {
+     "owner": "waiting",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "waiting",
+      "text": "ask"
+     },
+     "at": 1792088494973
+    },
+    "seen": "updated",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-08",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TIMER",
+   "why": "A desk-invented \"nudge?/still on track?\" ask: stays Watching, overdue, never the pill",
+   "rule": "overdue: a wait past its time stays Watching (PR 2)",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "waiting-quiet"
+   },
+   "row": {
+    "conversationKey": "conv-08",
+    "kind": "thread",
+    "createdAt": 1790027360904
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "contentKey": "k",
+     "lastOwnerRequest": {
+      "at": 1791349231903,
+      "text": "x"
+     },
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "lastGoodStep": null,
+     "workNotes": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "tagsSeeded": true,
+     "type": "bug",
+     "background": null,
+     "setup": null,
+     "linkedPullRequests": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "watching",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": true,
+     "waitingOn": {
+      "who": "an agent",
+      "what": "x",
+      "kind": "agent"
+     },
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176415186,
+     "version": 11,
+     "notesAt": null,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1791998687481,
+    "lastOwnerMessageAt": 1791349231903,
+    "lastAgentAt": 1791349239447,
+    "handoff": null,
+    "standing": null,
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "watching",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-09",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TIMER",
+   "why": "A desk-invented \"nudge?/still on track?\" ask: stays Watching, overdue, never the pill",
+   "rule": "overdue: a wait past its time stays Watching (PR 2)",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "watch-quiet"
+   },
+   "row": {
+    "conversationKey": "conv-09",
+    "kind": "thread",
+    "createdAt": 1790258230500
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "contentKey": "k",
+     "lastOwnerRequest": {
+      "at": 1792081723677,
+      "text": "x"
+     },
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": {
+      "url": "https://example.invalid/pr/16804",
+      "number": 16804
+     },
+     "lastGoodStep": null,
+     "workNotes": null,
+     "setup": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "tagsSeeded": true,
+     "type": "bug",
+     "prReview": null,
+     "prReviews": null,
+     "linkedPullRequests": null,
+     "prChecks": null,
+     "prChecksAll": null,
+     "prWatches": null,
+     "stage": "feedback"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "watching",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": true,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176357385,
+     "version": 11,
+     "notesAt": null,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792081734742,
+    "lastOwnerMessageAt": 1792081723677,
+    "lastAgentAt": 1792081734146,
+    "handoff": {
+     "owner": "me",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "me",
+      "text": "ask"
+     },
+     "at": 1792081734146
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "watching",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-10",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TIMER",
+   "why": "A desk-invented \"nudge?/still on track?\" ask: stays Watching, overdue, never the pill",
+   "rule": "overdue: a wait past its time stays Watching (PR 2)",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "watch-quiet"
+   },
+   "row": {
+    "conversationKey": "conv-10",
+    "kind": "thread",
+    "createdAt": 1789150289286
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1791654328766,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "lastGoodStep": null,
+     "workNotes": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "tagsSeeded": true,
+     "type": "bug",
+     "background": null,
+     "setup": null,
+     "linkedPullRequests": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "watching",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176401378,
+     "version": 11,
+     "notesAt": null,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1791998687541,
+    "lastOwnerMessageAt": 1791654328766,
+    "lastAgentAt": 1791654331216,
+    "handoff": {
+     "owner": "me",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "me",
+      "text": "ask"
+     },
+     "at": 1791654331216
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "watching",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-11",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-11",
+    "kind": "thread",
+    "createdAt": 1791398941176
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1791998263549,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "lastGoodStep": null,
+     "workNotes": [
+      {
+       "at": 1791998329401,
+       "text": "x"
+      },
+      {
+       "at": 1791998344852,
+       "text": "x"
+      },
+      {
+       "at": 1791998352608,
+       "text": "x"
+      },
+      {
+       "at": 1791998366006,
+       "text": "x"
+      },
+      {
+       "at": 1791998538566,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "tagsSeeded": true,
+     "type": "chore",
+     "background": null,
+     "setup": null,
+     "linkedPullRequests": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176329783,
+     "version": 11,
+     "notesAt": 1791998538566,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792128873930,
+    "lastOwnerMessageAt": 1791998263636,
+    "lastAgentAt": 1791998543509,
+    "handoff": {
+     "owner": "none",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "none",
+      "text": "ask"
+     },
+     "at": 1791998543509
+    },
+    "seen": "updated",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-12",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-12",
+    "kind": "thread",
+    "createdAt": 1791515708817
+   },
+   "input": {
+    "facts": {
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "lastGoodStep": null,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792168035746,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "workNotes": [
+      {
+       "at": 1792152084166,
+       "text": "x"
+      },
+      {
+       "at": 1792166469364,
+       "text": "x"
+      },
+      {
+       "at": 1792166515247,
+       "text": "x"
+      },
+      {
+       "at": 1792167960046,
+       "text": "x"
+      },
+      {
+       "at": 1792168039535,
+       "text": "x"
+      }
+     ],
+     "setup": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": true,
+     "tagsSeeded": true,
+     "background": null,
+     "type": "ops",
+     "linkedPullRequests": null,
+     "agentSpace": {
+      "id": "space",
+      "name": "space"
+     },
+     "role": "default"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": "report",
+     "at": 1792176301768,
+     "version": 11,
+     "notesAt": 1792168039535,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792169893208,
+    "lastOwnerMessageAt": 1792168035746,
+    "lastAgentAt": 1792168039537,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792168039537
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-13",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-13",
+    "kind": "thread",
+    "createdAt": 1791821540243
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792239630637,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "workNotes": [
+      {
+       "at": 1792239689985,
+       "text": "x"
+      },
+      {
+       "at": 1792239697671,
+       "text": "x"
+      },
+      {
+       "at": 1792240269116,
+       "text": "x"
+      },
+      {
+       "at": 1792240284586,
+       "text": "x"
+      },
+      {
+       "at": 1792240337355,
+       "text": "x"
+      }
+     ],
+     "lastGoodStep": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "tagsSeeded": true,
+     "linkedPullRequests": null,
+     "background": null,
+     "setup": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792240367150,
+     "version": 11,
+     "notesAt": 1792240337355,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792242193682,
+    "lastOwnerMessageAt": 1792239630637,
+    "lastAgentAt": 1792240342095,
+    "handoff": {
+     "owner": "none",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "none",
+      "text": "ask"
+     },
+     "at": 1792240342095
+    },
+    "seen": "updated",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-14",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-14",
+    "kind": "chapter",
+    "createdAt": 1791858745047
+   },
+   "input": {
+    "facts": {
+     "running": null,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1791911852098,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "failed": null,
+     "lastGoodStep": null,
+     "tagsSeeded": true
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176454109,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "todo",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1791911886913,
+    "lastOwnerMessageAt": 1791911852292,
+    "lastAgentAt": 1791911886913,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1791911886913
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-15",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TIMER",
+   "why": "A desk-invented \"nudge?/still on track?\" ask: stays Watching, overdue, never the pill",
+   "rule": "overdue: a wait past its time stays Watching (PR 2)",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "waiting-quiet"
+   },
+   "row": {
+    "conversationKey": "conv-15",
+    "kind": "thread",
+    "createdAt": 1791981092087
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792010832996,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": {
+      "url": "https://example.invalid/pr/17166",
+      "number": 17166
+     },
+     "workNotes": [
+      {
+       "at": 1792010845921,
+       "text": "x"
+      },
+      {
+       "at": 1792010859026,
+       "text": "x"
+      },
+      {
+       "at": 1792010868432,
+       "text": "x"
+      },
+      {
+       "at": 1792010876547,
+       "text": "x"
+      },
+      {
+       "at": 1792012982178,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "setup": null,
+     "lastGoodStep": null,
+     "background": null,
+     "tagsSeeded": true,
+     "stage": "building",
+     "type": "feat",
+     "linkedPullRequests": [
+      {
+       "url": "https://example.invalid/pr",
+       "number": 17138
+      },
+      {
+       "url": "https://example.invalid/pr",
+       "number": 17180
+      }
+     ],
+     "prReviews": [
+      {
+       "state": "pending",
+       "reviewers": [
+        "r0"
+       ],
+       "number": 17138,
+       "since": 1792001881487,
+       "url": "https://example.invalid/pr"
+      }
+     ],
+     "prReview": {
+      "state": "pending",
+      "reviewers": [
+       "r0"
+      ],
+      "number": 17138,
+      "since": 1792001881487
+     },
+     "prChecks": {
+      "state": "passing",
+      "number": 17166
+     },
+     "prChecksAll": [
+      {
+       "state": "passing",
+       "number": 17166,
+       "url": "https://example.invalid/pr"
+      },
+      {
+       "state": "passing",
+       "number": 17138,
+       "url": "https://example.invalid/pr"
+      },
+      {
+       "state": "passing",
+       "number": 17180,
+       "url": "https://example.invalid/pr"
+      }
+     ],
+     "prWatches": [
+      {
+       "url": "https://example.invalid/pr",
+       "number": 17138,
+       "onApprove": "x",
+       "at": 1792003271849,
+       "by": "x",
+       "wokeFor": null
+      }
+     ],
+     "projectId": "x"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "watching",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": {
+      "who": "someone",
+      "what": "x"
+     },
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176219764,
+     "version": 11,
+     "notesAt": 1792012982178,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792306090402,
+    "lastOwnerMessageAt": 1792010833019,
+    "lastAgentAt": 1792012982293,
+    "handoff": {
+     "owner": "waiting",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "waiting",
+      "text": "ask"
+     },
+     "at": 1792012982293
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "watching",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-16",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "STALE",
+   "why": "An ask that expired, was answered elsewhere, or was superseded",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-16",
+    "kind": "thread",
+    "createdAt": 1791983037856
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792007400186,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": {
+      "url": "https://example.invalid/pr/17175",
+      "number": 17175
+     },
+     "workNotes": [
+      {
+       "at": 1792007857351,
+       "text": "x"
+      },
+      {
+       "at": 1792007864731,
+       "text": "x"
+      },
+      {
+       "at": 1792007873988,
+       "text": "x"
+      },
+      {
+       "at": 1792008289984,
+       "text": "x"
+      },
+      {
+       "at": 1792008303355,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "setup": null,
+     "lastGoodStep": null,
+     "tagsSeeded": true,
+     "stage": "building",
+     "type": "enh",
+     "linkedPullRequests": [
+      {
+       "url": "https://example.invalid/pr",
+       "number": 17173
+      },
+      {
+       "url": "https://example.invalid/pr",
+       "number": 227
+      }
+     ],
+     "prChecks": {
+      "state": "running",
+      "number": 17173
+     },
+     "prChecksAll": [
+      {
+       "state": "passing",
+       "number": 17175,
+       "url": "https://example.invalid/pr"
+      },
+      {
+       "state": "running",
+       "number": 17173,
+       "url": "https://example.invalid/pr"
+      }
+     ],
+     "projectId": "x"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176240624,
+     "version": 11,
+     "notesAt": 1792008303355,
+     "askKind": "decision",
+     "askDueAt": "2026-10-15T18:00:00-07:00"
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792306090386,
+    "lastOwnerMessageAt": 1792007400197,
+    "lastAgentAt": 1792008320165,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792008320165
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "expired"
+   }
+  },
+  {
+   "id": "oracle-17",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-17",
+    "kind": "thread",
+    "createdAt": 1791992144732
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792004682794,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": {
+      "url": "https://example.invalid/pr/17178",
+      "number": 17178
+     },
+     "workNotes": [
+      {
+       "at": 1792007811635,
+       "text": "x"
+      },
+      {
+       "at": 1792007817596,
+       "text": "x"
+      },
+      {
+       "at": 1792007821834,
+       "text": "x"
+      },
+      {
+       "at": 1792007830071,
+       "text": "x"
+      },
+      {
+       "at": 1792008190034,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "setup": null,
+     "lastGoodStep": null,
+     "type": "feat",
+     "stage": "building",
+     "linkedPullRequests": [
+      {
+       "url": "https://example.invalid/pr",
+       "number": 17172
+      },
+      {
+       "url": "https://example.invalid/pr",
+       "number": 17174
+      }
+     ],
+     "prChecks": {
+      "state": "failing",
+      "number": 17174
+     },
+     "prChecksAll": [
+      {
+       "state": "passing",
+       "number": 17178,
+       "url": "https://example.invalid/pr"
+      },
+      {
+       "state": "running",
+       "number": 17172,
+       "url": "https://example.invalid/pr"
+      },
+      {
+       "state": "failing",
+       "number": 17174,
+       "url": "https://example.invalid/pr"
+      }
+     ],
+     "projectId": "x"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176255185,
+     "version": 11,
+     "notesAt": 1792008190034,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792306090403,
+    "lastOwnerMessageAt": 1792005024779,
+    "lastAgentAt": 1792008193603,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792008193603
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-18",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TIMER",
+   "why": "A desk-invented \"nudge?/still on track?\" ask: stays Watching, overdue, never the pill",
+   "rule": "overdue: a wait past its time stays Watching (PR 2)",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "waiting-quiet"
+   },
+   "row": {
+    "conversationKey": "conv-18",
+    "kind": "thread",
+    "createdAt": 1792007100161
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792011926608,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": {
+      "url": "https://example.invalid/pr/17186",
+      "number": 17186
+     },
+     "linkedPullRequests": null,
+     "workNotes": [
+      {
+       "at": 1792013504595,
+       "text": "x"
+      },
+      {
+       "at": 1792013510194,
+       "text": "x"
+      },
+      {
+       "at": 1792013513831,
+       "text": "x"
+      },
+      {
+       "at": 1792013519206,
+       "text": "x"
+      },
+      {
+       "at": 1792013548881,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "setup": null,
+     "lastGoodStep": null,
+     "autoTag": {
+      "at": 1792007114195,
+      "type": "enh",
+      "confidence": 0.65,
+      "applied": false,
+      "unconfirmed": false
+     },
+     "type": "chore",
+     "prChecks": {
+      "state": "passing",
+      "number": 17186
+     },
+     "prChecksAll": [
+      {
+       "state": "passing",
+       "number": 17186,
+       "url": "https://example.invalid/pr"
+      }
+     ],
+     "prReviews": [
+      {
+       "state": "pending",
+       "reviewers": [
+        "r0",
+        "r1"
+       ],
+       "number": 17186,
+       "since": 1792012283328,
+       "url": "https://example.invalid/pr"
+      }
+     ],
+     "prReview": {
+      "state": "pending",
+      "reviewers": [
+       "r0",
+       "r1"
+      ],
+      "number": 17186,
+      "since": 1792012283328
+     },
+     "prWatches": [
+      {
+       "url": "https://example.invalid/pr",
+       "number": 17186,
+       "onApprove": "x",
+       "at": 1792013549068,
+       "by": "x",
+       "wokeFor": null
+      }
+     ],
+     "stage": "feedback"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "watching",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": {
+      "who": "someone",
+      "what": "x"
+     },
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176255918,
+     "version": 11,
+     "notesAt": 1792013548881,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792306090404,
+    "lastOwnerMessageAt": 1792011926617,
+    "lastAgentAt": 1792013556955,
+    "handoff": {
+     "owner": "waiting",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "waiting",
+      "text": "ask"
+     },
+     "at": 1792013556955
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "watching",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-19",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "STALE",
+   "why": "An ask that expired, was answered elsewhere, or was superseded",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-19",
+    "kind": "chapter",
+    "createdAt": 1792044099699
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "contentKey": "k"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176361136,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "your_move",
+    "lastActivityAt": 1792044099699,
+    "lastOwnerMessageAt": null,
+    "lastAgentAt": 1792044099699,
+    "handoff": null,
+    "standing": null,
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "superseded"
+   }
+  },
+  {
+   "id": "oracle-20",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-20",
+    "kind": "thread",
+    "createdAt": 1792071333172
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792327747522,
+      "filedAt": 1792327754224,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "linkedPullRequests": [
+      {
+       "url": "https://example.invalid/pr",
+       "number": 17244
+      },
+      {
+       "url": "https://example.invalid/pr",
+       "number": 96
+      }
+     ],
+     "workNotes": [
+      {
+       "at": 1792325523621,
+       "text": "x"
+      },
+      {
+       "at": 1792327767122,
+       "text": "x"
+      },
+      {
+       "at": 1792327955662,
+       "text": "x"
+      },
+      {
+       "at": 1792328066326,
+       "text": "x"
+      },
+      {
+       "at": 1792328278476,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": "working",
+     "setup": null,
+     "lastGoodStep": null,
+     "autoTag": {
+      "at": 1792071358532,
+      "type": "project",
+      "confidence": 0.78,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "project",
+     "stage": "discovery",
+     "projectId": "x",
+     "projectPickedUpAt": null,
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792328485642,
+      "filedAt": 1792328494339
+     },
+     "role": "default"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792328509741,
+     "version": 11,
+     "notesAt": 1792328278476,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792335993796,
+    "lastOwnerMessageAt": 1792327747533,
+    "lastAgentAt": 1792328485642,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792328485642
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-21",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "DUP",
+   "why": "The same ask as another active row",
+   "pending": "ask-identity: the same ask in other words on another thread, or answered elsewhere; needs matching by meaning",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-21",
+    "kind": "thread",
+    "createdAt": 1792082242561
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792245815215,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "linkedPullRequests": null,
+     "workNotes": [
+      {
+       "at": 1792328471692,
+       "text": "x"
+      },
+      {
+       "at": 1792328476947,
+       "text": "x"
+      },
+      {
+       "at": 1792328485482,
+       "text": "x"
+      },
+      {
+       "at": 1792328500786,
+       "text": "x"
+      },
+      {
+       "at": 1792328518821,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": "working",
+     "setup": null,
+     "lastGoodStep": null,
+     "projectId": "x",
+     "autoTag": {
+      "at": 1792082253120,
+      "type": "project",
+      "confidence": 0.85,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "project",
+     "stage": "building",
+     "lastMailInAt": 1792328287161,
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792328542931,
+      "filedAt": 1792328544378
+     }
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792328610442,
+     "version": 11,
+     "notesAt": 1792328518821,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792335867849,
+    "lastOwnerMessageAt": 1792245815219,
+    "lastAgentAt": 1792328542931,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792328542931
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-22",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-22",
+    "kind": "thread",
+    "createdAt": 1792083580030
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792085120124,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "linkedPullRequests": null,
+     "workNotes": [
+      {
+       "at": 1792083592726,
+       "text": "x"
+      },
+      {
+       "at": 1792083995067,
+       "text": "x"
+      },
+      {
+       "at": 1792084015760,
+       "text": "x"
+      },
+      {
+       "at": 1792085128419,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "setup": null,
+     "lastGoodStep": null,
+     "autoTag": {
+      "at": 1792083604624,
+      "type": "ops",
+      "confidence": 0.6,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "ops",
+     "stage": "building"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176349556,
+     "version": 11,
+     "notesAt": 1792085128419,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792087061636,
+    "lastOwnerMessageAt": 1792085120124,
+    "lastAgentAt": 1792085128422,
+    "handoff": {
+     "owner": "none",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "none",
+      "text": "ask"
+     },
+     "at": 1792085128422
+    },
+    "seen": "updated",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-23",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "STALE",
+   "why": "An ask that expired, was answered elsewhere, or was superseded",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-19",
+    "kind": "chapter",
+    "createdAt": 1792130537497
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "contentKey": "k"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [
+      "o0",
+      "o1"
+     ],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176325608,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792130537497,
+    "lastOwnerMessageAt": null,
+    "lastAgentAt": 1792130537497,
+    "handoff": null,
+    "standing": null,
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "superseded"
+   }
+  },
+  {
+   "id": "oracle-24",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-23",
+    "kind": "thread",
+    "createdAt": 1792153911440
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792154664075,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "linkedPullRequests": null,
+     "workNotes": [
+      {
+       "at": 1792153932924,
+       "text": "x"
+      },
+      {
+       "at": 1792154673935,
+       "text": "x"
+      },
+      {
+       "at": 1792154676558,
+       "text": "x"
+      },
+      {
+       "at": 1792154680182,
+       "text": "x"
+      },
+      {
+       "at": 1792154683743,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "setup": null,
+     "lastGoodStep": null,
+     "autoTag": {
+      "at": 1792153923206,
+      "type": "ops",
+      "confidence": 0.85,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "ops",
+     "stage": "building"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176319813,
+     "version": 11,
+     "notesAt": 1792154683743,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792156686355,
+    "lastOwnerMessageAt": 1792154664075,
+    "lastAgentAt": 1792154693332,
+    "handoff": null,
+    "standing": null,
+    "seen": "updated",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-25",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "DUP",
+   "why": "The same ask as another active row",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-19",
+    "kind": "chapter",
+    "createdAt": 1792216906267
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "contentKey": "k"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [
+      "o0",
+      "o1",
+      "o2",
+      "o3",
+      "o4",
+      "o5"
+     ],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792216948386,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792216906267,
+    "lastOwnerMessageAt": null,
+    "lastAgentAt": 1792216906267,
+    "handoff": null,
+    "standing": null,
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "superseded"
+   }
+  },
+  {
+   "id": "oracle-26",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-24",
+    "kind": "thread",
+    "createdAt": 1792239048911
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792239048911,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "linkedPullRequests": null,
+     "workNotes": [
+      {
+       "at": 1792239080075,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "setup": null,
+     "lastGoodStep": null,
+     "autoTag": {
+      "at": 1792239059446,
+      "type": "ops",
+      "confidence": 0.82,
+      "applied": true,
+      "unconfirmed": true
+     },
+     "type": "ops",
+     "stage": "building"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792239103966,
+     "version": 11,
+     "notesAt": 1792239080075,
+     "askKind": "todo",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792239082910,
+    "lastOwnerMessageAt": 1792239048911,
+    "lastAgentAt": 1792239082898,
+    "handoff": null,
+    "standing": null,
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-27",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-25",
+    "kind": "thread",
+    "createdAt": 1792266530483
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792266762354,
+      "filedAt": 1792266762368,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "autoTag": {
+      "at": 1792266543740,
+      "type": "ops",
+      "confidence": 0.8,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "ops",
+     "stage": "building",
+     "openAsk": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792266780099,
+     "version": 11,
+     "notesAt": null,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792334542125,
+    "lastOwnerMessageAt": 1792266762356,
+    "lastAgentAt": 1792266769665,
+    "handoff": {
+     "owner": "none",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "none",
+      "text": "ask"
+     },
+     "at": 1792266769665
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-28",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-26",
+    "kind": "thread",
+    "createdAt": 1792267388013
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792267388013,
+      "filedAt": 1792267388032,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "autoTag": {
+      "at": 1792267400488,
+      "type": "ops",
+      "confidence": 0.85,
+      "applied": true,
+      "unconfirmed": true
+     },
+     "type": "ops",
+     "stage": "building",
+     "openAsk": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792267423351,
+     "version": 11,
+     "notesAt": null,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792334538247,
+    "lastOwnerMessageAt": 1792267388013,
+    "lastAgentAt": 1792267402500,
+    "handoff": null,
+    "standing": null,
+    "seen": "updated",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-29",
+   "source": "t3",
+   "list": "needs",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-27",
+    "kind": "thread",
+    "createdAt": 1792268413677
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792269834214,
+      "filedAt": 1792269837190,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "linkedPullRequests": null,
+     "workNotes": [
+      {
+       "at": 1792268422023,
+       "text": "x"
+      },
+      {
+       "at": 1792268424709,
+       "text": "x"
+      },
+      {
+       "at": 1792268561901,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "setup": null,
+     "lastGoodStep": null,
+     "autoTag": {
+      "at": 1792268436650,
+      "type": "ops",
+      "confidence": 0.85,
+      "applied": true,
+      "unconfirmed": true
+     },
+     "type": "ops",
+     "stage": "building"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792269877704,
+     "version": 11,
+     "notesAt": 1792268561901,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792271908198,
+    "lastOwnerMessageAt": 1792269834214,
+    "lastAgentAt": 1792269838817,
+    "handoff": null,
+    "standing": null,
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-30",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-28",
+    "kind": "thread",
+    "createdAt": 1792275230027
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792334438140,
+      "filedAt": 1792334438196,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "projectId": "x",
+     "autoTag": {
+      "at": 1792275240333,
+      "type": "feat",
+      "confidence": 0.7,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "feat",
+     "stage": "discovery",
+     "openAsk": {
+      "text": "ask",
+      "at": 1792336008224
+     },
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792336008224,
+      "filedAt": 1792336008285
+     }
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792336027176,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792336009170,
+    "lastOwnerMessageAt": 1792334438146,
+    "lastAgentAt": 1792336008224,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792336008224
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-31",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-29",
+    "kind": "thread",
+    "createdAt": 1792283189339
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "openAsk": {
+      "text": "ask",
+      "at": 1792336031335
+     },
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "projectId": "x",
+     "autoTag": {
+      "at": 1792283203454,
+      "type": "ops",
+      "confidence": 0.75,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "ops",
+     "stage": "building",
+     "lastOwnerRequest": {
+      "at": 1792335976744,
+      "filedAt": 1792335976789,
+      "text": "x"
+     },
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792336031335,
+      "filedAt": 1792336031342
+     },
+     "lastMailInAt": 1792336026332,
+     "role": "default"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792336047374,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792336031353,
+    "lastOwnerMessageAt": 1792335976752,
+    "lastAgentAt": 1792336031335,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792336031335
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-32",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "DUP",
+   "why": "The same ask as another active row",
+   "pending": "ask-identity: the same ask in other words on another thread, or answered elsewhere; needs matching by meaning",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-30",
+    "kind": "thread",
+    "createdAt": 1792283196714
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "openAsk": {
+      "text": "ask",
+      "at": 1792283330004
+     },
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "projectId": "x",
+     "autoTag": {
+      "at": 1792283212649,
+      "type": "ops",
+      "confidence": 0.72,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "ops",
+     "stage": "building",
+     "role": "default"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792283345958,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792293144044,
+    "lastOwnerMessageAt": null,
+    "lastAgentAt": 1792283330004,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792283330004
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-33",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-31",
+    "kind": "thread",
+    "createdAt": 1792285420151
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792285628098,
+      "filedAt": 1792285628111,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "openAsk": {
+      "text": "ask",
+      "at": 1792285766562
+     },
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "projectId": "x",
+     "autoTag": {
+      "at": 1792285430158,
+      "type": "ops",
+      "confidence": 0.65,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "ops",
+     "stage": "building"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792285786553,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "todo",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792334539399,
+    "lastOwnerMessageAt": 1792285628100,
+    "lastAgentAt": 1792285766562,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792285766562
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-34",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-32",
+    "kind": "thread",
+    "createdAt": 1792285503513
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792285503513,
+      "filedAt": 1792285503532,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "openAsk": {
+      "text": "ask",
+      "at": 1792285700684
+     },
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "projectId": "x",
+     "autoTag": {
+      "at": 1792285514701,
+      "type": "ops",
+      "confidence": 0.62,
+      "applied": true,
+      "unconfirmed": true
+     },
+     "type": "ops",
+     "stage": "building"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792285714206,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "todo",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792334542517,
+    "lastOwnerMessageAt": 1792285503513,
+    "lastAgentAt": 1792285700684,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792285700684
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-35",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "DUP",
+   "why": "The same ask as another active row",
+   "pending": "ask-identity: the same ask in other words on another thread, or answered elsewhere; needs matching by meaning",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-33",
+    "kind": "thread",
+    "createdAt": 1791759733218
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1791759733218,
+      "filedAt": 1792287249425,
+      "text": "x"
+     },
+     "contentKey": "k"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792287272131,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1791759847368,
+    "lastOwnerMessageAt": 1791759733218,
+    "lastAgentAt": 1791759847368,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1791759847368
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-36",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "STALE",
+   "why": "An ask that expired, was answered elsewhere, or was superseded",
+   "pending": "ask-identity: the same ask in other words on another thread, or answered elsewhere; needs matching by meaning",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-33",
+    "kind": "thread",
+    "createdAt": 1792286149658
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792286149658,
+      "filedAt": 1792287249436,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "lastGoodStep": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792287276284,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792286333055,
+    "lastOwnerMessageAt": 1792286149658,
+    "lastAgentAt": 1792286333055,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792286333055
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-37",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-33",
+    "kind": "thread",
+    "createdAt": 1792295529668
+   },
+   "input": {
+    "facts": {
+     "running": null,
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792296844486,
+      "filedAt": 1792296888343,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "failed": null,
+     "lastGoodStep": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [
+      "o0",
+      "o1"
+     ],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792297376794,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792297337581,
+    "lastOwnerMessageAt": 1792296844486,
+    "lastAgentAt": 1792297337581,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792297337581
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-38",
+   "source": "discord",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-19",
+    "kind": "chapter",
+    "createdAt": 1792303238660
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792303238660,
+      "filedAt": 1792303279769
+     },
+     "contentKey": "k"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [
+      "o0",
+      "o1",
+      "o2",
+      "o3",
+      "o4",
+      "o5"
+     ],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792303292707,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "your_move",
+    "lastActivityAt": 1792303238660,
+    "lastOwnerMessageAt": null,
+    "lastAgentAt": 1792303238660,
+    "handoff": null,
+    "standing": null,
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-39",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-34",
+    "kind": "thread",
+    "createdAt": 1792329238049
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792329238050,
+      "filedAt": 1792329238074,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "openAsk": {
+      "text": "ask",
+      "at": 1792335740235
+     },
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "autoTag": {
+      "at": 1792329248237,
+      "type": "ops",
+      "confidence": 0.85,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "ops",
+     "stage": "discovery",
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792335740235,
+      "filedAt": 1792335740293
+     }
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792335756122,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792335742198,
+    "lastOwnerMessageAt": 1792329238050,
+    "lastAgentAt": 1792335740235,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792335740235
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-40",
+   "source": "loom",
+   "list": "needs",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-35",
+    "kind": "thread",
+    "createdAt": 1792331543571
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792331677621,
+      "filedAt": 1792331677639,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "openAsk": {
+      "text": "ask",
+      "at": 1792332328544
+     },
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "autoTag": {
+      "at": 1792331552863,
+      "type": "enh",
+      "confidence": 0.78,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "enh",
+     "stage": "discovery",
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792332328544,
+      "filedAt": 1792332328555
+     }
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792332343454,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792336074707,
+    "lastOwnerMessageAt": 1792331677625,
+    "lastAgentAt": 1792332328544,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792332328544
+    },
+    "seen": "new",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "needs",
+    "unread": true
+   }
+  },
+  {
+   "id": "oracle-41",
+   "source": "t3",
+   "list": "ready",
+   "bucket": "DONE-REPORT",
+   "why": "A finished-work or status message with nothing to do: unread marker, never the pill",
+   "snapshot": {
+    "nextStep": "fyi",
+    "basis": "summary"
+   },
+   "row": {
+    "conversationKey": "conv-36",
+    "kind": "thread",
+    "createdAt": 1790448713371
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "contentKey": "k",
+     "lastOwnerRequest": {
+      "at": 1792168504921,
+      "text": "x"
+     },
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "lastGoodStep": null,
+     "workNotes": [
+      {
+       "at": 1792172945620,
+       "text": "x"
+      },
+      {
+       "at": 1792172991378,
+       "text": "x"
+      },
+      {
+       "at": 1792173568594,
+       "text": "x"
+      },
+      {
+       "at": 1792173574960,
+       "text": "x"
+      },
+      {
+       "at": 1792174726422,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "tagsSeeded": true,
+     "stage": "feedback",
+     "background": null,
+     "setup": null,
+     "linkedPullRequests": null
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176229154,
+     "version": 11,
+     "notesAt": 1792174726422,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792176799352,
+    "lastOwnerMessageAt": 1792168504930,
+    "lastAgentAt": 1792174742292,
+    "handoff": {
+     "owner": "waiting",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "waiting",
+      "text": "ask"
+     },
+     "at": 1792174742292
+    },
+    "seen": "seen",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": false
+   }
+  },
+  {
+   "id": "oracle-42",
+   "source": "t3",
+   "list": "ready",
+   "bucket": "DUP",
+   "why": "The same ask as another active row",
+   "pending": "ask-identity: the same ask in other words on another thread, or answered elsewhere; needs matching by meaning",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-37",
+    "kind": "thread",
+    "createdAt": 1791514621799
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792167864675,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "lastGoodStep": null,
+     "workNotes": [
+      {
+       "at": 1792071296202,
+       "text": "x"
+      },
+      {
+       "at": 1792167893569,
+       "text": "x"
+      },
+      {
+       "at": 1792167930026,
+       "text": "x"
+      },
+      {
+       "at": 1792167944861,
+       "text": "x"
+      },
+      {
+       "at": 1792167966413,
+       "text": "x"
+      }
+     ],
+     "setup": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "background": null,
+     "tagsSeeded": true,
+     "stage": "discovery",
+     "type": "project",
+     "linkedPullRequests": [
+      {
+       "url": "https://example.invalid/pr",
+       "number": 16324
+      }
+     ]
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176245474,
+     "version": 11,
+     "notesAt": 1792167966413,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792306090395,
+    "lastOwnerMessageAt": 1792167864691,
+    "lastAgentAt": 1792168013304,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792168013304
+    },
+    "seen": "seen",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": false
+   }
+  },
+  {
+   "id": "oracle-43",
+   "source": "t3",
+   "list": "ready",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-38",
+    "kind": "thread",
+    "createdAt": 1790001176121
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792009307979,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": null,
+     "workNotes": [
+      {
+       "at": 1792007821373,
+       "text": "x"
+      },
+      {
+       "at": 1792007866292,
+       "text": "x"
+      },
+      {
+       "at": 1792009313142,
+       "text": "x"
+      },
+      {
+       "at": 1792009324211,
+       "text": "x"
+      },
+      {
+       "at": 1792009328234,
+       "text": "x"
+      }
+     ],
+     "lastGoodStep": null,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "setup": null,
+     "background": null,
+     "tagsSeeded": true,
+     "stage": "discovery",
+     "type": "project",
+     "linkedPullRequests": null,
+     "projectId": "x"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [
+      "o0",
+      "o1"
+     ],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176371480,
+     "version": 11,
+     "notesAt": 1792009328234,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792011428737,
+    "lastOwnerMessageAt": 1792009307988,
+    "lastAgentAt": 1792009349886,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792009349886
+    },
+    "seen": "seen",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "ready",
+    "unread": false
+   }
+  },
+  {
+   "id": "oracle-44",
+   "source": "discord",
+   "list": "ready",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "pending": "summary-classification: at the snapshot its summary was stale or read the step as fyi, so only the words (scrubbed here) or a fresh summary can say to-do",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-39",
+    "kind": "thread",
+    "createdAt": 1791647740007
+   },
+   "input": {
+    "facts": {
+     "running": null,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792275066734,
+      "filedAt": 1792275111451,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "failed": null,
+     "lastGoodStep": null,
+     "tagsSeeded": true
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "watching",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": "2026-10-17T18:00:00-07:00",
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792275579106,
+     "version": 11,
+     "notesAt": null,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792275527793,
+    "lastOwnerMessageAt": 1792275066734,
+    "lastAgentAt": 1792275527793,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792275527793
+    },
+    "seen": "seen",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": false,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-45",
+   "source": "t3",
+   "list": "ready",
+   "bucket": "TIMER",
+   "why": "A desk-invented \"nudge?/still on track?\" ask: stays Watching, overdue, never the pill",
+   "rule": "overdue: a wait past its time stays Watching (PR 2)",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "watch-quiet"
+   },
+   "row": {
+    "conversationKey": "conv-40",
+    "kind": "thread",
+    "createdAt": 1791980909725
+   },
+   "input": {
+    "facts": {
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792102556039,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "sourceSnoozedUntil": null,
+     "settledAtSource": false,
+     "t3Url": null,
+     "pullRequest": {
+      "url": "https://example.invalid/pr/17130",
+      "number": 17130
+     },
+     "workNotes": [
+      {
+       "at": 1791988216375,
+       "text": "x"
+      },
+      {
+       "at": 1792102571847,
+       "text": "x"
+      },
+      {
+       "at": 1792102579297,
+       "text": "x"
+      },
+      {
+       "at": 1792102585492,
+       "text": "x"
+      },
+      {
+       "at": 1792103067514,
+       "text": "x"
+      }
+     ],
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "pinned": false,
+     "setup": null,
+     "lastGoodStep": null,
+     "background": null,
+     "prReview": null,
+     "tagsSeeded": true,
+     "stage": "feedback",
+     "type": "feat",
+     "prReviews": null,
+     "linkedPullRequests": null,
+     "prWatches": null,
+     "prChecks": null,
+     "prChecksAll": null,
+     "projectId": "x"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "watching",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792176337806,
+     "version": 11,
+     "notesAt": 1792103067514,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792105072520,
+    "lastOwnerMessageAt": 1792102556044,
+    "lastAgentAt": 1792103080467,
+    "handoff": {
+     "owner": "waiting",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "waiting",
+      "text": "ask"
+     },
+     "at": 1792103080467
+    },
+    "seen": "seen",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "watching",
+    "unread": false
+   }
+  },
+  {
+   "id": "oracle-46",
+   "source": "loom",
+   "list": "ready",
+   "bucket": "TODO",
+   "why": "A real-world action handed to the owner; the thread itself is not blocked",
+   "pending": "summary-classification: at the snapshot its summary was stale or read the step as fyi, so only the words (scrubbed here) or a fresh summary can say to-do",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-41",
+    "kind": "thread",
+    "createdAt": 1792240212934
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792322128241,
+      "filedAt": 1792322128318,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "projectId": "x",
+     "autoTag": {
+      "at": 1792240224435,
+      "type": "project",
+      "confidence": 0.6,
+      "applied": true,
+      "unconfirmed": false
+     },
+     "type": "project",
+     "stage": "discovery",
+     "projectPickedUpAt": null,
+     "background": null,
+     "openAsk": {
+      "text": "ask",
+      "at": 1792324366056
+     },
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792324366056,
+      "filedAt": 1792324366120
+     }
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "fyi",
+     "ask": null,
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792324378278,
+     "version": 11,
+     "notesAt": null,
+     "askKind": null,
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792334535879,
+    "lastOwnerMessageAt": 1792322128251,
+    "lastAgentAt": 1792324366056,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792324366056
+    },
+    "seen": "seen",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": false,
+    "ask": "todo"
+   }
+  },
+  {
+   "id": "oracle-47",
+   "source": "discord",
+   "list": "ready",
+   "bucket": "DUP",
+   "why": "The same ask as another active row",
+   "pending": "ask-identity: the same ask in other words on another thread, or answered elsewhere; needs matching by meaning",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:next-line"
+   },
+   "row": {
+    "conversationKey": "conv-42",
+    "kind": "thread",
+    "createdAt": 1792283213697
+   },
+   "input": {
+    "facts": {
+     "running": null,
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792283213697,
+      "filedAt": 1792283217039,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "projectId": "x",
+     "role": "default"
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792283271772,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792283241980,
+    "lastOwnerMessageAt": 1792283213697,
+    "lastAgentAt": 1792283241980,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792283241980
+    },
+    "seen": "seen",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": null,
+    "unread": false
+   }
+  },
+  {
+   "id": "oracle-48",
+   "source": "loom",
+   "list": "ready",
+   "bucket": "TRUE",
+   "why": "A question, approval or decision only the owner can give, still open",
+   "snapshot": {
+    "nextStep": "your_move",
+    "basis": "source:ask"
+   },
+   "row": {
+    "conversationKey": "conv-43",
+    "kind": "thread",
+    "createdAt": 1792328122001
+   },
+   "input": {
+    "facts": {
+     "tagsSeeded": true,
+     "lastAuthor": "agent",
+     "lastOwnerRequest": {
+      "at": 1792335057615,
+      "filedAt": 1792335057653,
+      "text": "x"
+     },
+     "contentKey": "k",
+     "running": null,
+     "failed": null,
+     "pending": null,
+     "background": null,
+     "openAsk": {
+      "text": "ask",
+      "at": 1792335930800
+     },
+     "settledAtSource": false,
+     "project": {
+      "name": "repo",
+      "icon": null,
+      "color": null
+     },
+     "projectId": "x",
+     "lastAgentWords": {
+      "text": "x",
+      "at": 1792335930800,
+      "filedAt": 1792335930813
+     },
+     "autoTag": {
+      "at": 1792328132791,
+      "type": "enh",
+      "confidence": 0.5,
+      "applied": false,
+      "unconfirmed": false
+     },
+     "stage": "discovery",
+     "lastMailInAt": 1792335863533
+    },
+    "summary": {
+     "title": "x",
+     "gist": "x",
+     "step": "your_move",
+     "ask": "ask",
+     "options": [],
+     "context": [],
+     "ownerAsk": null,
+     "watchUntil": null,
+     "ackOnly": false,
+     "waitingOn": null,
+     "source": "model",
+     "contentKey": "k",
+     "kind": null,
+     "at": 1792335943324,
+     "version": 11,
+     "notesAt": null,
+     "askKind": "decision",
+     "askDueAt": null
+    },
+    "fallbackStep": "fyi",
+    "lastActivityAt": 1792335930814,
+    "lastOwnerMessageAt": 1792335057623,
+    "lastAgentAt": 1792335930800,
+    "handoff": {
+     "owner": "you",
+     "text": "ask"
+    },
+    "standing": {
+     "handoff": {
+      "owner": "you",
+      "text": "ask"
+     },
+     "at": 1792335930800
+    },
+    "seen": "seen",
+    "now": 1792336080000
+   },
+   "expect": {
+    "move": "ready",
+    "unread": false
+   }
+  }
+ ]
+}

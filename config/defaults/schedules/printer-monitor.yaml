@@ -1,0 +1,31 @@
+id: printer-monitor
+display_name: 3D Printer Monitor
+description: >
+  Polls Prusa MK4 REST API every 2 minutes, detects state transitions
+  (finishing, complete, error, stopped), and posts notifications.
+  Silent when nothing has changed.
+enabled: true
+
+schedule:
+  every_seconds: 120
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: printer-monitor
+  timeout_seconds: 15
+
+delivery:
+  channel_id: "100000000000000027"
+  agent_id: sierra
+
+policy:
+  max_consecutive_failures: 10
+  alert_channel_id: "100000000000000010"
+  backoff:
+    enabled: false
+
+tags:
+  - sierra
+  - printer
+  - monitor

@@ -1,0 +1,40 @@
+# Inbox rules for the screen's home view (apps/screen).
+#
+# Copy to ~/.tango/profiles/<profile>/config/screen/inbox-rules.yaml (or point
+# SCREEN_INBOX_RULES at a file). The service re-reads it whenever it changes;
+# no restart or deploy. A file that fails to parse keeps the previous rules and
+# shows the error at the top of the inbox.
+#
+# match (all given conditions must hold):
+#   agent   an agent id or list of ids (clones match their persona: sierra-ollama → sierra)
+#   text    case-insensitive regex over the item's summary and the agent's latest message
+#   place   case-insensitive regex over the thread title
+#   status  needs_you | in_progress | done (or a list)
+#
+# effects:
+#   priority     top | high | low | bottom (Smart sort)
+#   quiet_until  a weekday: never shown as urgent except on that day
+#   hide         only listed under "All"
+#   label        a chip on the row
+#   kind         report: a recurring report or briefing you skim. The desk shows it
+#                as Your move only when the agent asks you something outright;
+#                otherwise it is FYI. Without a kind, the desk's general rules apply.
+#                Matched on agent and place only (text is ignored for kind).
+
+rules:
+  - name: Study companion is never urgent before Sunday
+    match: { agent: papa }
+    quiet_until: sunday
+
+  - name: Food tracking gets a label
+    match: { agent: malibu, place: "food" }
+    label: Food
+
+  - name: Pull requests to the top
+    match: { agent: victor, text: "github\\.com/[^\\s]+/pull/\\d+" }
+    priority: top
+    label: PR
+
+  - name: The morning digest thread is a report
+    match: { agent: t3, place: "· Morning Digest$" }
+    kind: report

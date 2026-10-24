@@ -1,0 +1,21 @@
+id: notes.vault_maintenance_review
+domain: notes
+display_name: Review Vault Maintenance
+description: Review planning notes, daily notes, and related vault organization issues, then report inconsistencies or cleanup candidates without making changes.
+mode: read
+route:
+  kind: worker
+  target_id: note-librarian
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Review the vault for stale planning notes and report what needs cleanup.
+  - Check recent daily notes and backlog references for inconsistencies.
+classifier_hints:
+  - Use for vault-maintenance audits, stale-note review, backlog hygiene review, or planning-note consistency checks that should report findings without mutating notes.
+  - Prefer notes.note_read when the request is about one specific note rather than a maintenance pass across the vault.

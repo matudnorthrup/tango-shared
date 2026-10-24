@@ -1,0 +1,21 @@
+id: notes.note_read
+domain: notes
+display_name: Read Note
+description: Read, inspect, summarize, or quote an existing Obsidian note or personal note.
+mode: read
+route:
+  kind: worker
+  target_id: note-librarian
+slots:
+  - name: note_query
+    required: true
+    inferable: false
+examples:
+  - Read the Obsidian note titled Large Desk OpenGrid and Underware Project
+  - Read obsidian://open?vault=main&file=Planning%2FDaily%2F2026-05-23
+  - Summarize the Print Summary section from my desk project note
+  - What does my Chipotle ordering note say?
+can_run_in_parallel: true
+classifier_hints:
+  - Use when the request is primarily about reading or summarizing an existing Obsidian note or local note.
+  - Prefer this over web lookup when the user explicitly mentions Obsidian, a note title, or a personal note.

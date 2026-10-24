@@ -1,0 +1,20 @@
+id: travel.location_read
+domain: travel
+display_name: Current Location
+description: Read and summarize the current GPS location from the live location feed.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Where am I right now?
+  - What's my current location?
+  - Read the live GPS location and summarize it
+can_run_in_parallel: true
+classifier_hints:
+  - Use for requests about the current live location, GPS position, or where the user is right now.
+  - Prefer this over route planning when the user is asking for the present location rather than directions.

@@ -1,0 +1,4 @@
+# Piper's allowed Gmail account (single value, first non-comment line wins).
+# The public repo ships no default. Set the real account in the profile layer:
+#   ~/.tango/profiles/<profile>/config/email/piper-account.txt
+# Overrides: PIPER_GMAIL_ACCOUNT (value) or TANGO_PIPER_GMAIL_ACCOUNT_FILE (path).

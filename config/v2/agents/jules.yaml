@@ -1,0 +1,85 @@
+id: jules
+enabled: true
+display_name: Jules
+type: wellness
+avatar_url: https://example.com/tango/avatars/jules.png
+
+system_prompt_file: agents/assistants/jules/soul.md
+
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: agent-docs
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "agent-docs"]
+    env:
+      ALLOWED_TOOL_IDS: "agent_docs"
+  - name: wellness
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "wellness"]
+    env:
+      ALLOWED_TOOL_IDS: "nutrition_log_items,fatsecret_api,health_query,workout_sql,health_morning,jules_files,walmart,location_read,browser,exa_search,exa_answer,youtube_transcript,youtube_analyze,gog_calendar,gog_docs,gog_docs_update_tab"
+  - name: wellness-db
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "wellness-db"]
+    # No JULES_WELLNESS_DB_PATH here on purpose: resolveWellnessDbPath falls
+    # back to the active profile's wellness db, so worktree slots with
+    # TANGO_PROFILE isolation never write the default profile's live data.
+    # Set the env var only to point at a non-standard location.
+    env:
+      ALLOWED_TOOL_IDS: "wellnessdb_search_product,wellnessdb_search_supplement,wellnessdb_search_recipe,wellnessdb_get_recipe_detail,wellnessdb_day_summary,wellnessdb_day_range,wellnessdb_recent_meals,wellnessdb_active_supplements,wellnessdb_active_products,wellnessdb_log_meal,wellnessdb_log_supplement,wellnessdb_log_weight,wellnessdb_log_activity,wellnessdb_log_hydration,wellnessdb_log_presence,wellnessdb_add_product,wellnessdb_add_recipe,wellnessdb_update_recipe,wellnessdb_add_recipe_ingredient,wellnessdb_update_recipe_ingredient,wellnessdb_remove_recipe_ingredient,wellnessdb_archive_recipe,wellnessdb_duplicate_recipe,wellnessdb_add_day_note,wellnessdb_delete_meal_entry,wellnessdb_update_product,wellnessdb_update_supplement"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+
+current_turn_metadata:
+  timezone: America/Los_Angeles
+  time_format: 12h
+
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  # 2026-09-25 fleet bake-off (PR #305): Opus 5.5 0.95 vs 4.8 0.88.
+  model: claude-opus-5-5
+  reasoning_effort: high
+  idle_timeout_hours: 4
+  context_reset_threshold: 0.80
+
+memory:
+  post_turn_extraction: enabled
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.25
+  scheduled_reflection: disabled
+
+# Real channel ids and the voice block (call_signs required by schema) come
+# from the profile overlay, like every other assistant. No access block here:
+# a repo-level placeholder allowlist blocks slot-mode smoke threads and all
+# real traffic until an overlay exists.
+discord:
+  default_channel_id: "100000000000000015"
+  smoke_test_channel_id: "100000000000001015"
+  typing_token_env: JULES_DISCORD_TOKEN
+
+provider:
+  default: claude-oauth
+  reasoning_effort: high
+
+tools:
+  mode: off
+
+orchestration:
+  worker_ids:
+    - nutrition-logger
+    - recipe-librarian
+    - health-analyst
+    - activity-tracker
+    - note-librarian
+  write_confirmation: on-ambiguity

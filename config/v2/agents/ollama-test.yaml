@@ -1,0 +1,72 @@
+id: ollama-test
+enabled: true
+display_name: Ollama Test
+type: operations
+
+# System prompt = personality + domain + rules (reuse an existing soul.md)
+system_prompt_file: agents/assistants/victor/soul.md
+
+# MCP servers (unused at runtime since tools.mode: off, but schema needs >=1)
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+
+# Runtime configuration.
+# claude-code-v2 makes this agent v2-enabled (routed through TangoRouter -> RuntimePool).
+# The RuntimePool then picks the backend from provider.default below:
+#   "ollama" -> OllamaRuntimeAdapter (DeepSeek), anything else -> Claude Code CLI.
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  model: deepseek-v4-pro:cloud        # operative model on the v2 path -> OllamaProvider
+  reasoning_effort: low
+  idle_timeout_hours: 4
+  context_reset_threshold: 0.80
+
+# Disable background memory extraction so this eval agent does NOT write Atlas.
+memory:
+  post_turn_extraction: disabled
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.5
+  scheduled_reflection: disabled
+
+active_tasks:
+  continuation: disabled
+
+# Discord routing
+discord:
+  default_channel_id: "100000000000000017"
+  smoke_test_channel_id: "100000000000000017"
+
+# Harness smoke-test registration (text-harness webhook acceptance reads voice.smoke_test_channel_id)
+voice:
+  call_signs:
+    - Ollama Test
+  default_channel_id: "100000000000000017"
+  smoke_test_channel_id: "100000000000000017"
+
+# Legacy registry fields
+avatar_url: https://example.com/tango/avatars/ollama.png
+default_project: operations
+response_mode: concise
+
+# provider.default drives the v2 runtime backend selection (-> "ollama").
+# No fallback: failures must be VISIBLE during the eval, not masked by Claude.
+provider:
+  default: ollama
+  model: deepseek-v4-pro:cloud
+  reasoning_effort: low
+  fallback: []
+
+tools:
+  mode: off
+
+# Route straight to the agent's backend; no classifier indirection.
+deterministic_routing:
+  enabled: false

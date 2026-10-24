@@ -1,0 +1,5 @@
+id: smoke-testing-kilo
+type: project
+agent: kilo
+channels:
+  - discord:100000000000001009

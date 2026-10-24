@@ -1,0 +1,51 @@
+id: research.fact_verification
+domain: research
+display_name: Fact Verification
+description: Verify a claim by checking multiple source types or perspectives before answering.
+mode: read
+route:
+  kind: worker
+  target_id: research-coordinator
+slots:
+  - name: claim
+    required: true
+    inferable: false
+    description: The claim, statement, or factual assertion to verify.
+  - name: context
+    required: false
+    inferable: true
+    description: Product, timeframe, version, or scope that determines what evidence counts.
+  - name: success_criteria
+    required: false
+    inferable: true
+    description: What the verification must establish before the answer is trustworthy.
+  - name: must_answer
+    required: false
+    inferable: true
+    description: The precise factual questions that must be resolved.
+evaluation:
+  task_class: fact_verification
+  success_criteria:
+    - State whether the claim is supported, unsupported, mixed, or unverifiable.
+    - Ground the conclusion in multiple current or primary sources when possible.
+    - Call out contradictions, version/date sensitivity, and any evidence gaps explicitly.
+  must_answer:
+    - Is the claim supported by current evidence?
+    - What is the strongest contradictory or qualifying evidence?
+  comparison_axes:
+    - source_quality
+    - recency
+    - contradiction
+  required_fields:
+    - source_urls
+    - rationale
+    - caveats
+  quality_gate_required: true
+examples:
+  - Is PLA actually food safe for kitchen items?
+  - Verify whether this printer supports input shaping out of the box
+  - Check if this claim about PrusaSlicer is true
+can_run_in_parallel: false
+classifier_hints:
+  - Use when the user asks whether a claim is true, wants verification, or wants multiple source perspectives on a factual question.
+  - Prefer research.web_lookup for straightforward lookups that do not need cross-checking.

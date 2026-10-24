@@ -1,0 +1,21 @@
+{
+  "name": "@tango/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "tango-server": "dist/main.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node ../../scripts/dev/load-cap.mjs vitest run"
+  },
+  "dependencies": {
+    "@tango/system": "0.1.0",
+    "@tango/core": "0.1.0",
+    "js-yaml": "^4.2.0",
+    "zod": "^3.25.76"
+  }
+}

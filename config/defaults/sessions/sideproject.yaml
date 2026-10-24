@@ -1,0 +1,5 @@
+id: project:sideproject
+type: project
+agent: victor
+channels:
+  - discord:100000000000000021

@@ -1,0 +1,28 @@
+id: memory-obsidian-index
+display_name: Memory Obsidian Index
+description: >
+  Refresh curated Obsidian note memories so planning notes, references,
+  and durable project context remain searchable without transcript noise.
+enabled: true
+
+schedule:
+  cron: "0 5 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: memory-index-obsidian
+  timeout_seconds: 300
+
+delivery:
+  mode: none
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 0
+
+tags:
+  - memory
+  - obsidian
+  - daily

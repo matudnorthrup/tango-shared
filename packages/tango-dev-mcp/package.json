@@ -1,0 +1,21 @@
+{
+  "name": "@tango/tango-dev-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node ../../scripts/dev/load-cap.mjs vitest run",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0",
+    "vitest": "^1.6.0"
+  }
+}

@@ -1,0 +1,66 @@
+id: manual-test-slack-saved-review
+display_name: "[Manual Test] Slack Saved Items Review"
+description: Manual trigger for testing the Slack saved items review workflow
+enabled: false
+runtime: v2
+
+schedule:
+  cron: "0 0 1 1 *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: research-assistant
+  intent_ids:
+    - productivity.slack_saved_review
+  deterministic_agent_id: watson
+  task: |
+    Review the owner's Slack saved items.
+
+    1. Use the slack tool with action "saved_items" and since_hours: 48
+       to get recent saved messages. Do not include older recurring saved
+       items unless this manual test is explicitly being used for backlog
+       cleanup.
+
+    2. For each saved message:
+       - Resolve the user ID to a display name using slack action "user_info"
+       - Write a one-line summary of what the message is about
+       - Include the permalink
+
+    3. Write to the domain log at Records/Jobs/Slack/YYYY-MM.md using
+       direct filesystem I/O (NOT obsidian-cli):
+       - Determine today's date and time in America/Los_Angeles timezone
+       - Append a new entry with this format:
+         ## YYYY-MM-DD HH:MM — Slack Saved Items Review
+         **Status:** Done — N items found
+         **Items:**
+         - [ ] [Summary](permalink) — #channel-name
+       - If no saved items are found, write:
+         ## YYYY-MM-DD HH:MM — Slack Saved Items Review
+         **Status:** Done — 0 items found
+       - Create the file/directory if it doesn't exist.
+
+    4. For each processed item, call the slack tool with action
+       "remove_star", channel_id set to the item's channel_id, and
+       timestamp set to the item's ts. If the tool returns missing_scope
+       for stars:write, continue the job and include a brief **Note:** in
+       the domain log; do not fail the review because cleanup could not run.
+
+    Do NOT write to the daily note (Planning/Daily/). The daily-brief
+    aggregator will pull Slack items from this domain log.
+  timeout_seconds: 180
+
+provider:
+  model: role:job-planning
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: manual-test-slack-saved-review
+  scope: daily
+
+tags:
+  - watson
+  - slack
+  - manual-test

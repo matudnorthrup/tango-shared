@@ -1,0 +1,21 @@
+id: finance.receipt_catalog
+domain: finance
+display_name: Catalog Receipts
+description: Create or update receipt records, notes, or structured transaction support artifacts after matching transaction and merchant detail data.
+mode: write
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: receipt_scope
+    required: false
+    inferable: true
+  - name: transaction_scope
+    required: false
+    inferable: true
+examples:
+  - Create receipt notes for those uncategorized purchases.
+  - Catalog the receipts for the recent Amazon and Walmart charges.
+classifier_hints:
+  - Use for explicit receipt cataloging or note-creation requests after or alongside finance review.
+  - Prefer finance.receipt_lookup when the request is only to inspect or find receipt details without persisting organized receipt artifacts.

@@ -1,0 +1,5 @@
+id: victor
+type: persistent
+agent: victor
+channels:
+  - "discord:100000000000000004"

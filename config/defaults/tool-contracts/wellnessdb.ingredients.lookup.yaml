@@ -1,0 +1,20 @@
+id: wellnessdb.ingredients.lookup
+family: wellnessdb.ingredients
+description: Resolve ingredients from wellness.db using wellnessdb_search_product.
+owner_worker: nutrition-logger
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: sqlite
+  target: products
+input_fields:
+  - query
+output_fields:
+  - products
+  - count
+legacy:
+  read_paths:
+    - "<profile>/wellness/wellness.db"

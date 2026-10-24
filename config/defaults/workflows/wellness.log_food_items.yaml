@@ -1,0 +1,29 @@
+id: wellness.log_food_items
+display_name: Log Food Items
+description: Log one or more ad-hoc food items to FatSecret at the specified meal. The workflow scopes the write, while the owning worker still chooses the exact search, matching, and diary-write steps.
+owner_worker: nutrition-logger
+mode: write
+status: implemented
+confirmation_required: false
+handler: log_food_items
+tool_contract_ids:
+  - fatsecret.log_food
+  - fatsecret.day_summary
+input_fields:
+  - items (list of food descriptions with approximate quantities)
+  - meal
+  - date_scope? (today by default)
+examples:
+  - Log a the grocery store dark chocolate peanut butter cup as a snack
+  - I had a piece of 90% dark chocolate and a yogurt treat, log those as snacks yesterday
+  - Log 2 eggs and a banana for breakfast
+  - I just had a protein bar, about 200 cal 20g protein
+planning:
+  summary: Use this when the user wants to log individual food items that are NOT saved recipes. The workflow defines the write objective, but the nutrition worker still chooses the exact search, matching, and logging strategy.
+  when_to_use:
+    - the user asks to log one or more individual food items
+    - the items are described inline (not a saved recipe name)
+    - the user provides calorie or macro estimates for custom items
+  ask_for_clarification_when:
+    - the meal slot is ambiguous and cannot be inferred from context or time of day
+    - item descriptions are too vague to search (e.g., "some food")

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Tango pre-push privacy gate — local mirror of the CI privacy-gate.
+#
+# On a public repo, `git push` IS exposure: CI catches PII only after it is
+# already public. This hook is the prevention layer. It runs the same
+# scripts/privacy-scan.sh against the host denylist (profile layer, never in
+# the repo) and blocks the push if anything matches.
+#
+# Fail-closed: if the scanner or its denylist is missing, the push is blocked.
+# Enable with: scripts/setup-git-hooks.sh  (sets core.hooksPath -> .githooks)
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "pre-push: not inside a git repository — blocking." >&2
+  exit 2
+}
+
+SCAN="$ROOT/scripts/privacy-scan.sh"
+if [ ! -f "$SCAN" ]; then
+  echo "pre-push: scripts/privacy-scan.sh not found — blocking (fail-closed)." >&2
+  exit 2
+fi
+
+# privacy-scan.sh resolves the denylist from TANGO_PRIVACY_DENYLIST_FILE, else
+# the profile-layer default (~/.tango/profiles/default/config/privacy/denylist.txt).
+# It fails closed on its own if the denylist is missing/empty.
+if ! bash "$SCAN"; then
+  echo "" >&2
+  echo "pre-push: BLOCKED by privacy scan. Resolve the findings above before pushing." >&2
+  echo "  (Verified-legitimate matches go in scripts/privacy-scan-allowlist.txt with a justification.)" >&2
+  exit 1
+fi
+
+exit 0

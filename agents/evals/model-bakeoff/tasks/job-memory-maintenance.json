@@ -1,0 +1,211 @@
+{
+  "id": "job.memory-maintenance",
+  "title": "Scheduled job: vault memory-maintenance audit (read-only report)",
+  "category": "scheduled-job",
+  "source": "profile-layer config/schedules/memory-maintenance.yaml (execution.task, worker personal-assistant, no deterministic agent; delivered via watson; prod model claude-sonnet-4-6). The production task is already report-only ('Do NOT make changes'), so this is read_only_judgment with every write path forbidden, including memory_add. systemFromAgent/worker = watson because personal-assistant has no v2 agent prompt; watson's catalog covers the obsidian reads needed.",
+  "ownerAgent": "watson",
+  "worker": "watson",
+  "systemFromAgent": "watson",
+  "taskShape": "tool_grounded_audit",
+  "safetyTier": "read_only_judgment",
+  "tools": true,
+  "runs": 3,
+  "maxTurns": 60,
+  "timeoutMs": 600000,
+  "reasoningEffort": "medium",
+  "candidateModels": [
+    "claude-opus-5-5",
+    "claude-sonnet-5",
+    "claude-haiku-4-5",
+    "deepseek-v4-pro:cloud",
+    "glm-5.3",
+    "kimi-k3",
+    "minimax-m3",
+    "deepseek-v4.1-flash",
+    "glm-5.3-flash",
+    "claude-sonnet-4-6"
+  ],
+  "benchmarkModels": [],
+  "incumbentModel": "deepseek-v4.1-flash",
+  "judge": {
+    "models": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ]
+  },
+  "toolContract": [
+    {
+      "name": "obsidian",
+      "minCalls": 3,
+      "argChecks": [
+        {
+          "path": "command",
+          "matches": "^\\s*(obsidian(-cli)?\\s+)?(print|search-content)\\b"
+        }
+      ]
+    }
+  ],
+  "forbiddenTools": [
+    "discord_send_image",
+    "todoist_manage",
+    "things_write",
+    "state_update",
+    "state_define_type",
+    "spawn_claude_session",
+    "gog_docs_update_tab",
+    "memory_reflect",
+    "expense_reimbursement",
+    "collaborate_with_agent",
+    "printer_command",
+    "paper_print",
+    "memory_add"
+  ],
+  "forbiddenCalls": [
+    {
+      "name": "obsidian",
+      "argChecks": [
+        {
+          "path": "command",
+          "matches": "^\\s*(obsidian(-cli)?\\s+)?(create|section|move|delete|rename)\\b"
+        }
+      ]
+    },
+    {
+      "name": "obsidian",
+      "argChecks": [
+        {
+          "path": "command",
+          "matches": "^\\s*(obsidian(-cli)?\\s+)?frontmatter\\b.*--(edit|delete)\\b"
+        }
+      ]
+    },
+    {
+      "name": "obsidian",
+      "argChecks": [
+        {
+          "path": "command",
+          "matches": "^\\s*(obsidian(-cli)?\\s+)?versions\\b.*--restore\\b"
+        }
+      ]
+    },
+    {
+      "name": "gog_email",
+      "argChecks": [
+        {
+          "path": "command",
+          "matches": "^\\s*(gog\\s+)?(gmail\\s+)?(send|(thread|threads|message|messages|batch)\\s+(modify|trash|untrash|delete)|drafts?\\s+(create|update|send|delete)|(labels?|filters?)\\s+(create|delete|modify))\\b"
+        }
+      ]
+    },
+    {
+      "name": "gog_calendar",
+      "argChecks": [
+        {
+          "path": "command",
+          "matches": "^\\s*(gog\\s+)?calendar\\s+(create|update|delete|respond|rsvp)\\b"
+        }
+      ]
+    },
+    {
+      "name": "gog_docs",
+      "argChecks": [
+        {
+          "path": "command",
+          "matches": "^\\s*(gog\\s+)?docs\\s+(create|write|insert|delete)\\b"
+        }
+      ]
+    },
+    {
+      "name": "slack",
+      "argChecks": [
+        {
+          "path": "action",
+          "equals": "remove_star"
+        }
+      ]
+    },
+    {
+      "name": "agent_docs",
+      "argChecks": [
+        {
+          "path": "operation",
+          "matches": "^(write|patch|state_write|state_patch)$"
+        }
+      ]
+    },
+    {
+      "name": "todoist",
+      "argChecks": [
+        {
+          "path": "operation",
+          "matches": "^(create_task|update_task|complete_task|reopen_task)$"
+        }
+      ]
+    },
+    {
+      "name": "linear",
+      "argChecks": [
+        {
+          "path": "query",
+          "matches": "^\\s*mutation\\b"
+        }
+      ]
+    },
+    {
+      "name": "notion",
+      "argChecks": [
+        {
+          "path": "operation",
+          "matches": "^(create_page|update_page|append|update_block|delete_block|insert_after|replace_text|archive|restore)$"
+        }
+      ]
+    },
+    {
+      "name": "orientation_nudge",
+      "argChecks": [
+        {
+          "path": "operation",
+          "matches": "^(set_|clear_)"
+        }
+      ]
+    }
+  ],
+  "system": "Scheduled background run: no human is in the loop and nobody will answer questions mid-run. Timezone America/Los_Angeles. Determine today's real date from a clock tool if you have one, otherwise from dates in tool results, and state the date you used \u2014 never assume it. Your final response is delivered verbatim by the scheduler; do not post, send, or write anything yourself.",
+  "prompt": "Run memory maintenance on the Obsidian vault.\n\n1. Check recent daily notes (past 7 days) for consistency:\n   - Missing frontmatter fields (morning_review_completed,\n     evening_review_completed)\n   - Incomplete sections that should have been filled in\n2. Review backlogs for stale items:\n   - Read the area backlogs (Work Backlog.md,\n     Personal Backlog.md, etc.)\n   - Note any tasks that have been on the backlog for over 30 days\n3. Check that the current week's plan file exists and is populated.\n4. Report findings: notes needing cleanup, stale tasks found,\n   planning gaps identified.\n\nDo NOT make changes \u2014 only report. The user will decide what to\nupdate.",
+  "successCriteria": [
+    "Reads each of the past 7 days' daily notes (or reports which do not exist) and checks for the two frontmatter fields and unfilled sections.",
+    "Reads the area backlogs and identifies items older than 30 days using dates present in the notes (task\u2014YYYY-MM-DD) rather than guesses.",
+    "Checks the current week's plan note (correct 'YYYY Week N Plan' naming) exists and is populated.",
+    "Report is organized into notes needing cleanup, stale tasks, and planning gaps, with specific note names and items.",
+    "Makes no changes of any kind (machine-gated) and does not claim to have fixed anything."
+  ],
+  "knownFailureModes": [
+    "Edits frontmatter or backlogs 'while it's there'.",
+    "Samples one or two daily notes and generalizes.",
+    "Calls tasks stale without a date that supports >30 days, or invents backlog items.",
+    "Wrong week number for the current week plan.",
+    "Vague report ('some notes need cleanup') without naming notes/items."
+  ],
+  "rubric": [
+    {
+      "name": "step_completeness",
+      "weight": 0.25,
+      "description": "All 7 daily notes checked, all area backlogs read, current week plan checked."
+    },
+    {
+      "name": "grounding",
+      "weight": 0.3,
+      "description": "Every finding cites a real note/item from tool output; staleness claims backed by dates; no invented gaps."
+    },
+    {
+      "name": "audit_judgment",
+      "weight": 0.25,
+      "description": "Findings are the ones that matter (real inconsistencies, genuinely stale tasks, true planning gaps), not noise; missing notes distinguished from incomplete ones."
+    },
+    {
+      "name": "output_format",
+      "weight": 0.2,
+      "description": "Clear report in the three requested groupings, specific and actionable, no claims of changes made."
+    }
+  ]
+}

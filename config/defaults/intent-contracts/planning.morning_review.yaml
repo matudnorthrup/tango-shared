@@ -1,0 +1,22 @@
+id: planning.morning_review
+domain: planning
+display_name: Morning Review
+description: Run a morning planning review that gathers calendar, email, notes, health, and related context to lay out the day.
+mode: mixed
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Run morning planning.
+  - Lay out my day for me.
+  - Give me a morning review with calendar, priorities, and inbox.
+classifier_hints:
+  - Use for broader morning planning or day-start review requests that combine multiple systems, not just calendar or inbox alone.
+  - Prefer planning.calendar_review or email.inbox_review when the user asks about only one system.

@@ -1,0 +1,30 @@
+id: wellness.analyze_health_trends
+display_name: Analyze Health Trends
+description: Read and analyze multi-day health, activity, recovery, sleep, and TDEE trends. The owning worker chooses the exact windows, queries, comparisons, and recommendation logic.
+owner_worker: health-analyst
+mode: read
+status: implemented
+handler: analyze_health_trends
+tool_contract_ids:
+  - healthdb.weekly_trends
+  - healthdb.recovery_summary
+  - healthdb.activity_summary
+input_fields:
+  - date_scope? (recent period, explicit dates, or relative window)
+  - compare_date_scopes? (ordered comparison windows)
+  - days? (7, 14, 21, 28, etc.)
+  - focus? (tdee, recovery, sleep, activity, weight, trends)
+  - goal? (cut, maintain, recovery, training)
+examples:
+  - Take a look at my TDEE over the last few weeks
+  - How have my recovery trends looked lately?
+  - Compare my last two weeks of sleep and activity
+planning:
+  summary: Use when the user wants multi-day health analysis, trends, windows, or recommendations rather than a same-day snapshot. The workflow only scopes the objective; the health worker still chooses the exact queries, comparisons, and reasoning path.
+  when_to_use:
+    - the user asks about multi-day or multi-week TDEE, activity, recovery, sleep, or wellness trends
+    - the user wants averages, deltas, windows, or a recommendation based on recent health data
+    - the user asks for comparison across recent health periods
+  ask_for_clarification_when:
+    - the timeframe is too ambiguous to infer from the prompt
+    - the question implies a recommendation but the underlying goal is unclear

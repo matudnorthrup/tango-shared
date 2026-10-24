@@ -1,0 +1,125 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { execFileSync } from "node:child_process";
+import { LoomStore } from "../src/store.js";
+import { LoomHost } from "../src/host.js";
+import { createWorktree, parkWorktree } from "../src/git.js";
+import { FakeRuntime } from "./fake-runtime.js";
+const roots: string[] = [], hosts: LoomHost[] = [];
+afterEach(async () => { await Promise.all(hosts.splice(0).map(h => h.closeAll())); for (const p of roots.splice(0)) rmSync(p, { recursive: true, force: true }); vi.unstubAllEnvs(); });
+function repo() {
+  const root = mkdtempSync(join(tmpdir(), "loom-promote-")); roots.push(root);
+  const git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  git("init", "-b", "topic"); git("config", "user.name", "Test"); git("config", "user.email", "test@example.invalid");
+  writeFileSync(join(root, "tracked.txt"), "committed"); git("add", "."); git("commit", "-m", "base");
+  return { root, git };
+}
+describe("Auto promotion", () => {
+  it.each(["claude", "codex"])("denies then saves and restarts %s in a HEAD worktree, carrying dirty-file warning and preserving identity", async provider => {
+    const { root, git } = repo();
+    const store = new LoomStore(":memory:"); const runtime = new FakeRuntime(store);
+    const allocate = vi.fn((cwd: string, id: string, options?: { fromHead?: boolean }) => createWorktree(cwd, { id, worktreesDir: join(root, "trees"), ...options }));
+    const host = new LoomHost(store, { [provider]: runtime }, { createWorktree: allocate, fresh: { mode: "off", soft: 150000, idleMs: 3600000, idleMin: 80000 }, claudeProjectsDir: "/transcripts" }); hosts.push(host);
+    writeFileSync(join(root, "tracked.txt"), "dirty"); writeFileSync(join(root, "untracked.txt"), "leave here");
+    const r = await host.execute({ type: "submit", commandId: "start", cwd: root, provider, worktree: "auto", text: "edit tracked.txt" });
+    const id = r.threadId!, old = runtime.last;
+    old.emit({ type: "session.native", nativeSessionId: "old-session" });
+    old.emit({ type: "worktree.promote", runId: old.currentRun });
+    old.emit({ type: "worktree.promote", runId: old.currentRun });
+    await vi.waitFor(() => expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`"));
+    expect(old.interrupted).toBe(1); expect(allocate).not.toHaveBeenCalled();
+    host.saveHandoff(id, { summary: "Need to edit tracked.txt", next: "retry denied edit" });
+    old.complete("Saved");
+    await vi.waitFor(() => expect(runtime.sessions).toHaveLength(2));
+    expect(old.closed).toBe(true); expect(allocate).toHaveBeenCalledTimes(1);
+    expect(allocate).toHaveBeenCalledWith(root, id, { fromHead: true });
+    const moved = store.thread(id)!;
+    expect(moved.worktree_mode).toBe("worktree"); expect(moved.cwd).not.toBe(root);
+    expect(runtime.last.options.cwd).toBe(moved.cwd); expect(runtime.last.options.nativeSessionId).toBeNull();
+    expect(runtime.last.options.worktreeMode).toBe("worktree");
+    expect(runtime.last.turns[0]!.text).toContain("Need to edit tracked.txt");
+    expect(runtime.last.turns[0]!.text).toContain("Uncommitted changes were NOT carried");
+    expect(runtime.last.turns[0]!.text).toContain("untracked.txt");
+    expect(readFileSync(join(root, "tracked.txt"), "utf8")).toBe("dirty");
+    expect(readFileSync(join(moved.cwd, "tracked.txt"), "utf8")).toBe("committed");
+    expect(existsSync(join(moved.cwd, "untracked.txt"))).toBe(false);
+    expect(execFileSync("git", ["rev-parse", "HEAD"], { cwd: moved.cwd, encoding: "utf8" }).trim()).toBe(git("rev-parse", "HEAD"));
+    runtime.last.emit({ type: "session.native", nativeSessionId: "new-session" });
+    runtime.last.emit({ type: "worktree.promote", runId: runtime.last.currentRun });
+    expect(allocate).toHaveBeenCalledTimes(1); expect(store.thread(id)!.fresh).toBeNull();
+    expect(host.ledger.timeline(id).some((e: any) => e.kind === "worktree-promoted")).toBe(true);
+  });
+  it("reports a failed allocation and retries without resuming checkout edits", async () => {
+    const { root } = repo();
+    const store = new LoomStore(":memory:"), runtime = new FakeRuntime(store);
+    const allocate = vi.fn().mockRejectedValueOnce(new Error("disk unavailable")).mockImplementation((cwd, id, options) => createWorktree(cwd, { id, worktreesDir: join(root, "trees"), ...options }));
+    const host = new LoomHost(store, { fake: runtime }, { createWorktree: allocate }); hosts.push(host);
+    const r = await host.execute({ type: "submit", commandId: "start", cwd: root, provider: "fake", worktree: "auto", text: "edit" });
+    const id = r.threadId!, old = runtime.last;
+    old.emit({ type: "session.native", nativeSessionId: "old" });
+    await host.execute({ type: "submit", commandId: "queued", threadId: id, text: "Also check the note" });
+    old.emit({ type: "worktree.promote", runId: old.currentRun });
+    await vi.waitFor(() => expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`"));
+    old.complete("saved");
+    await vi.waitFor(() => expect(allocate).toHaveBeenCalledTimes(1));
+    expect(runtime.sessions).toHaveLength(1); expect(old.closed).toBe(true);
+    expect(store.thread(id)!.cwd).toBe(root);
+    expect(JSON.parse(store.thread(id)!.fresh!).worktree.stage).toBe("ready");
+    expect(host.ledger.timeline(id).some((e: any) => e.kind === "worktree-promotion-failed")).toBe(true);
+    await host.execute({ type: "submit", commandId: "retry", threadId: id, text: "Retry now" });
+    await vi.waitFor(() => expect(runtime.sessions).toHaveLength(2));
+    expect(allocate).toHaveBeenCalledTimes(2); expect(runtime.last.options.worktreeMode).toBe("worktree");
+    expect(old.turns.map(t => t.text)).not.toContain("Also check the note");
+  });
+  it("Keep session, owner queue priority and native replacement preserve the pending move", async () => {
+    const { root } = repo(); const store = new LoomStore(":memory:"), runtime = new FakeRuntime(store);
+    const host = new LoomHost(store, { fake: runtime }, { createWorktree: (cwd, id, options) => createWorktree(cwd, { id, worktreesDir: join(root, "trees"), ...options }) }); hosts.push(host);
+    const r = await host.execute({ type: "submit", commandId: "start", cwd: root, provider: "fake", worktree: "auto", text: "edit" });
+    const id = r.threadId!, old = runtime.last;
+    old.emit({ type: "session.native", nativeSessionId: "old" });
+    // Keep the denied run active while controls and queue priority change.
+    old.interrupt = async () => {};
+    old.emit({ type: "worktree.promote", runId: old.currentRun });
+    await host.keepSession(id, true);
+    expect(JSON.parse(store.thread(id)!.fresh!).reason).toBe("worktree");
+    expect(store.queuedRuns(id).some(r => r.source === "reset")).toBe(true);
+    old.emit({ type: "session.native", nativeSessionId: "replacement" });
+    expect(JSON.parse(store.thread(id)!.fresh!).worktree.stage).toBe("handoff");
+    const owner = await host.execute({ type: "submit", commandId: "owner", threadId: id, text: "Check progress" });
+    // Admission/budget can legitimately move an owner turn ahead of an automatic save.
+    store.db.prepare("UPDATE runs SET position = -100 WHERE id = ?").run(owner.runId);
+    old.complete("Denied edit");
+    await vi.waitFor(() => expect(old.turns.at(-1)?.text).toBe("Check progress"));
+    expect(runtime.sessions).toHaveLength(1); expect(old.closed).toBe(false);
+    expect(JSON.parse(store.thread(id)!.fresh!).worktree.stage).toBe("handoff");
+    old.complete("Still guarded");
+    await vi.waitFor(() => expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`"));
+    host.saveHandoff(id, { summary: "Saved from replacement session" });
+    old.complete("Saved");
+    await vi.waitFor(() => expect(runtime.sessions).toHaveLength(2));
+    expect(runtime.last.turns[0]!.text).toContain("Saved from replacement session");
+    expect(runtime.last.options.worktreeMode).toBe("worktree");
+    expect(store.thread(id)!.fresh_opt_out).toBe(1);
+  });
+  it("off ignores promotion signals", async () => {
+    vi.stubEnv("LOOM_AUTO_PROMOTE", "off");
+    const store = new LoomStore(":memory:"), runtime = new FakeRuntime(store);
+    const host = new LoomHost(store, { fake: runtime }); hosts.push(host);
+    const r = await host.execute({ type: "submit", commandId: "start", cwd: "/repo", provider: "fake", worktree: "auto", text: "edit" });
+    runtime.last.emit({ type: "worktree.promote", runId: runtime.last.currentRun });
+    expect(store.thread(r.threadId!)!.fresh).toBeNull(); expect(runtime.last.interrupted).toBe(0);
+  });
+  it("takes a warm pooled tree at checkout HEAD without fetching", async () => {
+    const { root, git } = repo(); const worktreesDir = join(root, "trees");
+    const first = await createWorktree(root, { id: "aaaaaaaa", worktreesDir, fromHead: true });
+    expect(await parkWorktree(root, first.path, join(worktreesDir, root.split("/").at(-1)!), "HEAD")).toBe(true);
+    writeFileSync(join(root, "new.txt"), "new head"); git("add", "new.txt"); git("commit", "-m", "new head");
+    const second = await createWorktree(root, { id: "bbbbbbbb", worktreesDir, fromHead: true });
+    // Allocation is recoverable after a crash before the host stores its cwd.
+    const recovered = await createWorktree(root, { id: "bbbbbbbb", worktreesDir, fromHead: true });
+    expect(recovered.path).toBe(second.path);
+    expect(second.sha).toBe(git("rev-parse", "HEAD")); expect(readFileSync(join(second.path, "new.txt"), "utf8")).toBe("new head");
+  });
+});

@@ -1,0 +1,31 @@
+id: health.trend_analysis
+domain: wellness
+display_name: Health Trend Analysis
+description: Read and analyze multi-day health, activity, sleep, recovery, weight, or TDEE trends and recommendations.
+mode: read
+route:
+  kind: workflow
+  target_id: wellness.analyze_health_trends
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: compare_date_scopes
+    required: false
+    inferable: true
+  - name: days
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+  - name: goal
+    required: false
+    inferable: true
+examples:
+  - Take a look at my TDEE over the last few weeks
+  - How have my recovery trends looked lately?
+  - Compare my last two weeks of sleep and activity
+classifier_hints:
+  - Use for broader multi-day or multi-week health analysis, especially trends, averages, windows, recommendations, or TDEE questions.
+  - Prefer this over health.sleep_recovery when the request is not just about last night or today's recovery snapshot.

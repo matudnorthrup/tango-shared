@@ -1,0 +1,98 @@
+# Generic annotations for the system ledger (docs/specs/system-visibility.md).
+#
+# Discovery fills in what it can find on its own. This file holds only generic
+# defaults; machine-specific labels, names, groups, owners, logs and probes go
+# in the profile overlay at <profile>/config/system/jobs.yaml, which merges on
+# top of this one (maps merge, `services` merge by id, `prefixes.launchd` is the
+# union of both lists).
+
+# launchd agents whose labels start with one of these are jobs.
+prefixes:
+  launchd:
+    - com.tango.
+
+# The tmux server holding the startup service windows. Unset values fall back
+# to TANGO_SERVICE_TMUX_SOCKET / the startup config (socketName, session).
+tmux: {}
+
+# Health probes. Each has a url (HTTP GET, any answer below 500 is up), a port
+# (TCP connect on 127.0.0.1 unless host is set), or cmd: tailscale | docker.
+# critical: true sends a down service to Discord on the first failed probe pair.
+services:
+  - id: bot
+    name: Bot
+    url: http://127.0.0.1:9200/status/work
+    critical: true
+  - id: loom
+    name: Loom
+    url: http://127.0.0.1:9420/health
+    critical: true
+  - id: desk
+    name: Desk
+    url: http://127.0.0.1:9410/api/status
+    critical: true
+  - id: mcp
+    name: MCP
+    url: http://127.0.0.1:9100/health
+  - id: voice
+    name: Voice
+    port: 8787
+  - id: tailnet
+    name: Tailnet
+    cmd: tailscale
+  - id: docker
+    name: Docker
+    cmd: docker
+
+# Where the tick reaches the bot (schedule pause/resume/run) and Loom (waits).
+bot:
+  url: http://127.0.0.1:9200
+loom:
+  url: http://127.0.0.1:9420
+
+# Per-job annotations, keyed by "<runner>:<runner id>". Keys: name, group,
+# owner, criticality (critical | normal | quiet), cadence, cadenceSeconds,
+# logs, probe, retireCandidate, failAfter, lateFactor.
+jobs:
+  tmux:discord:
+    name: Tango bot
+    group: Tango core & desk
+    criticality: critical
+  launchd:com.tango.loom:
+    name: Loom
+    group: Tango core & desk
+    criticality: critical
+  launchd:com.tango.system-tick:
+    name: System tick
+    group: Tango core & desk
+    criticality: normal
+    cadence: Every 1 min
+    cadenceSeconds: 60
+  launchd:com.tango.wait-keeper:
+    name: Wait-keeper
+    group: Tango core & desk
+    criticality: normal
+    cadence: Every 30 min
+    cadenceSeconds: 1800
+
+defaults:
+  criticality: normal
+  group:
+    schedule: Schedules
+    launchd: launchd agents
+    tmux: Services
+    docker: Containers
+    routine: Claude routines
+    background: Background jobs
+    loom-wait: Loom waits
+
+# The unmanaged-process scan skips listening processes whose command starts
+# with one of these (apps and the OS, which launchd re-parents by design).
+unmanaged:
+  ignoreCommandPrefixes:
+    - /System/
+    - /Applications/
+    - /Library/
+    - /usr/libexec/
+    - /usr/sbin/
+    - /sbin/

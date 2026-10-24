@@ -1,0 +1,21 @@
+id: health.sleep_recovery
+domain: wellness
+display_name: Sleep Recovery
+description: Read sleep, recovery, HRV, RHR, or readiness information from the latest health data.
+mode: read
+route:
+  kind: workflow
+  target_id: wellness.analyze_sleep_recovery
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - How did I sleep last night?
+  - Check my recovery today
+  - What did my HRV look like?
+classifier_hints:
+  - Use when the user asks about sleep, recovery, readiness, HRV, or resting heart rate.

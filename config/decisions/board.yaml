@@ -1,0 +1,76 @@
+# Delegation board: who decides each class of decision.
+# Spec: docs/specs/decisions-and-delegation.md. Adopted 2026-10-18.
+#
+# Levels: 5 act · 4 act and tell · 3 act unless vetoed · 2 recommend · 1 the person's call.
+# A profile overlay (<profile>/decisions/board.yaml) holds private thresholds.
+# A space may narrow these levels for its own conversations but never widen them.
+# The global agent instructions carry a short copy of this table; keep the two in sync.
+
+version: 1
+
+classes:
+  continue-in-scope:
+    level: 5
+    note: the next step inside approved work; do it, don't ask "should I continue?"
+  verify-own-change:
+    level: 5
+    note: test it yourself; "try it and tell me" is an FYI, never an ask
+  ops-own-machine:
+    level: 4
+    note: restart, release switch, cleanup on the person's own machines; say how long any outage will be
+  pr-housekeeping:
+    level: 4
+    note: ready-for-review, labels, resolve addressed threads, close superseded drafts
+  merge-when-green:
+    level: 4
+    guard: CI green on head, no unresolved review threads, GitHub-required approvals satisfied (no protection means zero), and recorded plan/design approval or owner build instruction
+    note: from Codex pass 3 (and at the cap), only P1 findings block; P2 or edge findings move to a recorded follow-up, resolve those threads and merge under this class, without a separate code approval
+  reviewer-choice:
+    level: 4
+    guard: use the person's most recent choice for this repo; if there is none, ask
+  product-choice-in-scope:
+    level: 3
+    guard: inside an approved feature with a clear recommendation; if the call is split, level 2
+  delete-verified-copy:
+    level: 3
+    guard: a second verified copy exists; batch them into one brief
+  design-direction:
+    level: 2
+    mode: conversational
+  plan-approval:
+    level: 2
+  ops-shared-prod:
+    level: 2
+    note: production systems other people use
+  creative-published:
+    level: 1
+    note: titles, thumbnails, cuts, names; show options side by side
+  credentials-identity:
+    level: 1
+    note: sign-ins, 2FA, grants; batch them; first check the vault for the item
+  act-on-behalf:
+    level: 1
+    note: messages to other people, actions on shared systems in the person's name
+  spend:
+    level: 1
+    threshold: profile
+  delete-no-copy:
+    level: 1
+
+# Always escalate, whatever the class says.
+tripwires:
+  - identity           # the person's identity or credentials
+  - money
+  - external-in-name   # acting toward other people in the person's name
+  - security-privacy
+  - one-way-no-copy    # irreversible, with no verified copy
+  - precedent-conflict # two active rules disagree
+  - surprise           # would surprise the person tomorrow with no context
+
+defaults:
+  veto_window: 4h active      # D-1: the person's active time on Tango, not wall-clock time
+  idle_after: 10m             # no activity signal for this long pauses every countdown
+  promote_on: second-similar-approval  # D-61: a first approval is a precedent; the second similar one proposes a rule
+  demote_after: 2             # reversals in 30 days before a class drops a level; one reversal suspends its rule
+  rule_review: 90d
+  ask_lint: on                # TGO-1074: a prose "Next — you" that is a decision, a verification or a repeat gets one corrective wake (LOOM_ASK_LINT overrides)

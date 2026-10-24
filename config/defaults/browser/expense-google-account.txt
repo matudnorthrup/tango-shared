@@ -1,0 +1,6 @@
+# Google account email used to select the ExpenseDesk SSO login identity
+# (single value, first non-comment line wins).
+# The public repo ships no default. Set the real account in the profile layer:
+#   ~/.tango/profiles/<profile>/config/browser/expense-google-account.txt
+# Overrides: TANGO_EXPENSE_GOOGLE_ACCOUNT_EMAIL (value) or *_FILE (path), then
+# TANGO_WORK_GOOGLE_ACCOUNT_EMAIL as a fallback.

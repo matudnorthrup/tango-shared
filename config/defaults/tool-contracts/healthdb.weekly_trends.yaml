@@ -1,0 +1,25 @@
+id: healthdb.weekly_trends
+family: healthdb
+description: Multi-day trend summary for steps, exercise, TDEE, sleep, HRV, and RHR.
+owner_worker: health-analyst
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: mongodb
+  target: health-auto-export
+input_fields:
+  - days? (defaults to 7)
+output_fields:
+  - days
+  - data
+  - averages
+legacy:
+  commands:
+    - node ~/.tango/tools/health-data/scripts/health-query.js --trend 7
+  read_paths:
+    - "MongoDB health-auto-export collections: step_count, apple_exercise_time, active_energy, basal_energy_burned, sleep_analysis, heart_rate_variability, resting_heart_rate, weight_body_mass"
+  write_paths:
+    - none (legacy flow was read-only)

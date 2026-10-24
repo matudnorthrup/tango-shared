@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3f4f7" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Tango Desk</title>
+<script>
+  // Opened as /tango-screen (no slash): relative URLs would resolve against the site root.
+  if (!/\/$|\.html$|\/decision\/D-\d+$/.test(location.pathname)) location.replace(location.pathname + '/' + location.search);
+</script>
+<link rel="stylesheet" href="desk.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the list</a>
+<div id="app"></div>
+
+<!-- Scene frames live outside the app so a re-render never reloads them. -->
+<iframe class="frame" id="frame-a" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-pointer-lock" allow="autoplay; fullscreen" title="Scene"></iframe>
+<iframe class="frame" id="frame-b" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-pointer-lock" allow="autoplay; fullscreen" title="Scene"></iframe>
+<div class="updated-pill" id="updated">Updated</div>
+
+<div class="offline" id="offline" hidden>Reconnecting…</div>
+<button class="unlock" id="unlock" hidden>Tap once to allow sound</button>
+
+<script type="module" src="desk/main.js"></script>
+</body>
+</html>

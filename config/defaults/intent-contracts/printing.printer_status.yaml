@@ -1,0 +1,22 @@
+id: printing.printer_status
+domain: printing
+display_name: Printer Status
+description: Read and summarize the current 3D printer status, active job, or printer state.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - What's the current printer status?
+  - Is the printer idle or printing right now?
+  - Summarize the active printer state
+  - Use the worker to check the current printer status and summarize it briefly.
+can_run_in_parallel: true
+classifier_hints:
+  - Use for requests about the current 3D printer state, active job, printer readiness, or print status.
+  - Prefer this over generic note or web lookup when the request is specifically about the live printer.
+  - Prefer this over printing.job_prepare_or_start when the user is only asking about current state, readiness, or whether the printer is idle.

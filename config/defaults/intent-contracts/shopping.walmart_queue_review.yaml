@@ -1,0 +1,26 @@
+id: shopping.walmart_queue_review
+domain: shopping
+display_name: Review Walmart Queue
+description: Read and summarize the Walmart shopping queue, purchase-history restock recommendations, or saved shopping preferences.
+mode: read
+route:
+  kind: worker
+  target_id: foxtrot
+slots:
+  - name: focus
+    required: false
+    inferable: true
+  - name: days_back
+    required: false
+    inferable: true
+examples:
+  - What's currently in the Walmart queue?
+  - Show my Walmart restock recommendations
+  - Review my saved Walmart shopping preferences
+  - Use the worker to list the current Walmart queue and summarize it briefly.
+can_run_in_parallel: true
+classifier_hints:
+  - Use for reading the Walmart queue, restock suggestions, purchase-history analysis, or saved shopping preferences.
+  - Prefer browser-driven shopping flows only when the request is to actively shop, compare product pages, or modify the cart on Walmart.com.
+  - If the user also asks for travel, routing, or diesel information in the same message, still emit this as a separate intent whenever they explicitly ask about the Walmart queue, restock list, or preferences.
+  - Match imperative phrasings like "use the worker to list the current Walmart queue" the same way as conversational read requests.

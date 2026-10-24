@@ -1,0 +1,40 @@
+# Sanitized, disabled starter view. Enable in the profile layer and set
+# TANGO_STATE_PROJECTION_ROOT to an explicitly chosen output directory.
+id: generic-project-overview
+enabled: false
+for_each:
+  types: [project]
+output_path: "State Views/{root.slug}.md"
+title_template: "{root.title} Overview"
+sections:
+  - heading: Quick Read
+    source: state
+    selector:
+      where:
+        id: "$root.id"
+    item_template: "{entity.summary}"
+    empty_text: "_No summary recorded._"
+  - heading: Current State
+    source: state
+    selector:
+      where:
+        project_entity_id: "$root.id"
+    sort:
+      - field: overdue
+        direction: desc
+      - field: due_at
+        direction: asc
+      - field: last_progress_at
+        direction: desc
+    item_template: "- **{entity.title}** — {entity.status}; due {entity.due_at}; last progress {entity.last_progress_at}"
+    empty_text: "_No associated state entities._"
+  - heading: Narrative
+    source: atlas
+    selector:
+      where:
+        metadata.project_entity_id: "$root.id"
+    sort:
+      - field: created_at
+        direction: desc
+    item_template: "- {memory.created_at} — {memory.content}"
+    empty_text: "_No project narrative recorded in Atlas._"

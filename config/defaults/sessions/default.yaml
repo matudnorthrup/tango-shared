@@ -1,0 +1,22 @@
+id: tango-default
+type: persistent
+agent: watson
+channels:
+  - discord:100000000000000001
+  - discord:default
+orchestrator_continuity: stateless
+memory:
+  max_context_tokens: 100000
+  zones:
+    pinned: 0.05
+    summary: 0.20
+    memories: 0.25
+    recent: 0.50
+  summarize_window: 4
+  memory_limit: 200
+  importance_threshold: 0.2
+  retrieval_weights:
+    recency: 1.0
+    importance: 1.0
+    relevance: 2.0
+    source: 0.5

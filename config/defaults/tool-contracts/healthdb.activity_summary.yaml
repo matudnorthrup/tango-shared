@@ -1,0 +1,29 @@
+id: healthdb.activity_summary
+family: healthdb
+description: Same-day activity, workout, and calorie summary from the legacy health pipeline.
+owner_worker: health-analyst
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: mongodb
+  target: health-auto-export
+input_fields:
+  - date? (defaults to today)
+output_fields:
+  - date
+  - steps
+  - exercise_min
+  - workouts
+  - active_cal
+  - basal_cal
+  - tdee
+legacy:
+  commands:
+    - node ~/.tango/tools/health-data/scripts/health-query.js --date today
+  read_paths:
+    - "MongoDB health-auto-export collections: step_count, apple_exercise_time, active_energy, basal_energy_burned, workouts"
+  write_paths:
+    - none (legacy flow was read-only)

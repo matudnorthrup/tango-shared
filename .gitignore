@@ -1,0 +1,37 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.slot
+# Hand-made backups of secrets files (.env.bak, .env.bak-20261006, prod.env.bak)
+.env.bak*
+*.env.bak*
+.DS_Store
+*.log
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+data/imports/
+data/browser-profile/
+data/reports/
+data/state/
+data/tango.db
+data/tango.db-shm
+data/tango.db-wal
+.mcp.json
+.claude/
+data/*.bak*
+data/walmart-queue.json
+data/_retired-*/
+docs/projects/imessage-analysis/
+*.tsbuildinfo
+
+# Agent personal context (lives in profile layer, not repo)
+agents/assistants/*/USER.md
+agents/assistants/*/context/
+agents/assistants/*/context
+Records/
+
+# Artifacts written to a literal "undefined" path by a tool with an
+# unset output-dir variable. Never intentional; keep them out of the repo.
+undefined/

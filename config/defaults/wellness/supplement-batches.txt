@@ -1,0 +1,5 @@
+# Supplement batch shortcuts for wellnessdb_log_supplement
+# (one per line, format: shortcut: item-a, item-b, item-c).
+# The public repo ships no entries. Add real batch shortcuts in the profile
+# layer: ~/.tango/profiles/<profile>/config/wellness/supplement-batches.txt
+# Override env vars: TANGO_WELLNESS_SUPPLEMENT_BATCHES / TANGO_WELLNESS_SUPPLEMENT_BATCHES_FILE.

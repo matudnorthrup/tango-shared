@@ -1,0 +1,5 @@
+id: foxtrot-ollama
+type: persistent
+agent: foxtrot-ollama
+channels:
+  - "discord:100000000000000005"

@@ -1,0 +1,13 @@
+# The system's own identity. Not an agent: it never runs a turn.
+#
+# display_name: name on system messages (alerts, errors, "Back to Tango.").
+# voice.call_signs: names that address the system itself in voice, so
+#   "Tango, focus Sierra" parses as a system command.
+# voice.default_prompt_agent: who answers unaddressed speech.
+display_name: Tango
+voice:
+  call_signs:
+    - Tango
+  # 2026-07-18 claude-primary flip (TGO-809): unaddressed speech goes to the
+  # original Claude-backed watson.
+  default_prompt_agent: watson

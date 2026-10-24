@@ -1,0 +1,29 @@
+id: printing.job_prepare_or_start
+domain: printing
+display_name: Prepare Or Start Print Job
+description: Prepare, slice, upload, or start a requested 3D print job, including print-ready actions for a specific model or print variant.
+mode: write
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: print_request
+    required: false
+    inferable: true
+  - name: printer_target
+    required: false
+    inferable: true
+  - name: print_constraints
+    required: false
+    inferable: true
+examples:
+  - Can you do a 7x7 grid print please? No brim needed. Printer is ready.
+  - Get the 7x7 OpenGrid print ready for the MK4
+  - Slice and upload the 7x7 OpenGrid job with no brim
+  - Get the 7x7 OpenGrid print ready for the MK4, but preview only. Do not upload or start it.
+classifier_hints:
+  - Use for requests to actively prepare, slice, upload, or start a print job for a specific model or variant.
+  - Do not use for paper documents, PDFs, itineraries, confirmations, reservations, boarding passes, tickets, or hard-copy travel packets; use printing.paper_document for those.
+  - Prefer this over printing.printer_status when the user is asking to initiate printing work rather than only read the current printer state.
+  - The worker still decides the exact render, slice, upload, start, or readiness-check sequence based on the request and current printer state.
+  - Preview-only or dry-run requests still belong here; they are execution-shaped requests with side effects suppressed by the runtime/tooling.

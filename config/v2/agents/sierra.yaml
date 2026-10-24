@@ -1,0 +1,217 @@
+id: sierra
+enabled: false
+display_name: Sierra
+type: research
+
+# System prompt = personality + domain + rules
+system_prompt_file: agents/assistants/sierra/soul.md
+
+# MCP servers this agent can access
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: google
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "google"]
+    env:
+      ALLOWED_TOOL_IDS: "gog_email,gog_calendar,gog_docs,gog_docs_update_tab"
+  - name: exa
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "exa"]
+    env:
+      ALLOWED_TOOL_IDS: "exa_search,exa_answer"
+  - name: browser
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "browser"]
+    env:
+      ALLOWED_TOOL_IDS: "browser"
+  - name: obsidian
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "obsidian"]
+    env:
+      ALLOWED_TOOL_IDS: "obsidian"
+  - name: onepassword
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "onepassword"]
+    env:
+      ALLOWED_TOOL_IDS: "onepassword"
+  - name: printer
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "printer"]
+    env:
+      ALLOWED_TOOL_IDS: "printer_command,openscad_render,prusa_slice,paper_print"
+  - name: location
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "location"]
+    env:
+      ALLOWED_TOOL_IDS: "location_read,local_business_search,driving_route,walking_route,route_ahead_search,find_diesel"
+  - name: file-ops
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "file-ops"]
+    env:
+      ALLOWED_TOOL_IDS: "file_ops"
+  - name: slack
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "slack"]
+    env:
+      ALLOWED_TOOL_IDS: "slack"
+  - name: youtube
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "youtube"]
+    env:
+      ALLOWED_TOOL_IDS: "youtube_transcript,youtube_analyze"
+  - name: agent-docs
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "agent-docs"]
+    env:
+      ALLOWED_TOOL_IDS: "agent_docs"
+  - name: notion
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "notion"]
+    env:
+      ALLOWED_TOOL_IDS: "notion"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+  - name: screen
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "screen"]
+    env:
+      ALLOWED_TOOL_IDS: "screen"
+  - name: desk-mail
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "desk-mail"]
+    env:
+      ALLOWED_TOOL_IDS: "desk_mail"
+  - name: background-job
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "background-job"]
+    env:
+      ALLOWED_TOOL_IDS: "background_job"
+  - name: offroad
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "offroad"]
+    env:
+      ALLOWED_TOOL_IDS: "offroad_check,offroad_plan,offroad_networks,offroad_photos,trail_app_library,trail_app_import,ridebook_status,ridebook_update,ridebook_publish,ridebook_promote"
+
+mcp:
+  default_servers:
+    - memory
+    - exa
+    # Always mounted so a long sweep can be moved out of the turn whatever the
+    # request wording (lazy mounting keys on turn text).
+    - background-job
+    # Ride checks and ride book edits come up mid-conversation ("add it to the
+    # book", "publish it") in words the keyword mounter can't see.
+    - offroad
+
+# Runtime configuration
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  fallback: codex
+  # 2026-09-25 fleet bake-off (PR #305): Opus 5.5 0.93-0.96 on travel, 0.80 vs 0.69 on gear research; 30-50% faster than 4.8.
+  model: claude-opus-5-5
+  reasoning_effort: high
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.80
+  # Marketplace/listing research can run 10-15 min of browser work in one turn;
+  # the 15 min default killed it mid-sweep (2026-09-27). Longer batch work
+  # belongs in the background_job tool, not the turn.
+  timeout_seconds: 1800
+
+# Memory configuration
+memory:
+  post_turn_extraction: enabled
+  canonical_agent_id: sierra
+  alias_agent_ids:
+    - sierra
+    - sierra-ollama
+  # 2026-07-18 claude-primary flip (TGO-809): extraction stays on DeepSeek —
+  # the clones have extracted with it since June and it conserves the Claude
+  # subscription budget for turn traffic.
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.4
+  scheduled_reflection: enabled
+
+responsibilities:
+  - id: research_support
+    description: Provide bounded research, source checking, and comparison support for other agents.
+    objectives:
+      - Return source-grounded findings with concise evidence.
+      - Avoid writes or purchases when fulfilling collaboration requests unless a separate configured responsibility allows them.
+    autonomy:
+      default: supervised
+      writes_require_confirmation: true
+      purchase_or_payment: never
+    collaboration:
+      can_fulfill:
+        - purpose: source-check
+          max_turns: 1
+          max_duration_seconds: 180
+          max_tool_calls: 6
+          visibility_modes: ["summary", "digest", "thread", "transcript", "silent"]
+        - purpose: vendor-comparison
+          max_turns: 1
+          max_duration_seconds: 240
+          max_tool_calls: 8
+          visibility_modes: ["summary", "digest", "thread", "transcript", "silent"]
+        - purpose: local-business-research
+          max_turns: 1
+          max_duration_seconds: 240
+          max_tool_calls: 8
+          visibility_modes: ["summary", "digest", "thread", "transcript", "silent"]
+
+# Voice configuration
+voice:
+  call_signs:
+    - Sierra
+  default_channel_id: "100000000000000003"
+  smoke_test_channel_id: "100000000000001003"
+
+# Discord routing
+discord:
+  default_channel_id: "100000000000000003"
+  smoke_test_channel_id: "100000000000001003"
+
+# Legacy registry fields
+avatar_url: https://example.com/tango/avatars/sierra.png
+default_project: personal
+response_mode: concise
+
+provider:
+  default: claude-oauth
+  reasoning_effort: high
+  fallback:
+    - claude-oauth-secondary
+    - codex
+    # 2026-07-18 (TGO-809): a full Claude outage fails over to the
+    # unmetered Ollama/DeepSeek path after codex.
+    - ollama
+
+tools:
+  mode: allowlist
+  allowlist:
+    - WebSearch
+    - WebFetch
+
+deterministic_routing:
+  enabled: true
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex
+      # 2026-07-18 (TGO-809): a full Claude outage fails over to the
+      # unmetered Ollama/DeepSeek path after codex.
+      - ollama

@@ -1,0 +1,5 @@
+id: project:projects
+type: project
+agent: watson
+channels:
+  - discord:100000000000000024

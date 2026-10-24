@@ -1,0 +1,5 @@
+id: project:ai-systems
+type: project
+agent: victor
+channels:
+  - discord:100000000000000022

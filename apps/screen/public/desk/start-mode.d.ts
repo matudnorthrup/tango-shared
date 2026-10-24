@@ -1,0 +1,1 @@
+export function defaultStartMode(input?: { role?: string; tier?: string; prompt?: string; plan?: boolean | string; repo?: { mode?: 'auto' | 'local' | 'worktree' } | null }): 'auto' | 'local' | 'worktree';

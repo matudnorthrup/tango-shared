@@ -1,0 +1,38 @@
+id: memory-eval-report
+display_name: Memory Eval Report
+description: >
+  Run daily memory-system evaluation: benchmark retrieval against a curated
+  suite, audit a few recent prompt snapshots, and post a concise health
+  report to Discord.
+enabled: true
+
+schedule:
+  cron: "15 6 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: memory-eval-report
+  timeout_seconds: 180
+
+delivery:
+  channel_id: "100000000000000026"
+  agent_id: watson
+
+completion:
+  workflow_id: memory-eval-report
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 1
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - memory
+  - eval
+  - daily

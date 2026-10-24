@@ -1,0 +1,24 @@
+id: engineering.codebase_read
+domain: engineering
+display_name: Read Codebase
+description: Read, inspect, summarize, or explain code, config, tests, or repo files inside the Tango codebase.
+mode: read
+route:
+  kind: worker
+  target_id: dev-assistant
+slots:
+  - name: target_query
+    required: true
+    inferable: false
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Read packages/discord/src/tango-router.ts and explain how Discord turns are routed
+  - Summarize what config/v2/agents/victor.yaml says about MCP tool access
+  - Read package.json and tell me what test:deterministic-live-gate does
+can_run_in_parallel: true
+classifier_hints:
+  - Use when the request is primarily about reading, summarizing, or explaining repo files, code paths, configs, scripts, or tests.
+  - Prefer this over engineering.repo_status when the user mentions file paths, functions, configs, scripts, or asks how a part of the codebase works.
+  - If the same message also explicitly asks for git status, branch state, dirty files, or repo cleanliness, return engineering.codebase_read alongside engineering.repo_status instead of collapsing them together.

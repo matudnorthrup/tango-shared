@@ -1,0 +1,29 @@
+id: healthdb.sleep_summary
+family: healthdb
+description: Sleep-stage summary for the most recent night with HRV and RHR context.
+owner_worker: health-analyst
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: mongodb
+  target: health-auto-export
+input_fields:
+  - date? (supports last-night or YYYY-MM-DD)
+output_fields:
+  - night_of
+  - date
+  - sleep
+  - hrv
+  - rhr
+legacy:
+  commands:
+    - node ~/.tango/tools/health-data/scripts/health-query.js --sleep last-night
+  read_paths:
+    - "MongoDB health-auto-export collection: sleep_analysis"
+    - "MongoDB health-auto-export collection: heart_rate_variability"
+    - "MongoDB health-auto-export collection: resting_heart_rate"
+  write_paths:
+    - none (legacy flow was read-only)

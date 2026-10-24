@@ -1,0 +1,118 @@
+id: slack-mention-scan
+display_name: Slack Mention Context Scan
+description: >
+  Scan all Slack channels for @mentions of the owner every 30 minutes during
+  working hours. For each mention, gather thread or channel context and
+  produce a summary with suggested response direction. Writes to the
+  Obsidian domain log for daily brief aggregation.
+enabled: true
+runtime: v2
+
+obsidian_log:
+  domain: Slack
+  job_name: Slack Mention Context Scan
+
+schedule:
+  cron: "*/30 8-17 * * 1-5"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - slack.mention_context
+  deterministic_agent_id: watson
+  task: |
+    Scan Slack for recent @mentions of the owner and summarize the context
+    around each one so he can respond intelligently.
+
+    1. Call the slack tool with action "my_user_id" to get the owner's Slack
+       user ID. Store this as OWNER_ID.
+
+    2. Call the slack tool with action "list_channels" to get all channels
+       the bot is in.
+
+    3. For each channel, call the slack tool with action "channel_history"
+       with hours=0.5 (last 30 minutes), limit=200.
+
+    4. Filter messages for any that contain "<@OWNER_ID>" in their text
+       (where OWNER_ID is the value from step 1). Skip messages from bots
+       (bot_id present) or system messages (subtype present).
+
+    5. For each mention found, gather context:
+
+       a. If the mention is IN a thread (it has a thread_ts different from
+          its own ts) OR if the mention has reply_count > 0:
+          - Call slack action "thread_replies" with the channel_id and
+            thread_ts to get the ENTIRE thread.
+          - Summarize the full thread conversation.
+
+       b. If the mention is a top-level message with no thread:
+          - Use the 10 messages immediately preceding it in the
+            channel_history results as context.
+
+    6. For each mention, resolve all user IDs to display names using
+       slack action "user_info".
+
+    7. For each mention, produce:
+       - **Channel:** #channel-name
+       - **From:** who mentioned the owner
+       - **Context:** 2-3 sentence summary of what was being discussed
+       - **Ask:** what specifically is being asked of or said to the owner
+       - **Suggested response direction:** a brief note on how the owner
+         might respond (tone, key points to address)
+       - **Link:** permalink (construct from channel + ts if needed)
+
+    8. Write results to Records/Jobs/Slack/Mentions/YYYY-MM.md
+       using direct filesystem I/O (NOT obsidian-cli).
+       - Determine today's date and time in America/Los_Angeles timezone
+       - Create the Mentions/ directory if it does not exist
+       - Append a new entry with this format:
+
+         ## YYYY-MM-DD HH:MM — Mention Scan
+         **Status:** Done — N mentions found
+
+         ### 1. #channel-name — @person
+         **Context:** ...
+         **Ask:** ...
+         **Suggested response:** ...
+         [View in Slack](permalink)
+
+       - If no mentions found, write:
+
+         ## YYYY-MM-DD HH:MM — Mention Scan
+         **Status:** Done — 0 mentions found
+
+    9. If mentions were found, also write a concise summary to the
+       daily note integration point so the daily brief picks them up.
+
+    Do NOT write to the daily note (Planning/Daily/). The daily-brief
+    aggregator will pull mention items from this domain log.
+  timeout_seconds: 180
+
+provider:
+  model: role:job-planning
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: slack-mention-scan
+  scope: daily
+  # A scan every 30 minutes, not a once-a-day workflow: the first run's daily
+  # marker (dated in UTC) otherwise skipped every later slot until 17:00 PT.
+  check_before_run: false
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  backoff:
+    enabled: true
+    initial_seconds: 300
+    max_seconds: 3600
+
+tags:
+  - watson
+  - slack
+  - mentions

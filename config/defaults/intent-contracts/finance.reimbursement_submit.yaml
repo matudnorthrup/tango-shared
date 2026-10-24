@@ -1,0 +1,31 @@
+id: finance.reimbursement_submit
+domain: finance
+display_name: Prepare Or Submit Reimbursement
+description: Prepare a reimbursement draft for review or submit a reviewed reimbursement in an external finance system, gather supporting evidence, and record status.
+mode: write
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: reimbursement_scope
+    required: false
+    inferable: true
+  - name: merchant_scope
+    required: false
+    inferable: true
+  - name: reimbursement_system
+    required: false
+    inferable: true
+examples:
+  - Prepare ExpenseDesk drafts for the pending delivery-fee reimbursements.
+  - Submit any pending or draft reimbursements.
+  - Submit the delivery-fee reimbursements to ExpenseDesk.
+  - File those reimbursable Walmart driver tips in ExpenseDesk and record that they were submitted.
+  - Submit this vendor invoice reimbursement in ExpenseDesk using the receipt from Gmail.
+  - File the Venmo vendor reimbursement in ExpenseDesk from the email receipt.
+classifier_hints:
+  - Use for reimbursement draft preparation, explicit reimbursement submission, repayment filing, or expense-report browser flows that require evidence gathering.
+  - Treat broad "submit pending or draft reimbursements" wording as draft-prep for pending candidates and verified final submission only for already-prepared drafts.
+  - Default execution should prepare a ExpenseDesk draft for review; final submission requires explicit user approval after the draft is prepared.
+  - This includes non-Walmart reimbursements when the invoice or receipt lives in Gmail and the task is to prepare or file it in ExpenseDesk.
+  - Prefer finance.receipt_lookup when the user only wants to inspect receipt details or find possible reimbursement candidates without submitting anything.

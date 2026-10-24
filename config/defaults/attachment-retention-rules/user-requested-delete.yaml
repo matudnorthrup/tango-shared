@@ -1,0 +1,15 @@
+id: user-requested-delete-review-v1
+schema_version: 1
+description: User-marked attachment deletion requests become review proposals; evaluation never deletes silently.
+enabled: true
+priority: 50
+scope:
+  type: global
+match:
+  metadata:
+    user_retention_request: delete
+actions:
+  all:
+    decision: review
+    reason: User requested deletion; route through retention review before any destructive action.
+    review_after_days: 0

@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f3f4f7" media="(prefers-color-scheme: light)">
+<title>Session Trace</title>
+<link rel="stylesheet" href="desk.css">
+<style>
+  /* Tokens come from desk.css (dark default, light via prefers-color-scheme / data-theme). */
+  /* desk.css follows the system; the toggle here can also force light (same tokens as desk.css's light block). */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f3f4f7; --panel: #ffffff; --card: #ffffff; --card-hi: #f0f2f6; --line: #dfe3ea; --line-soft: #eaedf2;
+    --fg: #141821; --fg-2: #2f3644; --muted: #5d6676; --dim: #8a93a3;
+    --move: #c77f00; --watching: #7c5ce0; --fyi: #2f7fe0; --working: #17a36a; --danger: #d64545;
+    --shadow: 0 16px 40px -18px rgba(20, 24, 33, .28);
+  }
+  :root { --s-operator: var(--fyi); --s-desk: var(--watching); --s-hub: var(--working); --s-screen: var(--move); --s-owner: var(--danger); }
+  body { font-size: 14px; }
+  .tr-top {
+    position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+    padding: 10px 16px; display: grid; gap: 8px;
+  }
+  .tr-row1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tr-title { font-size: 16px; font-weight: 750; display: flex; align-items: center; gap: 8px; margin-right: auto; }
+  .tr-live { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+  .tr-live.on { background: var(--working); box-shadow: 0 0 0 4px color-mix(in srgb, var(--working) 20%, transparent); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .seg button { background: none; border: 0; padding: 5px 10px; font-size: 13px; color: var(--muted); }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--card-hi); color: var(--fg); font-weight: 650; }
+  .btn { background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 5px 10px; font-size: 13px; color: var(--fg-2); }
+  .btn:hover { border-color: var(--muted); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .chips .lbl { color: var(--dim); font-size: 12px; margin-right: 2px; }
+  .chip {
+    border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 2px 9px; font-size: 12px;
+    color: var(--fg-2); display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip .n { color: var(--dim); font-variant-numeric: tabular-nums; }
+  .chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+  .chip .sw { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+  .mark { display: flex; gap: 6px; }
+  .mark input {
+    flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px;
+    color: var(--fg); font: inherit; font-size: 14px;
+  }
+  .mark button { background: var(--danger); color: #fff; border: 0; border-radius: 9px; padding: 7px 12px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+  .tr-note { color: var(--muted); font-size: 12.5px; padding: 6px 16px 0; }
+  .tl { list-style: none; margin: 0; padding: 6px 0 90px; font-variant-numeric: tabular-nums; }
+  .ev { border-left: 3px solid var(--c); margin: 0 16px; padding: 4px 10px; display: grid; grid-template-columns: 96px 66px 1fr; gap: 4px 10px; align-items: baseline; cursor: pointer; }
+  .ev:hover { background: var(--card); }
+  .ev.open { background: var(--card); }
+  .ev .t { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .ev .t small { display: block; color: var(--dim); font-size: 10.5px; }
+  .ev .src { font-size: 11px; font-weight: 750; letter-spacing: .03em; text-transform: uppercase; color: var(--c); white-space: nowrap; }
+  .ev .sum { color: var(--fg-2); overflow-wrap: anywhere; }
+  .ev .kind { font-family: var(--mono); font-size: 11px; color: var(--dim); margin-right: 6px; }
+  .ev.err .sum { color: var(--danger); }
+  .ev.owner { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+  .ev.owner .sum { color: var(--fg); font-weight: 650; }
+  .ev pre {
+    grid-column: 1 / -1; margin: 4px 0 6px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line-soft);
+    border-radius: 8px; font-family: var(--mono); font-size: 11.5px; color: var(--fg-2); white-space: pre-wrap; overflow-wrap: anywhere; cursor: text;
+  }
+  .gap { margin: 6px 16px; color: var(--dim); font-size: 11.5px; display: flex; align-items: center; gap: 8px; }
+  .gap::before, .gap::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+  .empty { color: var(--muted); padding: 40px 16px; text-align: center; }
+  .follow {
+    position: fixed; right: 16px; bottom: 16px; z-index: 6; background: var(--fg); color: var(--bg); border: 0; border-radius: 999px;
+    padding: 8px 14px; font-weight: 700; font-size: 13px; box-shadow: var(--shadow);
+  }
+  .toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--card-hi); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; z-index: 7; box-shadow: var(--shadow); }
+  @media (max-width: 699px) {
+    .ev { grid-template-columns: auto 1fr; }
+    .ev .t small { display: inline; margin-left: 6px; }
+    .ev .sum { grid-column: 1 / -1; }
+    .ev pre { font-size: 11px; }
+    .tr-title { width: 100%; }
+    /* One swipeable line per chip row, so the sticky header stays short. */
+    .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip, .chips .lbl { flex: none; }
+  }
+</style>
+</head>
+<body>
+<header class="tr-top">
+  <div class="tr-row1">
+    <div class="tr-title"><span class="tr-live" id="live" title="Live"></span>Session trace</div>
+    <div class="seg" role="group" aria-label="Time window" id="window">
+      <button data-w="10m" aria-pressed="true">10 min</button>
+      <button data-w="1h" aria-pressed="false">1 h</button>
+      <button data-w="session" aria-pressed="false">Session</button>
+    </div>
+    <button class="btn" id="copy" title="Copy the visible entries as text, one line each">Copy</button>
+    <button class="btn" id="theme" title="Light or dark">◐</button>
+  </div>
+  <div class="chips" id="sources"><span class="lbl">Source</span></div>
+  <div class="chips" id="kinds"><span class="lbl">Kind</span></div>
+  <form class="mark" id="markForm">
+    <input id="markText" placeholder="What's wrong? (optional)" maxlength="280" autocomplete="off" aria-label="Note for this moment">
+    <button type="submit">Mark this moment</button>
+  </form>
+</header>
+<div class="tr-note" id="note"></div>
+<ol class="tl" id="tl" aria-live="polite"></ol>
+<button class="follow" id="follow" hidden>↓ Latest</button>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+  const base = location.pathname.replace(/trace\/?$/, '');
+  const SOURCES = ['operator', 'desk', 'hub', 'screen', 'owner'];
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(key, fallback) {
+      try { const v = localStorage.getItem(`trace.${key}`); return v === null ? fallback : JSON.parse(v); } catch { return fallback; }
+    },
+    set(key, value) {
+      try { localStorage.setItem(`trace.${key}`, JSON.stringify(value)); } catch { /* private window */ }
+    },
+  };
+  const params = new URLSearchParams(location.search);
+  const state = {
+    entries: [],
+    window: params.get('window') || store.get('window', '10m'),
+    hiddenSources: new Set(store.get('hiddenSources', [])),
+    hiddenKinds: new Set(store.get('hiddenKinds', [])),
+    open: new Set(),
+    since: null,
+    lastSeq: 0,
+    follow: true,
+  };
+  const theme = store.get('theme', null);
+  if (theme) document.documentElement.dataset.theme = theme;
+
+  const family = (kind) => kind.split('.')[0];
+  const visible = (e) => !state.hiddenSources.has(e.source) && !state.hiddenKinds.has(family(e.kind));
+  const pad = (n, w = 2) => String(n).padStart(w, '0');
+  const clock = (ms) => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`; };
+  const delta = (ms) => (ms < 1000 ? `+${ms} ms` : ms < 60000 ? `+${(ms / 1000).toFixed(1)} s` : `+${Math.round(ms / 60000)} min`);
+  const isError = (e) => /error|failed|refused|dropped|ignored|queued$/.test(e.kind) && e.source !== 'owner';
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  function toast(text) {
+    const node = $('toast');
+    node.textContent = text;
+    node.hidden = false;
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => (node.hidden = true), 2500);
+  }
+
+  function nearBottom() {
+    return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 80;
+  }
+
+  function renderChips() {
+    const counts = {};
+    for (const e of state.entries) counts[e.source] = (counts[e.source] || 0) + 1;
+    $('sources').innerHTML = '<span class="lbl">Source</span>' + SOURCES.map((s) =>
+      `<button class="chip" data-source="${s}" aria-pressed="${!state.hiddenSources.has(s)}" style="--c: var(--s-${s})"><span class="sw"></span>${s}<span class="n">${counts[s] || 0}</span></button>`).join('');
+    const kinds = {};
+    for (const e of state.entries) if (!state.hiddenSources.has(e.source)) kinds[family(e.kind)] = (kinds[family(e.kind)] || 0) + 1;
+    for (const k of state.hiddenKinds) kinds[k] ??= 0;
+    const names = Object.keys(kinds).sort((a, b) => kinds[b] - kinds[a] || a.localeCompare(b));
+    $('kinds').innerHTML = '<span class="lbl">Kind</span>' + (names.length ? names.map((k) =>
+      `<button class="chip" data-kind="${esc(k)}" aria-pressed="${!state.hiddenKinds.has(k)}">${esc(k)}<span class="n">${kinds[k]}</span></button>`).join('') : '<span class="lbl">none yet</span>');
+  }
+
+  function row(e, prev) {
+    const cls = ['ev', e.source === 'owner' ? 'owner' : '', isError(e) ? 'err' : '', state.open.has(e.seq) ? 'open' : ''].filter(Boolean).join(' ');
+    const gap = prev && e.at - prev.at >= 60000 ? `<li class="gap">${delta(e.at - prev.at)} quiet</li>` : '';
+    const json = state.open.has(e.seq) ? `<pre>${esc(JSON.stringify({ seq: e.seq, at: new Date(e.at).toISOString(), source: e.source, kind: e.kind, sessionId: e.sessionId, data: e.data }, null, 2))}</pre>` : '';
+    return `${gap}<li class="${cls}" data-seq="${e.seq}" style="--c: var(--s-${e.source})" tabindex="0" aria-expanded="${state.open.has(e.seq)}">
+      <span class="t">${clock(e.at)}${prev ? `<small>${delta(e.at - prev.at)}</small>` : ''}</span>
+      <span class="src">${e.source}</span>
+      <span class="sum"><span class="kind">${esc(e.kind)}</span>${esc(e.summary)}</span>${json}</li>`;
+  }
+
+  function render() {
+    const follow = state.follow;
+    const shown = state.entries.filter(visible);
+    $('tl').innerHTML = shown.length
+      ? shown.map((e, i) => row(e, shown[i - 1])).join('')
+      : `<li class="empty">${state.entries.length ? 'Everything here is filtered out.' : 'Nothing recorded in this window yet. Talk to the operator, or mark a moment.'}</li>`;
+    renderChips();
+    if (follow) window.scrollTo(0, document.documentElement.scrollHeight);
+    $('follow').hidden = follow;
+  }
+
+  function windowQuery() {
+    if (state.window === 'session') return 'since=24h&session=latest';
+    return `since=${state.window}`;
+  }
+
+  async function load() {
+    try {
+      const response = await fetch(`${base}api/desk/trace?${windowQuery()}&limit=3000`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const body = await response.json();
+      state.entries = body.entries;
+      state.since = body.since;
+      state.lastSeq = Math.max(0, ...body.entries.map((e) => e.seq));
+      $('note').textContent = state.window === 'session'
+        ? (body.sessionStart ? `Since the voice session started at ${clock(body.sessionStart)}.` : 'No voice session in the last 24 h; showing the last 24 h.')
+        : '';
+      state.follow = true;
+      render();
+    } catch (err) {
+      $('note').textContent = `Couldn't load the trace: ${err.message}`;
+    }
+  }
+
+  function add(entry) {
+    if (entry.seq <= state.lastSeq) return;
+    state.lastSeq = entry.seq;
+    if (state.since && entry.at < state.since) return;
+    state.entries.push(entry);
+    if (state.entries.length > 5000) state.entries.splice(0, state.entries.length - 5000);
+    state.follow = state.follow && nearBottom();
+    render();
+  }
+
+  // Live: trace events on the desk stream (opt-in with ?trace=1). After a drop, fill the gap.
+  let source = null;
+  function connect() {
+    source = new EventSource(`${base}api/desk/stream?trace=1`);
+    source.addEventListener('open', async () => {
+      $('live').classList.add('on');
+      if (state.lastSeq) {
+        try {
+          const body = await (await fetch(`${base}api/desk/trace?after=${state.lastSeq}&limit=3000`)).json();
+          body.entries.forEach(add);
+        } catch { /* the next event fills in */ }
+      }
+    });
+    source.addEventListener('error', () => {
+      $('live').classList.remove('on');
+      if (source.readyState === EventSource.CLOSED) setTimeout(connect, 3000);
+    });
+    source.addEventListener('trace', (event) => {
+      try { add(JSON.parse(event.data)); } catch { /* malformed */ }
+    });
+  }
+
+  // ── controls ─────────────────────────────────────────────────────
+  $('window').addEventListener('click', (event) => {
+    const w = event.target.closest('button')?.dataset.w;
+    if (!w) return;
+    state.window = w;
+    store.set('window', w);
+    for (const b of $('window').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.w === w));
+    load();
+  });
+  for (const b of $('window').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.w === state.window));
+
+  document.querySelector('header').addEventListener('click', (event) => {
+    const chip = event.target.closest('.chip');
+    if (!chip) return;
+    const set = chip.dataset.source ? state.hiddenSources : state.hiddenKinds;
+    const key = chip.dataset.source || chip.dataset.kind;
+    if (set.has(key)) set.delete(key); else set.add(key);
+    store.set('hiddenSources', [...state.hiddenSources]);
+    store.set('hiddenKinds', [...state.hiddenKinds]);
+    render();
+  });
+
+  $('tl').addEventListener('click', (event) => {
+    if (event.target.closest('pre')) return;
+    const li = event.target.closest('.ev');
+    if (!li) return;
+    const seq = Number(li.dataset.seq);
+    if (state.open.has(seq)) state.open.delete(seq); else state.open.add(seq);
+    const keep = state.follow;
+    state.follow = false;
+    render();
+    state.follow = keep && nearBottom();
+  });
+  $('tl').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && event.target.classList.contains('ev')) event.target.click();
+  });
+
+  window.addEventListener('scroll', () => {
+    state.follow = nearBottom();
+    $('follow').hidden = state.follow;
+  }, { passive: true });
+  $('follow').addEventListener('click', () => {
+    state.follow = true;
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+    $('follow').hidden = true;
+  });
+
+  $('markForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const text = $('markText').value.trim();
+    try {
+      const response = await fetch(`${base}api/desk/trace`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'owner', kind: 'mark', summary: text ? `marked: ${text}` : 'marked this moment', data: { note: text || null, page: 'trace' } }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      $('markText').value = '';
+      state.follow = true;
+      toast('Marked');
+    } catch (err) {
+      toast(`Couldn't mark it: ${err.message}`);
+    }
+  });
+
+  $('copy').addEventListener('click', async () => {
+    const lines = state.entries.filter(visible).map((e) => `${clock(e.at)} ${e.source.padEnd(8)} ${e.kind.padEnd(26)} ${e.summary}`);
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      toast(`Copied ${lines.length} lines`);
+    } catch {
+      toast('Copy is blocked here; use the CLI (desk-trace.ts)');
+    }
+  });
+
+  $('theme').addEventListener('click', () => {
+    const dark = getComputedStyle(document.documentElement).colorScheme.includes('dark');
+    const next = dark ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    store.set('theme', next);
+  });
+
+  load().then(connect);
+</script>
+</body>
+</html>

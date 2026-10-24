@@ -1,0 +1,203 @@
+{
+  "latest": {
+    "when": "2026-09-25T13:08:12.683Z",
+    "harnessVersion": "2.0.0",
+    "fixtureSource": "model-bakeoff/tasks/piper-email-triage-decision.json",
+    "runsPerCandidate": 3,
+    "judges": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ],
+    "verdict": {
+      "fixtureId": "piper.email.triage-forwarded-renewal",
+      "passRateThreshold": 0.8,
+      "rubricThreshold": 0.7,
+      "rubricFloor": 0.6,
+      "recommendation": "claude-opus-5-5",
+      "reason": "cheapest reliable candidate (passRate 100%, 2555 out-tok/success (price unknown))",
+      "winner": "claude-opus-5-5",
+      "incumbent": "claude-sonnet-5",
+      "eligible": [
+        "claude-opus-5-5",
+        "deepseek-v4-pro:cloud",
+        "glm-5.3-flash"
+      ],
+      "infraIncomplete": false
+    },
+    "candidates": [
+      {
+        "model": "claude-opus-5-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.8266666666666668,
+        "rubricMin": 0.7175,
+        "rubricStdDev": 0.08463360574985698,
+        "rubricByJudge": {
+          "sonnet": 0.7975,
+          "deepseek-v4-pro": 0.8558333333333334
+        },
+        "meanSeconds": 29.409000000000002,
+        "meanOutputTokens": 2554.6666666666665,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-sonnet-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.2708333333333333,
+        "rubricMin": 0.010000000000000002,
+        "rubricStdDev": 0.3341427672251621,
+        "rubricByJudge": {
+          "sonnet": 0.2358333333333333,
+          "deepseek-v4-pro": 0.30583333333333335
+        },
+        "meanSeconds": 26.858999999999998,
+        "meanOutputTokens": 2221.6666666666665,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-haiku-4-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0,
+        "rubricMean": 0.5229166666666667,
+        "rubricMin": 0.42374999999999996,
+        "rubricStdDev": 0.11965807768619535,
+        "rubricByJudge": {
+          "sonnet": 0.5591666666666666,
+          "deepseek-v4-pro": 0.48666666666666675
+        },
+        "meanSeconds": 17.746333333333332,
+        "meanOutputTokens": 1411,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "output:notIncludes: \u2014",
+          "output:notIncludes: \u2014",
+          "output:notIncludes: \u2014"
+        ]
+      },
+      {
+        "model": "deepseek-v4-pro:cloud",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.88075,
+        "rubricMin": 0.82125,
+        "rubricStdDev": 0.044565962347962396,
+        "rubricByJudge": {
+          "sonnet": 0.8715,
+          "deepseek-v4-pro": 0.89
+        },
+        "meanSeconds": 32.44233333333333,
+        "meanOutputTokens": 3198.6666666666665,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "glm-5.3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0.6666666666666666,
+        "rubricMean": 0.8733333333333334,
+        "rubricMin": 0.82375,
+        "rubricStdDev": 0.04247957025310978,
+        "rubricByJudge": {
+          "sonnet": 0.8516666666666666,
+          "deepseek-v4-pro": 0.895
+        },
+        "meanSeconds": 50.147,
+        "meanOutputTokens": 7292.333333333333,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "output:notMatches: \\b(I('ve| have)? (sent|replied|created (a|the) task|archived))\\b"
+        ]
+      },
+      {
+        "model": "kimi-k3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0.6666666666666666,
+        "rubricMean": 0.8286666666666666,
+        "rubricMin": 0.75,
+        "rubricStdDev": 0.0702262217567073,
+        "rubricByJudge": {
+          "sonnet": 0.8039999999999999,
+          "deepseek-v4-pro": 0.8533333333333334
+        },
+        "meanSeconds": 54.958666666666666,
+        "meanOutputTokens": 3601.3333333333335,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "output:notIncludes: \u2014"
+        ]
+      },
+      {
+        "model": "minimax-m3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.15541666666666668,
+        "rubricMin": 0,
+        "rubricStdDev": 0.21979235781881856,
+        "rubricByJudge": {
+          "sonnet": 0.12916666666666668,
+          "deepseek-v4-pro": 0.18166666666666667
+        },
+        "meanSeconds": 9.098999999999998,
+        "meanOutputTokens": 2292.3333333333335,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4.1-flash",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0.6666666666666666,
+        "rubricMean": 0.5454166666666667,
+        "rubricMin": 0.025,
+        "rubricStdDev": 0.3680697586358083,
+        "rubricByJudge": {
+          "sonnet": 0.5558333333333333,
+          "deepseek-v4-pro": 0.535
+        },
+        "meanSeconds": 19.968666666666667,
+        "meanOutputTokens": 4095.3333333333335,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "output:notIncludes: \u2014"
+        ]
+      },
+      {
+        "model": "glm-5.3-flash",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.8519166666666665,
+        "rubricMin": 0.817,
+        "rubricStdDev": 0.026169585824430304,
+        "rubricByJudge": {
+          "sonnet": 0.8263333333333334,
+          "deepseek-v4-pro": 0.8775
+        },
+        "meanSeconds": 79.29,
+        "meanOutputTokens": 6738.666666666667,
+        "meanCostUsd": null,
+        "gateFailures": []
+      }
+    ]
+  },
+  "history": []
+}

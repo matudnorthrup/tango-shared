@@ -1,0 +1,21 @@
+id: files.local_write
+domain: files
+display_name: Local File Write
+description: Copy, move, rename, or otherwise organize allowed local files in user directories like Downloads, Documents, or 3d-printing.
+mode: write
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: path_query
+    required: true
+    inferable: false
+  - name: change_request
+    required: true
+    inferable: false
+examples:
+  - Move the newest STL from Downloads into the 3d-printing folder.
+  - Copy that G-code file into the MK4 job folder.
+classifier_hints:
+  - Use for non-repo local filesystem writes like copy, move, rename, or file organization.
+  - Prefer files.local_read when the request is only to inspect or summarize files without changing them.

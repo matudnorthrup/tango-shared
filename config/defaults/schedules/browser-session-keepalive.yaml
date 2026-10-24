@@ -1,0 +1,37 @@
+id: browser-session-keepalive
+display_name: Browser Session Keepalive
+description: >
+  Keep logged-in browser sessions alive for every site with a browser-session
+  descriptor that enables keepalive. Probes each scope, re-authenticates from
+  the site's configured 1Password item when needed, and rewrites the
+  session-scoped auth cookies with a real expiry so a browser restart no longer
+  throws away a valid login. Site descriptors live in the profile layer
+  (<profile>/config/browser-sites/*.yaml); this job is a no-op without them.
+enabled: true
+
+schedule:
+  # Every 45 minutes: shorter than a typical one-hour app token, and frequent
+  # enough that an identity-provider session never reaches its idle timeout.
+  cron: "*/45 * * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: browser-session-keepalive
+  timeout_seconds: 300
+
+delivery:
+  mode: none
+
+policy:
+  max_consecutive_failures: 3
+  priority: 0
+  backoff:
+    enabled: true
+    initial_seconds: 300
+    max_seconds: 3600
+
+tags:
+  - browser
+  - session
+  - maintenance

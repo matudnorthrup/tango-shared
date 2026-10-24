@@ -1,0 +1,27 @@
+id: finance.transaction_categorization
+domain: finance
+display_name: Categorize Transactions
+description: Review and categorize Lunch Money transactions, including merchant-based grouping, split decisions, and category assignment.
+mode: write
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: transaction_scope
+    required: false
+    inferable: true
+  - name: merchant_scope
+    required: false
+    inferable: true
+  - name: category_target
+    required: false
+    inferable: true
+examples:
+  - Go through these uncategorized transactions.
+  - Categorize the recent Amazon ones.
+  - Review the unconfirmed charges and assign categories.
+classifier_hints:
+  - Use for requests to review, categorize, split, or assign categories to transactions.
+  - Prefer finance.unreviewed_transactions when the user only wants a read-only summary of transactions needing review.
+evaluation:
+  safe_noop_allowed: true

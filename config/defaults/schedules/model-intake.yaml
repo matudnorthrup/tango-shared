@@ -1,0 +1,40 @@
+id: model-intake
+display_name: Model Intake
+description: >
+  Nightly check for newly released models on Ollama Cloud and Anthropic. When
+  one appears, screen it (1 run per fixture on a representative set) against
+  the production incumbents and report whether it's worth a full bake-off.
+  Silent on nights with nothing new. Respects the shared Ollama session limit
+  (defers when usage is high). Never changes assignments itself
+  (docs/guides/model-selection.md).
+enabled: true
+
+schedule:
+  cron: "15 2 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: model-intake
+  timeout_seconds: 7200
+
+delivery:
+  channel_id: "100000000000000026"
+  agent_id: watson
+
+completion:
+  workflow_id: model-intake
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 4
+  backoff:
+    enabled: true
+    initial_seconds: 600
+    max_seconds: 21600
+
+tags:
+  - models
+  - eval

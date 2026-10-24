@@ -1,0 +1,89 @@
+version: 1
+description: Generic Tango full-stack tmux startup.
+
+tmux:
+  session: tango
+  socketName: tango-service
+  cleanup:
+    staleSocket: true
+  legacySessions:
+    - tango-discord
+    - tango-voice
+    - kokoro
+    - whisper-server
+    - whisper-partials
+    - owntracks
+
+hooks:
+  enabled: true
+
+services:
+  - id: discord
+    name: Tango Discord runtime
+    enabled: true
+    optional: false
+    cwd: "${REPO_DIR}"
+    unsetEnv:
+      - CLAUDECODE
+    env:
+      DISCORD_LISTEN_ONLY: "false"
+    # Same supervisor loop as scripts/tmux/session.sh tango_discord_run_cmd: a crash restarts the
+    # bot after 10 s; five crashes within a minute of starting give up. Without it, a cold start
+    # (after a reboot) ran the bot bare and any crash left it down.
+    command: >-
+      fast=0; while :; do started=$(date +%s); "${NODE_BIN}" packages/discord/dist/main.js; code=$?;
+      [ $code -eq 0 ] && break;
+      if [ $(( $(date +%s) - started )) -lt 60 ]; then fast=$((fast + 1)); else fast=0; fi;
+      if [ $fast -ge 5 ]; then echo "[supervisor] bot crashed 5 times within 60s of start; giving up"; break; fi;
+      echo "[supervisor] bot exited with code $code; restarting in 10s"; sleep 10; done
+    tmux:
+      window: discord
+    retries:
+      attempts: 2
+      delayMs: 1000
+      timeoutMs: 15000
+    health:
+      checks:
+        - type: tmux-window
+
+  - id: remote-control
+    name: Remote control watchdog
+    enabled: true
+    optional: true
+    cwd: "${REPO_DIR}"
+    command: >-
+      scripts/remote-control-watchdog.sh Tango
+    tmux:
+      window: remote-control
+    retries:
+      attempts: 2
+      delayMs: 1000
+      timeoutMs: 15000
+    health:
+      checks:
+        - type: tmux-window
+
+  # Off by default: it needs a private usage collector (AI_USAGE_BIN, see
+  # apps/usage-ui/README.md). Enable it from the profile startup overlay.
+  - id: usage-ui
+    name: AI Usage Monitor
+    enabled: false
+    optional: true
+    cwd: "${REPO_DIR}/apps/usage-ui"
+    # Private cache, preferences, and renewal state are per profile.
+    env:
+      TANGO_PROFILE: "${TANGO_PROFILE}"
+    command: >-
+      "${NODE_BIN}" dist/server/main.js
+    tmux:
+      window: usage-ui
+    retries:
+      attempts: 2
+      delayMs: 1000
+      timeoutMs: 70000
+    health:
+      checks:
+        - type: tmux-window
+        - type: tcp
+          host: 127.0.0.1
+          port: 9380

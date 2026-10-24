@@ -1,0 +1,140 @@
+id: malibu
+enabled: false
+display_name: Malibu
+type: wellness
+
+# System prompt = personality + domain + rules
+system_prompt_file: agents/assistants/malibu/soul.md
+
+# MCP servers this agent can access
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: wellness
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "wellness"]
+    env:
+      ALLOWED_TOOL_IDS: "health_query,workout_sql,nutrition_log_items,system_clock,health_morning"
+  - name: wellness-db
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "wellness-db"]
+    # Resolve the active profile's wellness.db; no fixed profile path.
+    env:
+      ALLOWED_TOOL_IDS: "wellnessdb_search_product,wellnessdb_search_recipe,wellnessdb_get_recipe_detail,wellnessdb_day_summary,wellnessdb_day_range,wellnessdb_recent_meals,wellnessdb_active_products,wellnessdb_add_recipe,wellnessdb_update_recipe,wellnessdb_add_recipe_ingredient,wellnessdb_update_recipe_ingredient,wellnessdb_remove_recipe_ingredient,wellnessdb_archive_recipe,wellnessdb_duplicate_recipe,wellnessdb_add_product,wellnessdb_update_product"
+  - name: fatsecret
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "fatsecret"]
+    env:
+      ALLOWED_TOOL_IDS: "fatsecret_api"
+  - name: obsidian
+    # Note: read-only for Malibu (enforced at MCP server level)
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "obsidian"]
+    env:
+      ALLOWED_TOOL_IDS: "obsidian"
+  - name: agent-docs
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "agent-docs"]
+    env:
+      ALLOWED_TOOL_IDS: "agent_docs"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+  - name: screen
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "screen"]
+    env:
+      ALLOWED_TOOL_IDS: "screen"
+  - name: desk-mail
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "desk-mail"]
+    env:
+      ALLOWED_TOOL_IDS: "desk_mail"
+
+mcp:
+  default_servers:
+    - memory
+    - wellness
+    - wellness-db
+    - fatsecret
+
+# Runtime configuration
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  fallback: codex
+  # 2026-09-25 fleet bake-off (PR #305): Opus 5.5 beats 4.8 on grounded data (0.77 vs 0.61) at ~2x speed.
+  model: claude-opus-5-5
+  reasoning_effort: medium
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.80
+
+# Memory configuration
+memory:
+  post_turn_extraction: enabled
+  canonical_agent_id: malibu
+  alias_agent_ids:
+    - malibu
+    - malibu-ollama
+  # 2026-07-18 claude-primary flip (TGO-809): extraction stays on DeepSeek —
+  # the clones have extracted with it since June and it conserves the Claude
+  # subscription budget for turn traffic.
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.4
+  scheduled_reflection: enabled
+
+# Voice configuration
+voice:
+  call_signs:
+    - Malibu
+    - Mali
+    - "Coach Malibu"
+  default_channel_id: "100000000000000002"
+  smoke_test_channel_id: "100000000000001002"
+
+# Discord routing
+discord:
+  default_channel_id: "100000000000000002"
+  smoke_test_channel_id: "100000000000001002"
+
+# Legacy registry fields
+avatar_url: https://example.com/tango/avatars/malibu.png
+default_project: wellness
+response_mode: concise
+
+provider:
+  default: claude-oauth
+  reasoning_effort: medium
+  fallback:
+    - claude-oauth-secondary
+    - codex
+    # 2026-07-18 (TGO-809): a full Claude outage fails over to the
+    # unmetered Ollama/DeepSeek path after codex.
+    - ollama
+
+tools:
+  mode: off
+
+deterministic_routing:
+  enabled: true
+  project_scope: wellness
+  additional_domains:
+    - notes
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex
+      # 2026-07-18 (TGO-809): a full Claude outage fails over to the
+      # unmetered Ollama/DeepSeek path after codex.
+      - ollama

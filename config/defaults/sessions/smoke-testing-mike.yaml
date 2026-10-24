@@ -1,0 +1,5 @@
+id: smoke-testing-mike
+type: project
+agent: mike
+channels:
+  - discord:100000000000001034

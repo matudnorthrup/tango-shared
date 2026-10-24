@@ -1,0 +1,40 @@
+id: morning-flow-sentinel
+display_name: Morning Flow Sentinel
+description: >
+  Deterministically verify the daily note and morning brief artifacts after
+  the morning jobs should have completed. Repairs missing artifacts and alerts
+  on failed or missing input jobs.
+enabled: true
+
+schedule:
+  cron: "25 5 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: morning-flow-sentinel
+  timeout_seconds: 30
+
+delivery:
+  channel_id: "100000000000000001"
+  agent_id: watson
+
+completion:
+  workflow_id: morning-flow-sentinel
+  scope: daily
+
+policy:
+  max_consecutive_failures: 1
+  alert_channel_id: "100000000000000001"
+  priority: 20
+  backoff:
+    enabled: true
+    initial_seconds: 60
+    max_seconds: 600
+
+tags:
+  - watson
+  - planning
+  - daily
+  - sentinel
+  - deterministic

@@ -1,0 +1,89 @@
+id: kilo
+enabled: false
+# Isolated: kid-facing. See docs/guides/isolated-agents.md.
+isolated: true
+display_name: Kilo
+type: kid-finance
+
+system_prompt_file: agents/assistants/kilo/soul.md
+
+mcp_servers:
+  - name: kilo-ledger
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "kilo-ledger"]
+    env:
+      ALLOWED_TOOL_IDS: "kilo_ledger"
+      WORKER_ID: "kilo"
+
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  # 2026-06-10: kilo has no -ollama clone, so the agent itself moved to the
+  # Ollama backend (DeepSeek) with the rest of the fleet.
+  model: role:kid-ledger
+  reasoning_effort: low
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.70
+  timeout_seconds: 600
+
+memory:
+  post_turn_extraction: disabled
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.9
+  scheduled_reflection: disabled
+
+responsibilities:
+  - id: kid_spending_support
+    description: Provide child-facing spending information, questions, and instructions using only the Kilo ledger.
+    objectives:
+      - Explain Kilo spending information clearly and age-appropriately.
+      - Keep household finance outside the Kilo boundary.
+    autonomy:
+      default: supervised
+      writes_require_confirmation: true
+      purchase_or_payment: never
+    collaboration:
+      can_fulfill:
+        - purpose: kilo-spending-support
+          max_turns: 1
+          max_duration_seconds: 180
+          max_tool_calls: 4
+          visibility_modes: ["summary", "digest", "thread", "transcript", "silent"]
+
+voice:
+  call_signs:
+    - Kilo
+  default_channel_id: "100000000000000009"
+  smoke_test_channel_id: "100000000000001009"
+
+discord:
+  default_channel_id: "100000000000000009"
+  smoke_test_channel_id: "100000000000001009"
+
+access:
+  mode: allowlist
+  allowlist_channel_ids:
+    - "100000000000000009"
+    - "100000000000001009"
+
+default_project: personal
+response_mode: concise
+
+provider:
+  default: ollama
+  model: role:kid-ledger
+  reasoning_effort: low
+  fallback: []
+
+tools:
+  mode: off
+
+deterministic_routing:
+  enabled: false
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex

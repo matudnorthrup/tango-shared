@@ -1,0 +1,36 @@
+id: attachment-retention-sweep
+display_name: Attachment Retention Sweep
+description: >
+  Evaluate attachment retention rules and create proposed review decisions for
+  attachments that need review. This job never deletes or retires files.
+enabled: true
+
+schedule:
+  cron: "25 4 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: attachment-retention-sweep
+  timeout_seconds: 180
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: attachment-retention-sweep
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 0
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - maintenance
+  - attachments
+  - retention

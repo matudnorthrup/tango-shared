@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Optional wrapper; coordinator launches Chrome, client uses supported CDP/session flags.
+set -euo pipefail
+case "${TANGO_DESK_ITEM:-}" in
+  loom:*) exec loom resource browser -- "$@" ;;
+  *) exec agent-browser "$@" ;;
+esac

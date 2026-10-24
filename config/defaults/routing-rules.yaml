@@ -1,0 +1,9 @@
+rules:
+  - keywords: ["email review", "email session", "check email", "daily email", "email"]
+    target_hint: "Daily Email Review"
+
+  - keywords: ["meal prep", "recipe ideas", "what to cook", "meal planning"]
+    target_hint: "Meal Planning"
+
+  - keywords: ["messaging principles", "messaging discussion"]
+    target_hint: "Messaging Principles"

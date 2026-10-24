@@ -1,0 +1,54 @@
+id: research.multi_document_analysis
+domain: research
+display_name: Multi-Document Analysis
+description: Read and compare multiple documents, reports, or local files in parallel before synthesizing the result.
+mode: read
+route:
+  kind: worker
+  target_id: research-coordinator
+slots:
+  - name: documents
+    required: true
+    inferable: false
+    description: The documents, notes, reports, or files that must be read together.
+  - name: analysis_type
+    required: false
+    inferable: true
+    description: The kind of synthesis requested, such as compare, summarize, extract trends, or explain changes.
+  - name: task_class
+    required: false
+    inferable: true
+    description: Synthesis shape such as comparison, change detection, or thematic extraction.
+  - name: success_criteria
+    required: false
+    inferable: true
+    description: What the final synthesis must preserve or explain across the document set.
+  - name: must_answer
+    required: false
+    inferable: true
+    description: The exact cross-document questions the analysis must answer.
+evaluation:
+  task_class: multi_document_synthesis
+  success_criteria:
+    - Cover every requested document or clearly call out any missing one.
+    - Preserve the key differences, trends, or conflicts across documents instead of isolated summaries.
+    - Note unresolved contradictions, missing context, or weak evidence before concluding.
+  must_answer:
+    - What changed, differs, or repeats across the document set?
+  comparison_axes:
+    - agreement
+    - differences
+    - evidence_strength
+  required_fields:
+    - source_urls
+    - rationale
+    - caveats
+  quality_gate_required: true
+examples:
+  - Compare the last five memory eval reports
+  - Summarize trends across this week's dev logs
+  - Read these three notes and tell me what changed between them
+can_run_in_parallel: false
+classifier_hints:
+  - Use when the request clearly involves multiple documents, notes, reports, or local files that should be read together.
+  - Prefer files.local_read or research.note_read for single-document requests.

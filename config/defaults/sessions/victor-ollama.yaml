@@ -1,0 +1,5 @@
+id: victor-ollama
+type: persistent
+agent: victor-ollama
+channels:
+  - "discord:100000000000000004"

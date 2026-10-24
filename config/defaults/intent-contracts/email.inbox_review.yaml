@@ -1,0 +1,26 @@
+id: email.inbox_review
+domain: email
+display_name: Review Inbox
+description: Read and summarize unread, actionable, or inbox email that needs review.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: account_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - What unread emails need attention today?
+  - Review my inbox and tell me what needs a reply
+  - Summarize the actionable email from the last 24 hours
+can_run_in_parallel: true
+classifier_hints:
+  - Use for Gmail inbox triage, unread email review, actionable-email summaries, or requests to identify messages needing a reply.
+  - Prefer this over calendar or finance review when the request is about email, inbox state, or reply obligations.

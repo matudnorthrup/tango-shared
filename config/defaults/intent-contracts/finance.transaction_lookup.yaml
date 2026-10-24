@@ -1,0 +1,26 @@
+id: finance.transaction_lookup
+domain: finance
+display_name: Look Up Transactions
+description: Read and summarize specific Lunch Money transactions, merchants, categories, or recent spending windows.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: merchant
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - What were my most recent Amazon transactions?
+  - Show me the Costco charges from this month
+  - Look up my latest restaurant transactions
+can_run_in_parallel: true
+classifier_hints:
+  - Use for looking up or summarizing specific Lunch Money transactions, merchants, categories, or recent spending windows that are not specifically about unreviewed inbox cleanup.
+  - Prefer finance.unreviewed_transactions only when the request is explicitly about uncategorized, unconfirmed, or inbox-style review work.

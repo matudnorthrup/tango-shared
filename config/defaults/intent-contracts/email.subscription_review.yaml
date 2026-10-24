@@ -1,0 +1,32 @@
+id: email.subscription_review
+domain: email
+display_name: Subscription Review
+description: Review subscription or newsletter email patterns, recommend unsubscribes, and perform confirmed unsubscribe cleanup when explicitly directed.
+mode: mixed
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: mailbox_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+  - name: confirmed_candidates
+    required: false
+    inferable: true
+    description: Candidate IDs, numbers, senders, or newsletter names the user explicitly approved for unsubscribe action.
+examples:
+  - Review new subscriptions and recommend unsubscribes.
+  - What newsletters am I getting that I should probably clean up?
+  - Unsubscribe from candidates 1 and 3 from this morning's digest.
+  - Remove USUB-2026-06-19-02.
+classifier_hints:
+  - Use for subscription, newsletter, or inbox-cleanup review requests rather than general unread-email summaries.
+  - Use when the user confirms specific unsubscribe candidates from an Email Unsubscribe Review digest.
+  - Confirmed unsubscribe execution may require Gmail plus browser automation; follow the email_subscription_cleanup skill safety rails.
+  - Prefer email.inbox_review when the request is simply what unread or actionable messages need attention today.

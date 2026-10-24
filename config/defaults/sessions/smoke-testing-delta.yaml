@@ -1,0 +1,5 @@
+id: smoke-testing-delta
+type: project
+agent: delta
+channels:
+  - discord:100000000000001032

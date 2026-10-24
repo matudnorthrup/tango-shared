@@ -1,0 +1,75 @@
+{
+  "id": "memory.extraction.nothing-worth-saving",
+  "title": "Post-turn memory extraction: pure small talk must return []",
+  "category": "memory",
+  "ownerAgent": "watson",
+  "worker": "watson",
+  "taskShape": "structured_extraction",
+  "safetyTier": "read_only_bounded",
+  "tools": false,
+  "runs": 3,
+  "timeoutMs": 180000,
+  "reasoningEffort": "low",
+  "candidateModels": [
+    "deepseek-v4-pro:cloud",
+    "deepseek-v4.1-flash",
+    "glm-5.3",
+    "glm-5.3-flash",
+    "minimax-m3",
+    "kimi-k3",
+    "claude-haiku-4-5",
+    "claude-sonnet-5",
+    "gpt-oss:120b",
+    "nemotron-3-ultra"
+  ],
+  "benchmarkModels": [],
+  "incumbentModel": "deepseek-v4-pro:cloud",
+  "judge": {
+    "models": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ]
+  },
+  "system": "You are a memory extraction component. (No system prompt is sent in production; the extraction prompt below is the entire request.)",
+  "source": "packages/discord/src/memory-capture.ts buildExtractionPrompt — prompt replicated verbatim (no system prompt in production; reasoningEffort low). Post-turn pass runs on the Ollama extraction provider (deepseek-v4-pro:cloud) for Claude-primary agents; watson's importance_threshold is 0.4. Synthetic exchange.",
+  "outputAssertions": [
+    {
+      "type": "matches",
+      "value": "\\[\\s*\\]"
+    },
+    {
+      "type": "notMatches",
+      "value": "\"content\"\\s*:"
+    }
+  ],
+  "prompt": "Extract any facts, decisions, preferences, or commitments worth remembering from this exchange.\nDo not extract volatile current-state facts claimed by the State Reconciler; state owns those facts.\nReturn a JSON array of objects: [{content, importance (0-1), tags: string[]}].\nIf nothing worth remembering, return [].\n\nUser: Ha, good morning. Coffee's finally kicking in. That was a wild sunset last night, huh? Anyway, nothing much going on, just saying hi before I get started.\nAgent: Good morning! Glad the coffee's doing its job. Sunsets like that are hard to beat. Say hi anytime — I'm here whenever you want to get started.",
+  "successCriteria": [
+    "Returns an empty JSON array ([]), bare or in a json code fence.",
+    "Does not manufacture a preference (e.g. 'user likes sunsets' or 'user drinks coffee in the morning') from small talk.",
+    "Does not wrap the answer in explanatory prose that obscures the empty result.",
+    "Does not store agent-side pleasantries as memories."
+  ],
+  "knownFailureModes": [
+    "Extracts 'user drinks coffee' or 'user enjoyed the sunset' as a memory.",
+    "Returns a low-importance object instead of an empty array.",
+    "Returns prose like 'Nothing to extract' without a JSON array.",
+    "Returns null, {} or an array containing an empty object."
+  ],
+  "rubric": [
+    {
+      "name": "correct_empty_result",
+      "weight": 0.6,
+      "description": "Output is exactly an empty array — nothing extracted from pure small talk."
+    },
+    {
+      "name": "no_fabrication",
+      "weight": 0.2,
+      "description": "No invented preferences or facts inferred from greetings, coffee, or the sunset."
+    },
+    {
+      "name": "format_validity",
+      "weight": 0.2,
+      "description": "Parseable JSON ([] bare or fenced) with no extraneous prose."
+    }
+  ]
+}

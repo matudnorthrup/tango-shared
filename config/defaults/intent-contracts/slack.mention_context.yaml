@@ -1,0 +1,18 @@
+id: slack.mention_context
+domain: slack
+display_name: Slack Mention Context Scan
+description: Scan Slack channels for recent @mentions of the owner, gather surrounding context (thread or preceding messages), and produce a contextual summary with suggested response direction.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: hours
+    required: false
+    inferable: true
+examples:
+  - Check if anyone mentioned me in Slack recently.
+  - Any new Slack mentions I need to respond to?
+classifier_hints:
+  - Use when the user wants to find and understand recent Slack mentions directed at them.
+  - Prefer research.slack_digest for general channel summaries not focused on mentions.

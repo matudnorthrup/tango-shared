@@ -1,0 +1,7 @@
+id: cod-e
+type: quick
+display_name: Cod-E
+provider:
+  default: claude-oauth
+default_project: personal
+response_mode: concise

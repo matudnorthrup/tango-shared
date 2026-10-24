@@ -1,0 +1,25 @@
+id: travel.route_plan
+domain: travel
+display_name: Route Plan
+description: Plan and summarize a travel route, drive, or directions request, optionally using current location and travel constraints.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: destination
+    required: true
+    inferable: false
+  - name: origin
+    required: false
+    inferable: true
+  - name: constraints
+    required: false
+    inferable: true
+examples:
+  - Plan the drive from Las Vegas to Mesa Junction, Nevada.
+  - What's the best route to Pine Gap from here?
+  - Give me directions to the Prusa store and keep it interstate-heavy.
+classifier_hints:
+  - Use for route or directions requests where the user wants a travel plan rather than just current location, weather, or diesel stops.
+  - Prefer travel.diesel_lookup when the main request is fuel-stop discovery along the route.

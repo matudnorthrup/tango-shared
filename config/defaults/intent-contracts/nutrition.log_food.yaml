@@ -1,0 +1,27 @@
+id: nutrition.log_food
+domain: wellness
+display_name: Log Food Items
+description: Log ad-hoc individual food items or simple meal descriptions into the nutrition diary.
+mode: write
+route:
+  kind: workflow
+  target_id: wellness.log_food_items
+slots:
+  - name: items
+    required: true
+    inferable: false
+  - name: meal
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+examples:
+  - Log 2 eggs and toast for breakfast
+  - I had a protein bar
+  - Log a yogurt treat as a snack
+  - want to try adding that rice now?
+  - Ok. Try adding freeze dried apples
+classifier_hints:
+  - Use for ad-hoc foods described inline rather than named recurring meals.
+  - Short follow-up commands or questions about adding food still count, even when phrased conversationally.

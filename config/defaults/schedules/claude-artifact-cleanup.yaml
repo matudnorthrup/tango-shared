@@ -1,0 +1,37 @@
+id: claude-artifact-cleanup
+display_name: Claude Artifact Cleanup
+description: >
+  Remove expired Tango-owned stateless Claude CLI session artifacts from the
+  local Claude project history directory to keep the project history from
+  filling up with one-shot orchestrator turns.
+enabled: true
+
+schedule:
+  cron: "5 6 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: claude-artifact-cleanup
+  timeout_seconds: 180
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: claude-artifact-cleanup
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 0
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - maintenance
+  - claude
+  - cleanup

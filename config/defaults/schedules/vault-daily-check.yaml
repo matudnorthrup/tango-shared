@@ -1,0 +1,40 @@
+id: vault-daily-check
+display_name: Vault Daily Check
+description: >
+  Refresh the Obsidian memory index, run the deterministic vault audit,
+  classify findings into a cleanup plan, and write a Vault job-log entry for
+  daily brief aggregation. Only new review items and warning-level findings are
+  flagged for daily planning. Deterministic safe cleanup application is an
+  explicit operator opt-in, not the repo default.
+enabled: true
+
+schedule:
+  cron: "55 4 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: vault-daily-check
+  timeout_seconds: 300
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: vault-daily-check
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 7
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - vault
+  - obsidian
+  - daily
+  - maintenance

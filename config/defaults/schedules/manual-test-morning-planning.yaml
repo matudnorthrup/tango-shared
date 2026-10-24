@@ -1,0 +1,109 @@
+id: manual-test-morning-planning
+display_name: Manual Test Morning Planning
+description: >
+  Manual dry-run validation clone of morning planning for smoke/test channels.
+  It reads the same planning inputs and triage rules but must not mutate daily
+  notes.
+enabled: false
+runtime: v2
+
+schedule:
+  cron: "15 5 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - planning.morning_review
+  deterministic_agent_id: watson
+  task: |
+    Run a dry-run morning planning validation for the smoke/test channel.
+
+    Do NOT create, overwrite, or update any Obsidian notes. Do NOT call
+    Obsidian write commands. Return the sections you would write and explain
+    anything filtered out.
+
+    **Step 1: Read today's brief, triage rules, daily note, and yesterday's note.**
+    - Read Records/Briefs/YYYY-MM-DD.md for today's
+      brief (flagged items, calendar, overnight job summaries)
+    - Read References/Email Triage Rules.md before
+      selecting any email-derived priorities or Other Work tasks. These rules
+      define Ignore, Delegate, and Flag behavior for email sources.
+    - Read Planning/Daily/YYYY-MM-DD.md for existing
+      generated sections and human-owned context
+    - Read yesterday's daily note for carryover tasks (unchecked items)
+    - Get today's calendar events from both accounts (--all for
+      non-primary calendars)
+
+    **Step 2: Produce proposed generated sections only.**
+    Before proposing output, filter every email-sourced item from the brief or
+    email logs through the triage rules. Do not add ignored or delegated email
+    items to "Today's Priorities", "Other Work", or action
+    recommendations.
+    Return proposed content for only these sections:
+    - "Today's Priorities" — top 3-5 tasks based on brief flags,
+      carryovers, and calendar. Include dates in format: task—YYYY-MM-DD
+    - "Other Work" — lower-priority / spare-capacity items. APPEND only
+      (`section ... --append`); this section is human-owned and also holds
+      unscheduled work and completed rotation items. Never list an OPEN
+      Current Task Rotation item here.
+
+    **Filtering rules — do NOT surface these as priorities:**
+    - Current Task Rotation items. The rotation and the orientation nudge
+      already cover them; copying them into priorities is duplicate noise.
+    - Recurring meetings of any kind.
+    - Work meetings, recurring or not. Non-recurring PERSONAL or family
+      calendar events (doctor's appointment, school event, one-off
+      appointment) ARE allowed and often useful.
+    - Email items marked Ignore or Delegate by
+      References/Email Triage Rules.md. This applies to
+      both priorities and Other Work tasks. For example, emails from
+      alerts@example.com must not become daily-note tasks when the triage rules
+      say to ignore that source.
+    - Domain renewals: these are handled through other monitoring channels
+    - GitHub PAT expiration alerts: only flag if the token belongs to the owner
+      personally (not service accounts or shared org tokens)
+    - Linear login alerts: these are informational, not actionable
+    - "Check email log" reminders: email review is handled separately
+    - Vault Audit "Known Review" items: these stay in the brief/log as
+      maintenance context. Only add Vault Audit items to today's priorities
+      when they appear under the brief's Flagged section.
+
+    **Step 3: Return validation evidence.**
+    Include:
+    - Proposed "Today's Priorities"
+    - Proposed "Other Work" additions
+    - A short "Filtered by triage rules" list naming any ignored/delegated
+      email-derived items that were excluded
+    - Confirmation that no Obsidian writes were performed
+  timeout_seconds: 300
+
+provider:
+  model: role:job-planning
+
+delivery:
+  channel_id: "100000000000001001"
+  agent_id: watson
+
+completion:
+  workflow_id: manual-test-morning-planning
+  scope: daily
+  check_before_run: false
+  mark_on_success: false
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-test-tasks
+  priority: 10
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - morning
+  - planning
+  - manual-test

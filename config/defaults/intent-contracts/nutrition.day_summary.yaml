@@ -1,0 +1,27 @@
+id: nutrition.day_summary
+domain: wellness
+display_name: Nutrition Day Summary
+description: Read existing nutrition diary data for one or more days or meals and summarize, compare, or analyze it.
+mode: read
+route:
+  kind: workflow
+  target_id: wellness.analyze_nutrition_day
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: compare_date_scopes
+    required: false
+    inferable: true
+  - name: meal
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - What have I eaten today?
+  - How were my macros yesterday?
+  - Compare today's breakfast to yesterday's
+classifier_hints:
+  - Use for questions about already-logged food, macro totals, meal summaries, or day-to-day comparisons.

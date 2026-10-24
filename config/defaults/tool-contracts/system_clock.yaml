@@ -1,0 +1,27 @@
+id: system_clock
+family: runtime
+description: Read the current local date and time from the Tango runtime.
+owner_worker: personal-assistant
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: local_runtime
+  target: system-clock
+input_fields:
+  - timezone? (optional IANA timezone like America/Los_Angeles)
+output_fields:
+  - iso
+  - timeZone
+  - date
+  - time
+  - dateTime
+legacy:
+  commands:
+    - none (handled directly inside the runtime)
+  read_paths:
+    - runtime clock
+  write_paths:
+    - none

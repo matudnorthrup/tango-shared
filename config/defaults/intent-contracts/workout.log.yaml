@@ -1,0 +1,27 @@
+id: workout.log
+domain: wellness
+display_name: Log Workout
+description: Log workout sets, reps, weights, or workout session progress.
+mode: write
+route:
+  kind: worker
+  target_id: workout-recorder
+slots:
+  - name: exercise
+    required: false
+    inferable: true
+  - name: sets
+    required: false
+    inferable: true
+examples:
+  - Bench 100 for 8
+  - Set 2 was 15 at 45 lbs
+  - Log three sets of Arnold press
+  - Log my push day workout
+  - Start Push Day A
+  - Start Pull Day B
+  - Start a pull day session
+  - Record my leg day
+classifier_hints:
+  - Use for workout progress updates, set logging, reps, weights, and active session notes.
+  - Use for starting or recording push/pull/leg day sessions, including named routines like Push Day A/B or Pull Day B.

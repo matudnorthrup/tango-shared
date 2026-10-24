@@ -1,0 +1,349 @@
+{
+  "latest": {
+    "when": "2026-07-17T22:57:52.338Z",
+    "harnessVersion": "2.0.0",
+    "fixtureSource": "model-bakeoff/tasks/research-sync-notion-obsidian.json",
+    "runsPerCandidate": 5,
+    "verdict": {
+      "fixtureId": "research.sync.notion-obsidian",
+      "passRateThreshold": 1,
+      "rubricThreshold": 0.7,
+      "rubricFloor": 0.6,
+      "recommendation": null,
+      "reason": "no candidate met the reliability bar",
+      "winner": null,
+      "incumbent": null,
+      "eligible": [],
+      "infraIncomplete": false
+    },
+    "candidates": [
+      {
+        "model": "deepseek-v4-pro:cloud",
+        "benchmarkOnly": false,
+        "validRuns": 5,
+        "infraRuns": 0,
+        "passRate": 0,
+        "rubricMean": 0.5865,
+        "rubricMin": 0.51,
+        "rubricStdDev": 0.04841487374764082,
+        "meanSeconds": 214.67979999999997,
+        "meanOutputTokens": 10550.8,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "cap: hit the tool-iteration cap without a final answer",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+        ]
+      },
+      {
+        "model": "claude-haiku-4-5",
+        "benchmarkOnly": false,
+        "validRuns": 5,
+        "infraRuns": 0,
+        "passRate": 0,
+        "rubricMean": 0.567,
+        "rubricMin": 0.4775,
+        "rubricStdDev": 0.07355949972641196,
+        "meanSeconds": 34.6346,
+        "meanOutputTokens": 1972.8,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+        ]
+      },
+      {
+        "model": "claude-sonnet-5",
+        "benchmarkOnly": false,
+        "validRuns": 5,
+        "infraRuns": 0,
+        "passRate": 0,
+        "rubricMean": 0.67,
+        "rubricMin": 0.62,
+        "rubricStdDev": 0.03563705936241092,
+        "meanSeconds": 36.2818,
+        "meanOutputTokens": 2656.2,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+        ]
+      },
+      {
+        "model": "claude-opus-4-8",
+        "benchmarkOnly": false,
+        "validRuns": 5,
+        "infraRuns": 0,
+        "passRate": 0,
+        "rubricMean": 0.6904999999999999,
+        "rubricMin": 0.6174999999999999,
+        "rubricStdDev": 0.04029267923581158,
+        "meanSeconds": 50.654999999999994,
+        "meanOutputTokens": 3129.2,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+          "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+        ]
+      }
+    ]
+  },
+  "history": [
+    {
+      "when": "2026-06-10T01:40:09.431Z",
+      "harnessVersion": "2.0.0",
+      "fixtureSource": "model-bakeoff/tasks/research-sync-notion-obsidian.json",
+      "runsPerCandidate": 5,
+      "verdict": {
+        "fixtureId": "research.sync.notion-obsidian",
+        "passRateThreshold": 1,
+        "rubricThreshold": 0.7,
+        "rubricFloor": 0.6,
+        "recommendation": null,
+        "reason": "no candidate met the reliability bar",
+        "winner": null,
+        "incumbent": null,
+        "eligible": [],
+        "infraIncomplete": false
+      },
+      "candidates": [
+        {
+          "model": "deepseek-v4-pro:cloud",
+          "benchmarkOnly": false,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0.2,
+          "rubricMean": 0.7110000000000001,
+          "rubricMin": 0.63,
+          "rubricStdDev": 0.10274482955360821,
+          "meanSeconds": 235.41040000000004,
+          "meanOutputTokens": 8372.2,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        },
+        {
+          "model": "glm-5",
+          "benchmarkOnly": false,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.7187,
+          "rubricMin": 0.64,
+          "rubricStdDev": 0.04084433865298836,
+          "meanSeconds": 47.3624,
+          "meanOutputTokens": 1772.6,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        },
+        {
+          "model": "minimax-m2.5",
+          "benchmarkOnly": false,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.6535,
+          "rubricMin": 0.43,
+          "rubricStdDev": 0.11314371392171993,
+          "meanSeconds": 180.45700000000002,
+          "meanOutputTokens": 3205,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "benchmarkOnly": false,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.5959999999999999,
+          "rubricMin": 0.53,
+          "rubricStdDev": 0.039515819616958485,
+          "meanSeconds": 153.05739999999997,
+          "meanOutputTokens": 7033,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\".\",\"matches\":\"00000000\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\".\",\"matches\":\"00000000\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        },
+        {
+          "model": "claude:sonnet",
+          "benchmarkOnly": true,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.7244999999999999,
+          "rubricMin": 0.675,
+          "rubricStdDev": 0.029470324056582762,
+          "meanSeconds": 93.989,
+          "meanOutputTokens": 4437.4,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        }
+      ]
+    },
+    {
+      "when": "2026-06-10T01:37:32.055Z",
+      "harnessVersion": "2.0.0",
+      "fixtureSource": "model-bakeoff/tasks/research-sync-notion-obsidian.json",
+      "runsPerCandidate": 5,
+      "verdict": {
+        "fixtureId": "research.sync.notion-obsidian",
+        "passRateThreshold": 1,
+        "rubricThreshold": 0.7,
+        "rubricFloor": 0.6,
+        "recommendation": null,
+        "reason": "no candidate met the reliability bar",
+        "winner": null,
+        "incumbent": null,
+        "eligible": [],
+        "infraIncomplete": false
+      },
+      "candidates": [
+        {
+          "model": "deepseek-v4-pro:cloud",
+          "benchmarkOnly": false,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0.2,
+          "rubricMean": 0.7110000000000001,
+          "rubricMin": 0.63,
+          "rubricStdDev": 0.10274482955360821,
+          "meanSeconds": 235.41040000000004,
+          "meanOutputTokens": 8372.2,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        },
+        {
+          "model": "glm-5",
+          "benchmarkOnly": false,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.7187,
+          "rubricMin": 0.64,
+          "rubricStdDev": 0.04084433865298836,
+          "meanSeconds": 47.3624,
+          "meanOutputTokens": 1772.6,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:exa_search: called 0x, need >=1",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:exa_search: called 0x, need >=1",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        },
+        {
+          "model": "minimax-m2.5",
+          "benchmarkOnly": false,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.6535,
+          "rubricMin": 0.43,
+          "rubricStdDev": 0.11314371392171993,
+          "meanSeconds": 180.45700000000002,
+          "meanOutputTokens": 3205,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "benchmarkOnly": false,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.5959999999999999,
+          "rubricMin": 0.53,
+          "rubricStdDev": 0.039515819616958485,
+          "meanSeconds": 153.05739999999997,
+          "meanOutputTokens": 7033,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\".\",\"matches\":\"00000000\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\".\",\"matches\":\"00000000\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        },
+        {
+          "model": "claude:sonnet",
+          "benchmarkOnly": true,
+          "validRuns": 5,
+          "infraRuns": 0,
+          "passRate": 0,
+          "rubricMean": 0.7244999999999999,
+          "rubricMin": 0.675,
+          "rubricStdDev": 0.029470324056582762,
+          "meanSeconds": 93.989,
+          "meanOutputTokens": 4437.4,
+          "meanCostUsd": null,
+          "gateFailures": [
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}",
+            "tool:notion: no call satisfied argCheck {\"path\":\"operation\",\"equals\":\"archive\"}"
+          ]
+        }
+      ]
+    }
+  ]
+}

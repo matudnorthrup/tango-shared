@@ -1,0 +1,31 @@
+id: finance.budget_review
+domain: finance
+display_name: Review Budget
+description: Read and summarize current month budget performance, remaining budget, or category budget status from Lunch Money.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: category_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - How am I doing against budget this month?
+  - What's left in my groceries budget?
+  - Review my category budgets for this month
+  - What else is left from our weekly finance review?
+  - What is still open from the finance review?
+can_run_in_parallel: true
+classifier_hints:
+  - Use for Lunch Money budget performance, remaining budget, category budget review, or month-to-date spending against budget.
+  - Use as one intent for unified Finance Review runs that include budget pace, rolling spending signals, and reimbursement visibility checks.
+  - Use for current-status questions about what remains from a finance review, but verify live state before summarizing old review-note flags.
+  - When reimbursement state is included in a Finance Review, use receipt_registry rather than Obsidian Base files as the authoritative source.
+  - Prefer finance.transaction_lookup or finance.unreviewed_transactions when the request is about specific transactions rather than budget status.

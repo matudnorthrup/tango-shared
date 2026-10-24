@@ -1,0 +1,24 @@
+id: research.web_lookup
+domain: research
+display_name: Web Research Lookup
+description: Search the web or external sources for factual answers, product information, documentation, or current reference material.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: query
+    required: true
+    inferable: false
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Look up the official Prusa MK4S product page
+  - Find the current price of Prusament PETG
+  - Search the web for current OpenSCAD documentation on hull()
+can_run_in_parallel: true
+classifier_hints:
+  - Use for web search, research, docs lookup, pricing checks, and external-source fact finding.
+  - Prefer this over note read when the request asks for current, official, or external information.
+  - Prefer research.deep_research or research.fact_verification when the user asks for a deep dive, detailed comparison, or multi-angle verification.

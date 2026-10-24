@@ -1,0 +1,23 @@
+id: files.local_read
+domain: files
+display_name: Local File Review
+description: Read and summarize local non-repo files or directories on disk, such as Downloads, Desktop, or other ad-hoc user file locations.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: path_query
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Use the worker to list the most recent files in ~/Downloads and summarize what kinds of files are there.
+  - What are the newest files in Downloads?
+  - Summarize the latest files on my Desktop
+classifier_hints:
+  - Use for reading, listing, or summarizing local filesystem contents outside the repo and outside Obsidian note-reading flows.
+  - Prefer this over notes.note_read when the request is about arbitrary local files, directories, or recent downloads rather than an Obsidian note.
+  - Prefer this over engineering.codebase_read when the request is about user files like Downloads or Desktop rather than source code in the repo.

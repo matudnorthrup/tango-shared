@@ -1,0 +1,27 @@
+id: nutrition.log_recipe
+domain: wellness
+display_name: Log Recipe Meal
+description: Log a named recurring meal or recipe, optionally with ingredient or quantity overrides.
+mode: write
+route:
+  kind: workflow
+  target_id: wellness.log_recipe_meal
+slots:
+  - name: recipe_query
+    required: true
+    inferable: false
+  - name: meal
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: ingredient_mentions
+    required: false
+    inferable: true
+examples:
+  - Log my protein yogurt bowl for breakfast
+  - Log my lean taco bowl for dinner
+  - "Log today's lunch: asian power salad with extra chicken"
+classifier_hints:
+  - Use when the meal sounds like a saved recipe, staple, or recurring named meal.

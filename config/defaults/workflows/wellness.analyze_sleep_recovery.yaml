@@ -1,0 +1,21 @@
+id: wellness.analyze_sleep_recovery
+display_name: Analyze Sleep Recovery
+description: Read sleep and recovery data and answer user questions about sleep, HRV, RHR, readiness, or short trends. The owning worker chooses the exact health queries, windows, and comparisons.
+owner_worker: health-analyst
+mode: read
+status: implemented
+handler: analyze_sleep_recovery
+tool_contract_ids:
+  - healthdb.recovery_summary
+input_fields:
+  - date_scope? (last_night by default)
+  - focus? (sleep, stages, recovery, readiness)
+examples:
+  - How did I sleep last night?
+  - Can you take a look at my sleep data from last night?
+  - What did my recovery look like today?
+planning:
+  summary: Use when the user asks for sleep, recovery, readiness, HRV, or RHR interpretation. The workflow only scopes the objective; the health worker still decides the exact queries and analysis path.
+  when_to_use:
+    - the user asks about last night sleep or recovery
+    - the user asks for HRV, RHR, or readiness interpretation

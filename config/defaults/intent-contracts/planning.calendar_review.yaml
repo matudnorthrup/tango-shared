@@ -1,0 +1,23 @@
+id: planning.calendar_review
+domain: planning
+display_name: Review Calendar
+description: Read and summarize calendar events, schedule windows, or availability from Google Calendar.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: account_scope
+    required: false
+    inferable: true
+examples:
+  - What's on my calendar today?
+  - What does tomorrow look like on my calendar?
+  - Summarize my schedule for this week
+can_run_in_parallel: true
+classifier_hints:
+  - Use for reading or summarizing Google Calendar events, schedule, availability, or day and week plans without creating or editing events.
+  - Prefer this over note or email review when the request is primarily about scheduled events or free time.

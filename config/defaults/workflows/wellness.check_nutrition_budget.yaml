@@ -1,0 +1,30 @@
+id: wellness.check_nutrition_budget
+display_name: Check Nutrition Budget
+description: Read current nutrition diary state alongside activity and calorie context to answer calorie, protein, or room-left questions. The owning worker chooses the exact diary queries, health lookups, and analysis.
+owner_worker: nutrition-logger
+mode: read
+status: implemented
+handler: check_nutrition_budget
+tool_contract_ids:
+  - fatsecret.day_summary
+  - healthdb.today_summary
+  - healthdb.activity_summary
+input_fields:
+  - date_scope? (today by default)
+  - meal? (meal being considered)
+  - planned_item? (food or meal being evaluated)
+  - focus? (calories, protein, deficit, room_left, snack_budget)
+  - goal? (cut, maintain, fuel_training, protein_target)
+examples:
+  - Do I still have room for yogurt tonight?
+  - How many calories do I have left today?
+  - Am I on pace for protein after today's activity?
+planning:
+  summary: Use when the user wants to know how current nutrition intake relates to the day's calorie, protein, or activity budget. The workflow scopes the objective, but the nutrition worker still decides the exact reads, comparisons, and recommendation logic.
+  when_to_use:
+    - the user asks how much room is left for food today
+    - the user asks about calorie or protein budget relative to today's intake or activity
+    - the user asks whether a planned snack or meal still fits the day
+  ask_for_clarification_when:
+    - the planned food is too vague to evaluate and no reasonable interpretation exists
+    - the user wants a recommendation but the relevant goal is unclear

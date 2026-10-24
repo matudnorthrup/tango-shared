@@ -1,0 +1,33 @@
+# Discord Channel Directory
+#
+# Publishable starter values only. Replace these in a profile override for a
+# real installation.
+
+agents:
+  watson: "100000000000000001"
+  malibu: "100000000000000002"
+  sierra: "100000000000000003"
+  victor: "100000000000000004"
+  foxtrot: "100000000000000005"
+  papa: "100000000000000006"
+  kilo: "100000000000000009"
+  echo: "100000000000000031"
+  delta: "100000000000000032"
+  oscar: "100000000000000033"
+  mike: "100000000000000034"
+
+system:
+  alerts: "100000000000000010"
+  log: "100000000000000011"
+
+topics:
+  email: "100000000000000012"
+  finance: "100000000000000013"
+  ai-briefings: "100000000000000014"
+
+projects:
+  work: "100000000000000020"
+  side-project: "100000000000000021"
+  engineering: "100000000000000022"
+  3d-printing: "100000000000000023"
+  projects: "100000000000000024"

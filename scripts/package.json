@@ -1,0 +1,9 @@
+{
+  "name": "@tango/scripts",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@mapbox/polyline": "^1.2.1",
+    "geolib": "^3.3.4"
+  }
+}

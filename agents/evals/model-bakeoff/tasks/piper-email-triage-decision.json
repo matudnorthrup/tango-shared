@@ -1,0 +1,87 @@
+{
+  "id": "piper.email.triage-forwarded-renewal",
+  "title": "Piper: triage a forwarded vendor-renewal email (decision + draft, no send)",
+  "category": "email",
+  "source": "Sept 2026 fleet bake-off: Piper's core job is work email triage with source-grounded decisions and proposal-only drafts. Tools are not exposed to Piper on :9100, so the synthetic email is embedded in the prompt.",
+  "ownerAgent": "piper",
+  "worker": "piper",
+  "systemFromAgent": "piper",
+  "taskShape": "single_turn_answer",
+  "safetyTier": "read_only_judgment",
+  "tools": false,
+  "runs": 3,
+  "reasoningEffort": "high",
+  "incumbentModel": "claude-sonnet-5",
+  "candidateModels": [
+    "claude-opus-5-5",
+    "claude-sonnet-5",
+    "claude-haiku-4-5",
+    "deepseek-v4-pro:cloud",
+    "glm-5.3",
+    "kimi-k3",
+    "minimax-m3",
+    "deepseek-v4.1-flash",
+    "glm-5.3-flash"
+  ],
+  "benchmarkModels": [],
+  "judge": {
+    "models": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ]
+  },
+  "outputAssertions": [
+    {
+      "type": "notIncludes",
+      "value": "\u2014"
+    },
+    {
+      "type": "notMatches",
+      "value": "\\b(I('ve| have)? (sent|replied|created (a|the) task|archived))\\b"
+    }
+  ],
+  "system": "Scenario context: Tuesday 2026-09-22, 9:05am. The user is co-working with you in their private Piper channel. The email below arrived in the configured work inbox.",
+  "prompt": "Can you triage this one for me? What is it, what do I actually need to do, and draft me a reply if one is needed.\n\n---\nFrom: Dana Whitfield <dana@northwind-ops.example>\nTo: me\nDate: Mon, 21 Sep 2026 17:48\nSubject: Fwd: Your Brightline Analytics renewal\n\nCan you look at this before Thursday? I thought we agreed to drop to the Team tier. -D\n\n---------- Forwarded message ----------\nFrom: Brightline Analytics Billing <billing@brightline.example>\nDate: Mon, 21 Sep 2026 09:12\nSubject: Your Brightline Analytics renewal\n\nHi there,\n\nThanks for being a Brightline customer! Your Business plan (25 seats, billed annually) will automatically renew on October 1, 2026 at $18,000/year, reflecting our updated pricing.\n\nIf you'd like to change plans or seat counts, please reply to this email or update your subscription in the admin console no later than 5 business days before your renewal date. Changes requested after that window will take effect at your next renewal.\n\nNeed help? Reply here and your account manager, Priya, will get back to you within 2 business days.\n\nBest,\nBrightline Billing\n---",
+  "successCriteria": [
+    "Identifies it as action-required with a real deadline: plan changes must be made 5 business days before Oct 1 (about Thursday Sep 24), which lines up with Dana's 'before Thursday' ask, and notes the reply path's up-to-2-business-day response time makes replying today the safe move.",
+    "Surfaces what changed: auto-renewal on the Business plan at a new price, while Dana believes the team agreed to drop to Team tier; flags that the agreement should be confirmed.",
+    "Recommends a clear next step (e.g. make the change in the admin console or reply to billing today, and confirm with Dana), without creating tasks or sending anything.",
+    "Provides a complete, human-sounding reply draft (to Brightline billing and/or a short note to Dana) as a proposal for approval.",
+    "Source-grounded ('per Dana's forward', 'per the billing email'), no invented facts (e.g. Team tier price, seat counts not in the email), and no em-dashes per Piper's voice."
+  ],
+  "knownFailureModes": [
+    "Treats it as FYI because the sender is a billing robot, missing the change window.",
+    "Miscomputes the deadline (e.g. uses Oct 1 or ignores business days).",
+    "Invents Team-tier pricing or claims the change was already agreed with the vendor.",
+    "Says it sent the reply or created a task.",
+    "Generic AI-sounding draft or em-dash-laden voice."
+  ],
+  "rubric": [
+    {
+      "name": "triage_judgment",
+      "weight": 0.3,
+      "description": "Correct priority and deadline reasoning (5 business days before Oct 1, reply-latency risk), surfaces the Business vs Team discrepancy."
+    },
+    {
+      "name": "actionability",
+      "weight": 0.25,
+      "description": "Clear, specific next steps and owner; user arrives at a decision, not a debrief."
+    },
+    {
+      "name": "draft_quality",
+      "weight": 0.2,
+      "description": "Complete, natural, context-aware draft(s) ready to approve; proposal only."
+    },
+    {
+      "name": "grounding",
+      "weight": 0.15,
+      "description": "Claims cite the email/forward; no invented prices, seats, or agreements."
+    },
+    {
+      "name": "voice",
+      "weight": 0.1,
+      "description": "Piper's warm, concise, professional voice; no em-dashes; no raw field dumps."
+    }
+  ],
+  "now": "2026-09-22T09:05:00-07:00"
+}

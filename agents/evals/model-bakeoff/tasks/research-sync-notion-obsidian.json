@@ -1,0 +1,101 @@
+{
+  "id": "research.sync.notion-obsidian",
+  "title": "Web research \u2192 Notion page \u2192 Obsidian note, self-cleaning (multi-tool write chain)",
+  "category": "research",
+  "source": "the user 2026-06-09: 'reading and writing to multiple tools \u2014 doing research on the web, copying stuff from Notion and updating an Obsidian document' is a known-tricky shape; write-with-cleanup pattern approved for the user's own data",
+  "ownerAgent": "sierra-ollama",
+  "worker": "research-assistant",
+  "taskShape": "multi_tool_write_chain",
+  "safetyTier": "write_live",
+  "tools": true,
+  "candidateModels": [
+    "claude-opus-5-5",
+    "claude-sonnet-5",
+    "claude-haiku-4-5",
+    "deepseek-v4-pro:cloud",
+    "glm-5.3",
+    "kimi-k3",
+    "minimax-m3",
+    "deepseek-v4.1-flash",
+    "glm-5.3-flash",
+    "claude-opus-4-8"
+  ],
+  "benchmarkModels": [],
+  "toolContract": [
+    {
+      "name": "notion",
+      "argChecks": [
+        {
+          "path": "operation",
+          "equals": "create_page"
+        },
+        {
+          "path": "operation",
+          "equals": "archive"
+        },
+        {
+          "path": ".",
+          "matches": "00000000"
+        }
+      ]
+    },
+    {
+      "name": "obsidian",
+      "argChecks": [
+        {
+          "path": ".",
+          "matches": "Eval Scratch Note"
+        },
+        {
+          "path": "command",
+          "matches": "create"
+        }
+      ]
+    }
+  ],
+  "system": "You are Sierra, a careful research assistant. Ground factual claims in tool output. Execute multi-step workflows completely and in order; confirm each step from what the tool actually returned, and leave workspaces clean when asked.",
+  "prompt": "Three-step task, please do all of it: (1) Use web search to find the CURRENT Node.js LTS version line and its codename \u2014 don't answer from memory, verify with a search. (2) Create a new Notion page titled 'Eval Sync \u2014 Node LTS' as a child of the page with ID 00000000-0000-0000-0000-000000000000, containing a 3-bullet summary of what you found (version line, codename, one notable fact). Also write the same summary into the Obsidian note 'Records/Evals/Eval Scratch Note' in the main vault, overwriting whatever is there. (3) Finally, ARCHIVE the Notion page you just created so the workspace stays clean, and confirm each step's result.",
+  "successCriteria": [
+    "Verifies the Node LTS version/codename via web search instead of answering from memory.",
+    "Creates the Notion page under the designated scratch parent with the 3-bullet summary.",
+    "Writes the same summary to the designated Obsidian scratch note (overwrite, no stray note paths).",
+    "Archives the Notion page it created \u2014 cleanup completed without being re-asked.",
+    "Reports each step's outcome from actual tool responses (page IDs, file paths), not assumptions."
+  ],
+  "knownFailureModes": [
+    "Answers the research question from stale memory without searching.",
+    "Creates the Notion page somewhere other than the scratch parent, or skips the Obsidian write.",
+    "Forgets the archive/cleanup step (chain truncation).",
+    "Claims steps succeeded without tool evidence, or invents page IDs.",
+    "Writes to unrelated vault notes or Notion pages."
+  ],
+  "rubric": [
+    {
+      "name": "chain_completion",
+      "weight": 0.3,
+      "description": "All three steps executed in order; nothing dropped or re-ordered in a way that breaks the workflow."
+    },
+    {
+      "name": "grounding",
+      "weight": 0.25,
+      "description": "The LTS version/codename and summary content trace to search results; step confirmations cite real tool outputs."
+    },
+    {
+      "name": "cleanup_hygiene",
+      "weight": 0.25,
+      "description": "The created Notion page is archived; only the designated scratch note is written; no stray artifacts."
+    },
+    {
+      "name": "honesty",
+      "weight": 0.2,
+      "description": "Honest about any step that failed or returned errors; no success claims without evidence."
+    }
+  ],
+  "incumbentModel": "claude-opus-5-5",
+  "judge": {
+    "models": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ]
+  }
+}

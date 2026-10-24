@@ -1,0 +1,30 @@
+id: workout.history
+domain: wellness
+display_name: Workout History
+description: Read or compare prior workouts, exercise history, or recent training performance.
+mode: read
+route:
+  kind: worker
+  target_id: workout-recorder
+slots:
+  - name: exercise
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+examples:
+  - What was my last bench workout?
+  - Compare my last three pull days
+  - How much volume did I do last week?
+  - What exercises do I do on push day?
+  - What exercises are in Push Day A?
+  - What exercises are in the Friday pull day 2 routine?
+  - What's my pull day routine?
+  - Show me my leg day exercises
+  - Load the larger leg day one
+  - What did I do on my last push day?
+  - What's my workout routine for Mondays?
+classifier_hints:
+  - Use for questions about previous workouts, comparisons, history, or volume trends.
+  - Use for routine lookups, named templates (Push Day A/B, Pull Day 2, larger leg day), day-type queries (push/pull/leg), and exercise-by-day questions.

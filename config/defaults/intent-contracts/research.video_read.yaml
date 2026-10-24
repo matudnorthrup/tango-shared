@@ -1,0 +1,21 @@
+id: research.video_read
+domain: research
+display_name: Read Video
+description: Read, transcribe, analyze, or summarize a specific video or YouTube link.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: video_query
+    required: true
+    inferable: false
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Summarize this YouTube video for me.
+  - Pull the transcript from this video and tell me the main points.
+classifier_hints:
+  - Use for specific video or YouTube transcript/summary requests.
+  - Prefer research.web_lookup for general web research that is not centered on a specific video asset.

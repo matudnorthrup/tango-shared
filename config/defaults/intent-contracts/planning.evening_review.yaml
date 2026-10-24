@@ -1,0 +1,22 @@
+id: planning.evening_review
+domain: planning
+display_name: Evening Review
+description: Run an end-of-day review that closes out today, captures loose ends, and prepares tomorrow.
+mode: mixed
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Run evening review.
+  - Close out today and prep tomorrow.
+  - Help me wrap up the day.
+classifier_hints:
+  - Use for end-of-day review or tomorrow-prep requests that combine multiple planning systems.
+  - Prefer planning.calendar_review when the user only wants a read of the calendar.

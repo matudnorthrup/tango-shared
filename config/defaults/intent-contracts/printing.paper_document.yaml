@@ -1,0 +1,31 @@
+id: printing.paper_document
+domain: printing
+display_name: Paper Document Printing
+description: Create PDF previews or print paper copies of documents such as itineraries, reservations, confirmations, boarding passes, tickets, and travel packet backups.
+mode: write
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: document_query
+    required: true
+    inferable: false
+  - name: source_hint
+    required: false
+    inferable: true
+  - name: printer_target
+    required: false
+    inferable: true
+  - name: print_constraints
+    required: false
+    inferable: true
+examples:
+  - Print hard copies of my flight itinerary and lodging reservation.
+  - Make a PDF packet from the confirmation emails for my trip.
+  - Find the Airbnb reservation email and print the reservation details.
+  - Preview the boarding pass PDF before sending it to the paper printer.
+classifier_hints:
+  - Use for paper documents, PDFs, hard copies, printer queue jobs, itineraries, reservations, confirmations, boarding passes, tickets, and travel packets.
+  - Prefer this over printing.job_prepare_or_start whenever the requested item is a document or PDF rather than a 3D model, STL, G-code, OpenSCAD file, or fabrication job.
+  - If the user asks only to find or summarize a document without creating a PDF or printout, prefer the relevant email, notes, research, or files read intent instead.
+  - If the user explicitly asks for hard copies, this is a write-shaped request even though the worker should preview or dry-run before a real print unless the printer destination is known.

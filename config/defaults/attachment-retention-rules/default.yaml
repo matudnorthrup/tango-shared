@@ -1,0 +1,11 @@
+id: default-attachment-retention-v1
+schema_version: 1
+description: Keep attachment artifacts by default; destructive cleanup must be proposed by narrower rules and reviewed before application.
+enabled: true
+priority: 0
+scope:
+  type: global
+actions:
+  all:
+    decision: keep
+    reason: Default v1 keeps originals and derived records until a narrower retention rule proposes review, retirement, or deletion.

@@ -1,0 +1,18 @@
+{
+  "name": "@tango/voice",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node ../../scripts/dev/load-cap.mjs vitest run"
+  },
+  "dependencies": {
+    "@tango/core": "0.1.0",
+    "undici": "6.21.3",
+    "@tango/tango-voice": "1.0.0"
+  }
+}

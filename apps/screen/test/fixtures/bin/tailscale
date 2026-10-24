@@ -1,0 +1,4 @@
+#!/bin/sh
+# Tests never ask the real tailscale: its CLI can take seconds on a busy
+# machine, and its mappings differ from machine to machine.
+echo "{}"

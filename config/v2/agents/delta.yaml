@@ -1,0 +1,59 @@
+id: delta
+enabled: false
+# Isolated: serves a family member, not the owner. No built-in tools, no
+# shared memory/state, strictly self-scoped memory, safe MCP tools only.
+# See docs/guides/isolated-agents.md.
+isolated: true
+display_name: Delta
+type: youth-research
+
+system_prompt_file: agents/assistants/delta/soul.md
+
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: youth-tools
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "youth-tools"]
+    env:
+      ALLOWED_TOOL_IDS: "exa_search,exa_answer,youtube_transcript,youtube_analyze,safety_alert"
+
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  model: claude-opus-5-5
+  reasoning_effort: high
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.80
+  timeout_seconds: 900
+
+memory:
+  post_turn_extraction: enabled
+  canonical_agent_id: delta
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.5
+  scheduled_reflection: disabled
+
+# Real channel ids, enabled: true, and the access allowlist (channels plus the
+# family member's and owner's Discord user ids) come from the profile overlay.
+discord:
+  default_channel_id: "100000000000000032"
+  smoke_test_channel_id: "100000000000001032"
+
+default_project: personal
+response_mode: explain
+
+provider:
+  default: claude-oauth
+  reasoning_effort: high
+  # Never codex: degraded Codex hops run a CLI with filesystem access.
+  fallback:
+    - claude-oauth-secondary
+    - ollama
+
+tools:
+  mode: off
+
+deterministic_routing:
+  enabled: false

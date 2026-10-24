@@ -1,0 +1,57 @@
+id: memory-maintenance
+display_name: Memory Maintenance
+description: >
+  Periodic Obsidian vault organization — clean up stale daily notes,
+  update task list references, and ensure planning files are consistent.
+enabled: true
+runtime: v2
+
+schedule:
+  cron: "0 14 * * 0,3"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - notes.vault_maintenance_review
+  task: |
+    Run memory maintenance on the Obsidian vault.
+
+    1. Check recent daily notes (past 7 days) for consistency:
+       - Missing frontmatter fields (morning_review_completed,
+         evening_review_completed)
+       - Incomplete sections that should have been filled in
+    2. Review backlogs for stale items:
+       - Read the area backlogs (Work Backlog.md,
+         Personal Backlog.md, etc.)
+       - Note any tasks that have been on the backlog for over 30 days
+    3. Check that the current week's plan file exists and is populated.
+    4. Report findings: notes needing cleanup, stale tasks found,
+       planning gaps identified.
+
+    Do NOT make changes — only report. The user will decide what to
+    update.
+  timeout_seconds: 300
+
+provider:
+  model: role:job-digest
+
+delivery:
+  channel_id: "100000000000000026"
+  agent_id: watson
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  priority: 1
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - maintenance
+  - biweekly

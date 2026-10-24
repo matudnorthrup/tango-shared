@@ -1,0 +1,45 @@
+id: operations.decision_packet
+domain: operations
+display_name: Prepare Decision Packet
+description: Gather Linear, Obsidian, and memory context into a source-grounded operations packet with facts, assumptions, open questions, options, risks, and next actions.
+mode: read
+route:
+  kind: worker
+  target_id: operations-assistant
+slots:
+  - name: decision_topic
+    required: true
+    inferable: false
+    description: Decision, review, meeting, negotiation issue, business question, or operational choice to prepare for.
+  - name: audience
+    required: false
+    inferable: true
+    description: Optional audience such as the owner, advisor, accountant, business partner, or another Tango agent.
+  - name: source_scope
+    required: false
+    inferable: true
+    description: Optional Linear project, Obsidian note, date range, or document set to ground the packet.
+examples:
+  - Prepare a decision packet for the vendor agreement call with my advisor.
+  - Pull together options and open questions for the side-hustle pricing decision.
+  - Make me a accountant question packet for the business cash-flow issue.
+can_run_in_parallel: true
+evaluation:
+  task_class: decision_support
+  success_criteria:
+    - Distinguish facts, assumptions, open questions, options, and recommended next actions.
+    - Cite or name the source records that grounded the packet.
+    - Include professional-review gates for legal, tax, accounting, investment, or other high-stakes conclusions.
+  must_answer:
+    - What do we know?
+    - What is still uncertain?
+    - What should the owner ask or decide next?
+  required_fields:
+    - source_records
+    - open_questions
+    - next_actions
+  quality_gate_required: true
+classifier_hints:
+  - Use when Victor is asked to prepare for an advisor, accountant, business, negotiation, or operations decision.
+  - Use for high-stakes decision support where the answer should organize records rather than offer final professional advice.
+  - Prefer research.deep_research when the primary need is current public-source research rather than internal project/context synthesis.

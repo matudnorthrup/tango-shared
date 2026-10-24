@@ -1,0 +1,76 @@
+id: nightly-email-unsubscribe-review
+display_name: Email Unsubscribe Review
+description: >
+  Scan accessible Gmail accounts for noisy newsletters, subscriptions, and
+  notification lists that may be worth unsubscribing from. Surface candidates
+  for user confirmation; do not unsubscribe during the scheduled run.
+enabled: true
+runtime: v2
+
+obsidian_log:
+  domain: Email
+  job_name: Email Unsubscribe Review
+
+schedule:
+  cron: "40 3 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - email.subscription_review
+  deterministic_agent_id: watson
+  task: |
+    Run the nightly email unsubscribe review. Follow
+    agents/skills/email-subscription-cleanup.md.
+
+    This scheduled run is discovery-only:
+    - Scan all accessible Gmail accounts for recent newsletters,
+      subscriptions, marketing mail, and noisy notification lists.
+    - Use the vault note `References/Email Triage Rules.md` before
+      recommending anything.
+    - Read and update the subscription tracking note at
+      Records/Finance/Email Subscriptions.md when you classify senders.
+    - Do not click unsubscribe links, submit preference forms, send
+      unsubscribe emails, or archive/delete threads in this scheduled run.
+
+    Candidate rules:
+    - Recommend only senders that are recurring, low-value, and safe to remove.
+    - Do not recommend transactional, billing, security, legal, medical,
+      family/school, client/customer, work-operational, or account-access mail.
+    - De-duplicate by sender/newsletter identity across accounts.
+
+    Return a concise summary that can be written to the Email job log. Include
+    an explicit **Flagged:** section when the user should confirm unsubscribe
+    candidates. Each flagged bullet must include a stable candidate ID, sender
+    or newsletter name, account, and one short reason. If there are no
+    candidates, return "No flagged items."
+  timeout_seconds: 540
+
+provider:
+  model: claude-opus-5-5
+  reasoning_effort: medium
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: nightly-email-unsubscribe-review
+  scope: daily
+
+policy:
+  max_consecutive_failures: 2
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  priority: 4
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - email
+  - daily
+  - subscriptions

@@ -1,0 +1,55 @@
+id: sinking-fund-reconciliation
+display_name: Sinking Fund Reconciliation (Deprecated)
+description: >
+  Deprecated standalone weekly sinking fund reconciliation. The rolling Finance
+  Review now includes sinking fund contribution checks and draw recommendations.
+enabled: false
+runtime: v2
+
+obsidian_log:
+  domain: Finance
+  job_name: Sinking Fund Reconciliation
+
+schedule:
+  cron: "0 7 * * 0"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: conditional-agent
+  pre_check:
+    handler: foxtrot-sinking-fund-reconciliation-context
+  deterministic_agent_id: foxtrot
+  worker_id: personal-assistant
+  intent_ids:
+    - finance.sinking_fund_reconciliation
+  task_template: |
+    This standalone weekly sinking fund reconciliation is disabled. Use the
+    rolling Finance Review instead.
+  timeout_seconds: 300
+
+provider:
+  model: claude-sonnet-5
+
+delivery:
+  channel_id: "100000000000000005"
+  agent_id: foxtrot
+
+completion:
+  workflow_id: sinking-fund-reconciliation-weekly
+  scope: weekly
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: ledger-tasks
+  priority: 5
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - foxtrot
+  - finance
+  - deprecated
+  - sinking-fund

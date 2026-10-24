@@ -1,0 +1,5 @@
+id: project:finance
+type: project
+agent: foxtrot
+channels:
+  - discord:100000000000000013

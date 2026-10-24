@@ -1,0 +1,26 @@
+id: health.metric_lookup_or_question
+domain: wellness
+display_name: Health Metric Lookup Or Question
+description: Read and answer concrete questions grounded in recent health, recovery, activity, weight, or physiology-related metrics without requiring a full trend-analysis workflow.
+mode: read
+route:
+  kind: worker
+  target_id: health-analyst
+slots:
+  - name: metric_focus
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: question
+    required: false
+    inferable: true
+examples:
+  - What was my resting heart rate yesterday?
+  - How many steps did I get today?
+  - Sometimes I feel hungrier after a walk. Does my recent data line up with that?
+classifier_hints:
+  - Use for concrete health-data-backed questions that are narrower than a multi-week trend analysis and broader than just last night's sleep/recovery snapshot.
+  - Prefer this over health.trend_analysis when the user is asking about a specific metric, recent event, or grounded physiology question rather than windows, averages, or long-term trends.
+  - Prefer health.sleep_recovery when the request is specifically about last night sleep, readiness, HRV, or today's recovery snapshot.

@@ -1,0 +1,112 @@
+id: sinking-fund-reconciliation-month-end
+display_name: Finance Review Close Prep
+description: >
+  Month-end close-prep invocation of the unified Finance Review. The legacy id
+  is retained for schedule continuity.
+enabled: true
+runtime: v2
+
+obsidian_log:
+  domain: Finance
+  job_name: Finance Review Close Prep
+
+# The finance_review skill refuses to run without a scheduler-initialized
+# finance-review entity, so close prep needs the same state checklist as the
+# rolling review. Monthly cadence keys it apart from the weekly entity.
+state_tracking:
+  enabled: true
+  domain: finance
+  cadence: monthly
+  verification: none
+  review_checklist: finance
+  review_phase: close_prep
+
+schedule:
+  cron: "0 7 28,29 * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  deterministic_agent_id: foxtrot
+  worker_id: personal-assistant
+  intent_ids:
+    - finance.budget_review
+    - finance.sinking_fund_reconciliation
+    - finance.transaction_lookup
+  task: |
+    Run a close-prep Finance Review for the Foxtrot finance thread.
+
+    Review parameters:
+    - review_phase: close_prep
+    - dry_run: false
+    - review_window: current month-to-date
+    - lookback_window: since the most recent review note
+
+    IMPORTANT: Confirm today's date before doing any date math.
+
+    Follow the unified finance_review skill guidance in
+    agents/skills/finance-review.md. This is the same Finance Review process as
+    the rolling review, with stricter close-prep exit criteria.
+
+    The scheduler has already initialized this month's `finance-review` state
+    entity (phase `close_prep`). Query it before Step 1 and record each of the
+    seven evidence-backed checkpoints exactly as the skill specifies. A prose
+    summary is not a checkpoint, and you must not mark the overall review
+    complete yourself. Update the one initialized entity with today's
+    `review_date`, `last_execution_status: running`, and a non-null
+    `schedule_run_id`. Never create another `finance-review` entity; stop as
+    blocked if that lookup is not unique.
+
+    Required behavior:
+    1. Refresh stale Lunch Money/Plaid account data before judging missing
+       transactions, reimbursements, or sinking fund contributions.
+    2. Identify transaction, receipt, reimbursement, budget, and sinking fund
+       blockers that would prevent month close.
+    3. For employer reimbursements, use receipt_registry structured
+       actions first. Reconcile against live ExpenseDesk history before claiming an
+       item is pending, unsubmitted, submitted, or reimbursed. Do not infer
+       reimbursement amounts from Base views, old review notes, or note search.
+    4. For sinking fund draws, true-up all intentional remaining draws unless
+       explicitly carried forward.
+    5. Create or overwrite the review note at
+       Records/Finance/Reviews/YYYY-MM-DD Finance Review.md.
+       Use the finance_review frontmatter standard:
+       types: [[Record]], areas: [[Finance]], record_kind: finance_review,
+       review_phase: close_prep, dry_run: false.
+    6. Return a concise summary with close blockers, true-up recommendations,
+       unresolved reimbursements, budget target changes to consider, and review
+       note path.
+
+    Do not submit to ExpenseDesk or mutate Lunch Money categories/status unless the
+    user explicitly approved a correction during the review.
+
+    Rate limit: wait 0.3s between Lunch Money API calls.
+  # Same seven-checkpoint workload as the rolling review, which needed 15
+  # minutes; close prep timed out three times at 600s (Jun 28/29, Jul 28).
+  timeout_seconds: 900
+
+provider:
+  model: claude-sonnet-5
+
+delivery:
+  channel_id: "100000000000000005"
+  agent_id: foxtrot
+
+completion:
+  workflow_id: finance-review-close-prep
+  scope: monthly
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: ledger-tasks
+  priority: 6
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - foxtrot
+  - finance
+  - close-prep

@@ -1,0 +1,45 @@
+id: kilo-ledger-monitor
+display_name: Kilo Ledger Monitor
+description: >
+  Deterministically monitor the profile-configured Kilo backing account, apply
+  posted monthly Kilo funding, settle posted account transfers against
+  already-recorded Kilo spending, and reconcile expected external balance
+  against Lunch Money.
+enabled: true
+
+obsidian_log:
+  domain: Finance
+  job_name: Kilo Ledger Monitor
+
+schedule:
+  cron: "45 4 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: kilo-ledger-monitor
+  timeout_seconds: 120
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: kilo-ledger-monitor
+  scope: daily
+
+policy:
+  max_consecutive_failures: 1
+  alert_channel_id: "100000000000000010"
+  concurrency_group: ledger-tasks
+  priority: 12
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - foxtrot
+  - finance
+  - kilo
+  - daily
+  - deterministic

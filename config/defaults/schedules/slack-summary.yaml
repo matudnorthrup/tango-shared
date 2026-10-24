@@ -1,0 +1,59 @@
+id: slack-summary
+display_name: Slack Channel Summary
+description: >
+  Synthesize recent activity across all Slack channels the Watson bot
+  is in. Runs at 4 PM daily. Agent reads channels, filters for signal,
+  and produces a concise narrative digest.
+enabled: true
+runtime: v2
+
+schedule:
+  cron: "0 16 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: research-assistant
+  intent_ids:
+    - research.slack_digest
+  deterministic_agent_id: sierra
+  task: |
+    Run a Slack digest for ALL channels the bot is in.
+
+    Follow the slack_digest skill guidance. Use the slack tool to:
+    1. List all channels
+    2. Fetch the last 24 hours of history from each
+    3. Resolve user IDs to names
+    4. Read thread replies for high-engagement threads (reply_count >= 3)
+
+    Synthesize the activity into a concise narrative briefing organized
+    by significance, not by channel. Lead with what matters most.
+    Group related discussions across channels. Skip noise.
+
+    This is a daily digest — the reader should finish knowing what
+    happened today without having to open Slack.
+  timeout_seconds: 300
+
+provider:
+  model: role:job-digest
+
+delivery:
+  channel_id: "100000000000000028"
+  agent_id: watson
+
+completion:
+  workflow_id: slack-summary
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  backoff:
+    enabled: true
+    initial_seconds: 300
+    max_seconds: 3600
+
+tags:
+  - watson
+  - slack
+  - daily

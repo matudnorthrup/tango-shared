@@ -1,0 +1,26 @@
+id: workouts.today_summary
+family: workouts
+description: Read the active or most recent workout summary from the legacy Postgres tracker.
+owner_worker: workout-recorder
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: postgres
+  target: workouts
+input_fields:
+  - workout_id? (falls back to active or latest)
+output_fields:
+  - workout
+  - sets
+  - volume_by_exercise
+legacy:
+  commands:
+    - ~/.tango/tools/workout-tracker/workout.sh active
+    - ~/.tango/tools/workout-tracker/workout.sh summary <workout_id>
+  read_paths:
+    - "Postgres tables: workouts, sets, exercises"
+  write_paths:
+    - none (legacy flow was read-only)

@@ -1,0 +1,496 @@
+{
+  "note": "Model assignment records: every entry links a task or agent-default to the bake-off evidence behind it. Maintained alongside verdicts/; the config writer (DEV-67) will generate these. Dates are when the assignment decision was made.",
+  "assignments": [
+    {
+      "scope": "agent-default",
+      "target": "sierra-ollama",
+      "seam": "config/v2/agents/sierra-ollama.yaml runtime.model",
+      "model": "deepseek-v4-pro:cloud",
+      "previous": "minimax-m2.5",
+      "decided": "2026-06-09",
+      "evidence": [
+        "verdicts/travel.itinerary.constraint-planning.json \u2014 minimax 0.60 mean (ineligible), deepseek-pro wins on consistency (0.81-0.83)",
+        "verdicts/travel.diesel.route-aware.json \u2014 minimax below quality bar; deepseek-pro only eligible candidate",
+        "verdicts/travel.route.fairview-detour.json \u2014 all candidates pass; bounded tasks are model-insensitive"
+      ],
+      "rationale": "The fallback default must pass Sierra's research/travel portfolio, not win on the cheapest subset. minimax stays available for per-task pins on bounded jobs.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "charlie-ollama",
+      "seam": "config/v2/agents/charlie-ollama.yaml runtime.model",
+      "model": "deepseek-v4-pro:cloud",
+      "previous": "deepseek-v4-flash",
+      "decided": "2026-06-09",
+      "evidence": [
+        "verdicts/travel.diesel.route-aware.json \u2014 flash fabricated a station in 1/3 runs (0.45 rubric floor)",
+        "verdicts/research.sync.notion-obsidian.json \u2014 flash 0.60 mean, flailing tool loops",
+        "operating rule: defaults are the dependability tier; flash never had verdict coverage as a default"
+      ],
+      "rationale": "Policy-driven: a fabrication-prone model cannot be a fallback default. flash remains available for per-task pins it earns (e.g. it leads email-triage quality at 0.94 but is not cheaper there).",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "travel.route.fairview-detour",
+      "seam": "per-task (no standing schedule); agent default covers it",
+      "model": "minimax-m2.5",
+      "decided": "2026-06-09",
+      "evidence": [
+        "verdicts/travel.route.fairview-detour.json \u2014 incumbent retained, cheapest reliable"
+      ],
+      "appliedAt": null,
+      "requiresRestart": false
+    },
+    {
+      "scope": "task",
+      "target": "travel.diesel.route-aware",
+      "seam": "sierra travel portfolio (agent default carries it; flip design in TGO-809)",
+      "model": "claude-opus-4-8",
+      "previous": "deepseek-v4-pro:cloud (via sierra-ollama default)",
+      "decided": "2026-07-17",
+      "evidence": [
+        "verdicts/travel.diesel.route-aware.json \u2014 opus 0.94 rubric (min 0.91) @78s vs deepseek 0.86 (min 0.84) @71s; speed parity, meaningful accuracy win",
+        "sonnet-5 scored higher (0.96) but 1.8x slower (127s); haiku 0.78 is an accuracy downgrade despite engine's token-based pick"
+      ],
+      "rationale": "Criteria 2026-07-17 (cost irrelevant; accuracy then speed; ties keep Ollama): Tier-0 fuel-stop accuracy for real road trips; opus wins accuracy at equal speed.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "travel.itinerary.constraint-planning",
+      "seam": "sierra travel portfolio (agent default carries it; flip design in TGO-809)",
+      "model": "claude-opus-4-8",
+      "previous": "deepseek-v4-pro:cloud",
+      "decided": "2026-07-17",
+      "evidence": [
+        "verdicts/travel.itinerary.constraint-planning.json \u2014 opus 0.90 (min 0.86) @232s vs deepseek 0.81 (min 0.76) @178s",
+        "claude-haiku-4-5 DQ'd on consistency floor (0.47) \u2014 do not route itinerary judgment to haiku"
+      ],
+      "rationale": "Accuracy win (+0.09 mean, +0.10 worst-run) on a judgment-heavy task that is not latency-critical; opus over sonnet-5 (equal accuracy, 30% faster).",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "travel.route.fairview-detour",
+      "seam": "per-task (no standing schedule); agent default covers it",
+      "model": "deepseek-v4-pro:cloud",
+      "previous": "minimax-m2.5 (stale pin)",
+      "decided": "2026-07-17",
+      "evidence": [
+        "verdicts/travel.route.fairview-detour.json \u2014 deepseek 0.93 (min 0.91) @17s dominates minimax 0.85 (min 0.80) @53s on both axes",
+        "opus 0.96 @67s: +0.03 accuracy not worth 4x latency on a bounded lookup; criteria tie-rule keeps Ollama"
+      ],
+      "rationale": "Retire the stale minimax pin; bounded route lookups stay on deepseek (fast, accurate, zero Claude-budget draw).",
+      "appliedAt": null,
+      "requiresRestart": false
+    },
+    {
+      "scope": "task",
+      "target": "shopping.walmart.product-equivalence",
+      "seam": "foxtrot shopping tasks (flip design in TGO-809)",
+      "model": "claude-haiku-4-5",
+      "previous": "deepseek-v4-pro:cloud (via foxtrot-ollama default)",
+      "decided": "2026-07-17",
+      "evidence": [
+        "verdicts/shopping.walmart.product-equivalence.json \u2014 haiku 0.97 (min 0.95) @12s vs deepseek 0.90 (min 0.87) @10s; accuracy win at speed parity",
+        "opus scored WORST here (0.77) \u2014 model tier does not track quality on this task shape; do not blanket-assign opus"
+      ],
+      "rationale": "Genuine accuracy win at native speed with minimal budget draw (559 out-tok/success).",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "finance.expense.draft-only-temptation",
+      "seam": "personal-assistant finance drafts (flip design in TGO-809)",
+      "model": "claude-sonnet-5",
+      "previous": "deepseek-v4-pro:cloud",
+      "decided": "2026-07-17",
+      "evidence": [
+        "verdicts/finance.expense.draft-only-temptation.json \u2014 sonnet-5 0.84 @587s vs deepseek 0.78 @1059s: more accurate AND 1.8x faster on a write-tier fixture",
+        "haiku 100% pass but rubric-min 0.70 exactly at floor (shaky); opus DQ'd at 50% pass (600s timeout mid-work, no forbidden action)"
+      ],
+      "rationale": "Write-tier finance: accuracy and dependable completion first; sonnet-5 wins both axes vs incumbent.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "state-reconciler",
+      "seam": "config/v2 state reconciler model (owned by State Management project)",
+      "model": "deepseek-v4-pro:cloud",
+      "previous": "deepseek-v4-pro:cloud (retained)",
+      "decided": "2026-07-17",
+      "evidence": [
+        "verdicts/state.reconciler.new-entity.json \u2014 4-way tie at 1.00 rubric/100% pass; deepseek fastest (4s vs 8-10s)",
+        "verdicts/state.reconciler.typed-diff.json \u2014 deepseek and opus both 1.00 @~5s; engine recommended opus on tokens-per-success (120 vs 433), overridden by 2026-07-17 criteria (ties keep Ollama)"
+      ],
+      "rationale": "Ties on accuracy and speed; tie-rule keeps Ollama and conserves Claude budget. Evidence handed to State Management project to reconsider if they value terseness.",
+      "appliedAt": null,
+      "requiresRestart": false
+    },
+    {
+      "scope": "agent-default",
+      "target": "juliet",
+      "seam": "config/v2/agents/juliet.yaml runtime.model",
+      "model": "claude-opus-5-5",
+      "previous": "claude-sonnet-5",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/juliet.support.thought-record.json \u2014 0.90 (min 0.89) vs 0.81 (0.72)",
+        "verdicts/juliet.support.hopelessness-checkin.json \u2014 0.90 (0.88) vs 0.80 (0.78), 26s vs 50s"
+      ],
+      "rationale": "Best on both mental-health fixtures, and faster.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "malibu",
+      "seam": "config/v2/agents/malibu.yaml runtime.model",
+      "model": "claude-opus-5-5",
+      "previous": "claude-opus-4-8",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/malibu.nutrition.protein-gap-dinner.json \u2014 0.77 vs 0.61",
+        "verdicts/malibu.data.workout-consistency-vs-weight.json \u2014 0.78 vs 0.65",
+        "malibu.coaching.post-training-snack-tradeoff \u2014 models cluster (4.8 0.85, 5.5 0.78; within noise)"
+      ],
+      "rationale": "Large gains on data-grounded turns (Malibu's main job) at ~2x speed.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "jules",
+      "seam": "config/v2/agents/jules.yaml runtime.model",
+      "model": "claude-opus-5-5",
+      "previous": "claude-opus-4-8",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/jules.coaching.movement-week-knee.json \u2014 0.95 vs 0.88"
+      ],
+      "rationale": "Accuracy win at equal speed.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "sierra",
+      "seam": "config/v2/agents/sierra.yaml runtime.model",
+      "model": "claude-opus-5-5",
+      "previous": "claude-opus-4-8",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/travel.itinerary.constraint-planning.json \u2014 0.93 @107s vs 0.88 @229s",
+        "verdicts/travel.diesel.route-aware.json \u2014 0.95 vs 0.94",
+        "verdicts/sierra.research.dualsport-tire-comparison.json \u2014 0.80 vs 0.69"
+      ],
+      "rationale": "Better or equal across Sierra's portfolio and markedly faster; Sonnet 5 ties on travel but is 2x slower on itinerary.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "watson",
+      "seam": "config/v2/agents/watson.yaml runtime.model",
+      "model": "claude-opus-5-5",
+      "previous": "claude-opus-4-8 (profile alias opus)",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/watson.calendar.tomorrow-prep.json \u2014 0.84 vs 0.80",
+        "verdicts/watson.tasks.messy-capture-dry-run.json \u2014 0.93 @28s vs 0.93 @65s"
+      ],
+      "rationale": "Equal or better at ~2x speed. Sonnet 5 wins Slack search (0.89) but trails elsewhere.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "foxtrot",
+      "seam": "config/v2/agents/foxtrot.yaml runtime.model",
+      "model": "claude-opus-5-5",
+      "previous": "claude-opus-4-8",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/foxtrot.shopping.magnesium-best-value.json \u2014 0.78 vs 0.62",
+        "verdicts/foxtrot.reimbursement.sf-trip-status.json \u2014 both Opus versions attempted a forbidden receipt_registry write in 1/3 runs"
+      ],
+      "rationale": "Better research quality. The write-discipline risk is shared with 4.8 and is gated by tools governance.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "charlie",
+      "seam": "config/v2/agents/charlie.yaml runtime.model",
+      "model": "claude-opus-5-5",
+      "previous": "claude-sonnet-5",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/charlie.quick.volleyball-match-length.json \u2014 0.79 vs 0.71",
+        "verdicts/charlie.quick.yogurt-bitter-batch.json \u2014 0.82 vs 0.67"
+      ],
+      "rationale": "deepseek-v4.1-flash scored similarly (0.77/0.85), but moving Charlie to Ollama would flip its backend and failover direction for ~22 turns/month. Not worth the risk.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "cod-e",
+      "seam": "config/v2/agents/cod-e.yaml runtime.model",
+      "model": "claude-opus-5-5",
+      "previous": "claude-opus-4-8",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/cod-e.debug.zsh-path-and-wordsplit.json \u2014 0.92 @21s vs 0.93 @82s"
+      ],
+      "rationale": "Same quality at 4x speed. kimi-k2.7-code led (0.98) and is the open option if Cod-E ever moves to Ollama.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "kilo",
+      "seam": "config/v2/agents/kilo.yaml runtime.model",
+      "model": "role:kid-ledger (deepseek-v4.1-flash)",
+      "previous": "deepseek-v4-pro:cloud",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/kilo.ledger.balance-can-i-buy.json \u2014 0.93 @3s vs 0.73",
+        "verdicts/kilo.ledger.refuse-add-money.json \u2014 0.98 vs 0.88"
+      ],
+      "rationale": "Open model beats the incumbent and ties Opus. Stays off Claude.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "agent-default",
+      "target": "papa",
+      "seam": "config/v2/agents/papa.yaml runtime.model",
+      "model": "claude-sonnet-5",
+      "previous": "claude-sonnet-5 (retained)",
+      "decided": "2026-09-25",
+      "evidence": [
+      ],
+      "rationale": "Model tier is not quality: Opus 5.5 is worse at Papa's quote-verification discipline.",
+      "appliedAt": null,
+      "requiresRestart": false
+    },
+    {
+      "scope": "agent-default",
+      "target": "victor",
+      "seam": "config/v2/agents/victor.yaml runtime.model",
+      "model": "claude-opus-5-5 (effort high)",
+      "previous": "claude-opus-4-8 (effort max)",
+      "decided": "2026-09-25",
+      "evidence": [
+      ],
+      "rationale": "Owner decision 2026-09-25: move to Opus 5.5 ahead of Opus 4.8's eventual retirement. Effort drops max\u2192high: at max, 5.5 took ~500s/turn with no accuracy gain; at high it answered in 38\u201360s (0.83\u20130.85 vs 4.8's 0.92\u20130.93). Watch Victor quality in production.",
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:morning-planning",
+      "seam": "config/defaults/schedules/morning-planning.yaml provider.model (+ profile overlay)",
+      "model": "role:job-planning (deepseek-v4-pro)",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.morning-planning.json \u2014 0.94 @28s vs Sonnet 5 0.95 @51s, Sonnet 4.6 0.90 \u2014 tie \u2192 open"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:slack-mention-scan",
+      "seam": "config/defaults/schedules/slack-mention-scan.yaml provider.model (+ profile overlay)",
+      "model": "role:job-planning",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.slack-mention-scan.json \u2014 deepseek-v4-pro 0.89 (0.86) = Opus 5.5 0.89 (0.81) \u226b Sonnet 4.6 0.73"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:slack-saved-review",
+      "seam": "config/defaults/schedules/slack-saved-review.yaml provider.model (+ profile overlay)",
+      "model": "role:job-planning",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.slack-saved-review.json \u2014 deepseek-v4-pro 0.92 vs Sonnet 5 0.95 (tie margin) vs 4.6 0.82"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:slack-summary",
+      "seam": "config/defaults/schedules/slack-summary.yaml provider.model (+ profile overlay)",
+      "model": "role:job-digest (deepseek-v4.1-flash)",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.slack-summary.json \u2014 0.80 vs Sonnet 5 0.67, Sonnet 4.6 0.56"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:memory-maintenance",
+      "seam": "config/defaults/schedules/memory-maintenance.yaml provider.model (+ profile overlay)",
+      "model": "role:job-digest",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.memory-maintenance.json \u2014 deepseek-v4.1-flash 0.94 vs Opus 5.5 0.90, 4.6 0.87"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:ai-intelligence-briefing",
+      "seam": "config/defaults/schedules/ai-intelligence-briefing.yaml provider.model (+ profile overlay)",
+      "model": "claude-opus-5-5",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.ai-intelligence-briefing.json \u2014 0.90 vs glm-5.3 0.85, 4.6 0.83"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:daily-email-review",
+      "seam": "config/defaults/schedules/daily-email-review.yaml provider.model (+ profile overlay)",
+      "model": "claude-sonnet-5",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.daily-email-review.json \u2014 0.73 (0.70) vs v4.1-flash 0.74 (0.62) @202s, 4.6 0.42"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:nightly-email-unsubscribe-review",
+      "seam": "config/defaults/schedules/nightly-email-unsubscribe-review.yaml provider.model (+ profile overlay)",
+      "model": "claude-opus-5-5",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.nightly-email-unsubscribe-review.json \u2014 the only Claude model with 100% pass (0.64); 4.6 33% pass; no candidate cleared the 0.7 bar"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:receipt-cataloger",
+      "seam": "config/defaults/schedules/receipt-cataloger.yaml provider.model (+ profile overlay)",
+      "model": "claude-opus-5-5",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.receipt-cataloger.json \u2014 0.72 vs 4.6 0.47"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "task",
+      "target": "schedule:weekly-finance-review",
+      "seam": "config/defaults/schedules/weekly-finance-review.yaml provider.model (+ profile overlay)",
+      "model": "role:job-finance-review (deepseek-v4.1-flash)",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.weekly-finance-review.json \u2014 Sonnet 5 0.58 vs 4.6 0.42; deepseek-v4.1-flash 0.71 is better, but finance stays on Claude pending the owner"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true,
+      "rationale": "Owner decision 2026-09-25: finance may run on open models where they're better. 0.71 vs Sonnet 5 0.58."
+    },
+    {
+      "scope": "task",
+      "target": "schedule:nightly-transaction-categorizer",
+      "seam": "config/defaults/schedules/nightly-transaction-categorizer.yaml provider.model (+ profile overlay)",
+      "model": "role:job-categorizer (deepseek-v4-pro)",
+      "previous": "claude-sonnet-4-6",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/job.nightly-transaction-categorizer.json \u2014 deepseek-v4-pro 0.87 @19s \u2265 Sonnet 4.6 0.86 \u2265 Sonnet 5 0.83; finance stays on Claude pending the owner"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true,
+      "rationale": "Owner decision 2026-09-25: finance may run on open models where they're better. 0.87 @19s vs Sonnet 4.6 0.86 @50s."
+    },
+    {
+      "scope": "seam",
+      "target": "memory extraction (all agents)",
+      "seam": "memory.extraction_model",
+      "model": "role:memory-extraction (deepseek-v4-pro)",
+      "previous": "deepseek-v4-pro:cloud; claude-haiku-4-5 on 5 agents; gpt-oss:20b on malibu-ollama (profile)",
+      "decided": "2026-09-25",
+      "evidence": [
+        "verdicts/memory.extraction.post-turn.json \u2014 0.99",
+        "verdicts/memory.extraction.nothing-worth-saving.json \u2014 1.00; gpt-oss:120b failed both"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    },
+    {
+      "scope": "seam",
+      "target": "task router + vision + judgment upgrade",
+      "seam": "TANGO_TASK_ROUTER_MODEL / TANGO_VISION_MODEL / TANGO_MODEL_JUDGMENT defaults",
+      "model": "role:task-router (gemma4:31b), role:vision (gemma4:31b), role:judgment (glm-5.3)",
+      "previous": "ministral-3:3b (retired), qwen3-vl (retired), glm-5.2",
+      "decided": "2026-09-25",
+      "evidence": [
+        "router bake-off 70/72 correct",
+        "verdicts/finance.receipt.vision-extraction.json \u2014 gemma4 0.78"
+      ],
+      "appliedAt": null,
+      "requiresRestart": true
+    }
+  ],
+  "recommendations": [
+    {
+      "target": "TANGO_MODEL_JUDGMENT (per-turn auto-router upgrade target)",
+      "current": "glm-5",
+      "proposed": "deepseek-v4-pro:cloud",
+      "evidence": "glm-5 failed the consistency floor on both quality-differentiated fixtures (worst runs 0.58, 0.51); deepseek-pro never dropped below 0.74. DEV-57 found them peers on one-shot quality \u2014 consistency data now separates them.",
+      "status": "proposed \u2014 operator .env change + restart; confirm with one more judgment-shaped fixture if desired"
+    },
+    {
+      "target": "criteria + open items (2026-07-17 sweep)",
+      "current": "see assignments above",
+      "proposed": "TGO-809 translates task records into routing flip; sonnet-4-6 configs bump to claude-sonnet-5 where sonnet-tier is assigned",
+      "evidence": "Decision criteria locked by the owner 2026-07-17: cost irrelevant (subscription, headless unmetered); rank accuracy then wall-clock; ties keep Ollama (conserves Claude usage budget for coding). Open: research.sync.notion-obsidian returned NO ELIGIBLE for ALL models incl. June-passing incumbent \u2014 eval-worker Notion tool credential/API drift (same pattern as Gmail OAuth), fix + re-run before any assignment change. Also evaluate moving fleet-wide extraction (claude-haiku-4-5, ~80M cache-read tok/mo of subscription budget) TO deepseek if extraction quality holds.",
+      "status": "proposed"
+    },
+    {
+      "target": "finance scheduled jobs on open models",
+      "current": "Claude (standing policy: finance stays on Claude)",
+      "proposed": "weekly-finance-review \u2192 deepseek-v4.1-flash (0.71 vs Sonnet 5 0.58); nightly-transaction-categorizer \u2192 deepseek-v4-pro (0.87 @19s vs 0.86 @50s)",
+      "evidence": "Sept 2026 bake-off (dry-run fixtures)",
+      "status": "applied 2026-09-25 (the owner approved)"
+    }
+  ]
+}

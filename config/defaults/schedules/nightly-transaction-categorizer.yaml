@@ -1,0 +1,98 @@
+id: nightly-transaction-categorizer
+display_name: Nightly Transaction Categorizer
+description: >
+  Fetch uncleared Lunch Money transactions from the last 48 hours,
+  apply categorization rules, and post a summary. Exit silently if none.
+enabled: true
+runtime: v2
+
+obsidian_log:
+  domain: Finance
+  job_name: Nightly Transaction Categorizer
+
+state_tracking:
+  enabled: true
+  domain: finance
+  cadence: daily
+  verification: pre_check
+
+schedule:
+  cron: "0 23 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  context_dependencies:
+    - receipt-cataloger
+  mode: conditional-agent
+  pre_check:
+    handler: foxtrot-unreviewed-transactions
+  deterministic_agent_id: foxtrot
+  worker_id: personal-assistant
+  intent_ids:
+    - finance.transaction_categorization
+  task_template: |
+    Nightly transaction categorization run.
+
+    The scheduler pre-check already confirmed the current date and found
+    {{unreviewedCount}} uncleared Lunch Money transactions between
+    {{startDate}} and {{endDate}}.
+
+    1. Fetch the uncleared (status=uncleared) Lunch Money transactions
+       for exactly that date window. These may already have categories
+       auto-applied by Lunch Money rules — you need to review and
+       correct them using the finance rules.
+    2. If the follow-up fetch unexpectedly returns zero transactions,
+       return EXACTLY the text "__NO_OUTPUT__" and nothing else.
+    3. The deterministic pre-check successfully read the categorization rules
+       from the vault-relative path {{categorizationRulesPath}}. Use the exact
+       verified content below; do not attempt another path lookup and do not
+       fall back to a default category.
+
+       <finance-categorization-rules>
+       {{categorizationRules}}
+       </finance-categorization-rules>
+    4. Mandatory budget-neutral transfer guard: the pre-check identified
+       {{budgetNeutralTransferCount}} internal bank transfer(s):
+       {{budgetNeutralTransferDetails}}
+       Before ordinary payee rules, assign every listed transaction to the live
+       Lunch Money category named exactly "Transfer" and clear it. This guard
+       overrides any spend, income, or sinking-fund category already attached
+       by an auto-rule. Do not surface these transactions for spend/income review.
+    5. Follow the transaction_categorization skill to apply rules,
+       handle splits, and flag ambiguous vendors for review.
+    6. Apply categories via the Lunch Money API (PUT with category_id
+       and status: "cleared") only for verified categorizations. Leave
+       unresolved or receipt-dependent items uncleared.
+    7. Return a concise summary:
+       "Categorized N transactions tonight — here's what I did.
+       Reply to correct anything."
+       Then list each transaction: payee, amount, applied category.
+       List waiting-for-cataloging items separately from new questions that
+       genuinely need user input. Reuse prior answers and avoid repeat questions.
+
+    Rate limit: wait 0.3s between Lunch Money API calls.
+  timeout_seconds: 420
+
+provider:
+  model: role:job-categorizer
+  reasoning_effort: high
+
+delivery:
+  channel_id: "100000000000000005"
+  agent_id: foxtrot
+  mode: message  # Transaction review lands with Foxtrot in finance, not in daily priorities
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: ledger-tasks
+  priority: 3
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - foxtrot
+  - finance
+  - daily

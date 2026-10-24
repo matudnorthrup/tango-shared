@@ -1,0 +1,69 @@
+id: manual-test-daily-email-review
+display_name: Manual Test Daily Email Review
+description: >
+  Manual deterministic validation clone of the daily email review.
+enabled: false
+runtime: v2
+
+schedule:
+  cron: "0 16 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - email.inbox_maintenance
+  task: |
+    Run the daily email review. Follow the email_review skill guidance.
+
+    **First:** Read the triage rules at
+    References/Email Triage Rules.md
+    These rules define what to ignore, delegate, and flag. Apply them
+    before making triage decisions.
+
+    Since this is a scheduled run (not interactive), handle phases
+    autonomously:
+
+    Phase 1: Scan all 7 accounts. Categorize inbox mail into
+    newsletters/promotions, notifications, and actionable. Apply the
+    triage rules — auto-archive "Ignore" items, mark "Delegate" items
+    as not the owner's responsibility.
+
+    Phase 2: For actionable emails (not ignored or delegated), summarize
+    each thread. Skip ones that clearly don't need a response. For
+    important ones that need the user's input, note them but don't draft
+    replies — just flag them.
+
+    Phase 3: Review notifications and newsletters. Flag anything that
+    needs attention per the rules. Archive the rest in bulk.
+
+    Phase 4: Present a summary with counts: actionable flagged, drafts
+    created, notifications/newsletters archived, total inbox reduction.
+  timeout_seconds: 420
+
+provider:
+  model: claude-sonnet-5
+
+delivery:
+  channel_id: "100000000000001001"
+  agent_id: watson
+
+completion:
+  workflow_id: manual-test-daily-email-review
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-test-tasks
+  priority: 5
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - email
+  - manual-test

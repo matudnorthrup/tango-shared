@@ -1,0 +1,28 @@
+id: memory-archive-stale
+display_name: Memory Archival
+description: >
+  Archive low-retention memories (old, low-importance, rarely accessed) to
+  keep the active memory pool focused and reduce retrieval noise.
+enabled: true
+
+schedule:
+  cron: "0 4 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: memory-archive-stale
+  timeout_seconds: 60
+
+delivery:
+  mode: none
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 0
+
+tags:
+  - memory
+  - archival
+  - daily

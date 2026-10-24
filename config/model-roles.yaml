@@ -1,0 +1,70 @@
+# Model roles: ordered, bake-off-backed Ollama model lists.
+#
+# Configs name `role:<name>` instead of a concrete Ollama id. At request time the
+# FIRST model still in the live Ollama Cloud catalog serves the role
+# (packages/core/src/model-roles.ts). A retirement falls through to the next
+# model that also passed the role's fixtures, instead of failing every call.
+# Rules:
+#   - Only list models that passed the role's bake-off fixtures (see verdicts/).
+#   - Order = the bake-off ranking (accuracy first, then speed).
+#   - The weekly model scorecard flags ROLE FALLBACK / ROLE DOWN / RETIRED MODEL.
+# Claude models don't use roles; the CLI's family aliases (opus/sonnet/haiku)
+# already float, and the scorecard flags MODEL CHANGED when one moves.
+#
+# Evidence: Sept 2026 fleet bake-off (agents/evals/model-bakeoff/verdicts/).
+
+roles:
+  memory-extraction:
+    description: Post-turn memory extraction (JSON array of durable facts).
+    # post-turn 0.99/0.98, nothing-to-save 1.00/1.00 (deepseek-v4-pro, v4.1-flash)
+    models: [deepseek-v4-pro, deepseek-v4.1-flash, kimi-k3]
+
+  state-reconciler:
+    description: Typed-state reconciliation proposals.
+    # new-entity + typed-diff: 1.00 for all three
+    models: [deepseek-v4-pro, deepseek-v4.1-flash, kimi-k3]
+
+  kid-ledger:
+    description: Kilo, the child-facing spending helper over the ledger.
+    # balance 0.93 / refuse 0.98 at 3-6s; deepseek-v4-pro 0.73 / 0.88
+    models: [deepseek-v4.1-flash, deepseek-v4-pro]
+
+  task-router:
+    description: Per-turn JUDGMENT/DATA/OTHER classifier. MUST be non-thinking (max_tokens=4).
+    # 70/72 correct, p50 ~0.5s; mistral-large-3 69/72 (more timeouts)
+    models: [gemma4:31b, mistral-large-3:675b]
+
+  vision:
+    description: Image description fold-in for text-only models + attachment vision.
+    # receipt vision 0.78 / 0.72
+    models: [gemma4:31b, mistral-large-3:675b]
+
+  judgment:
+    description: Per-turn JUDGMENT upgrade target on Ollama turns (failover/-test paths).
+    # Jules 0.95, Juliet 0.89, Papa 0.91 (slow; attempted forbidden writes once on Victor, so gated turns only)
+    models: [glm-5.3, deepseek-v4-pro]
+
+  job-planning:
+    description: Morning planning, Slack mention scan, Slack saved-items review.
+    # morning 0.94 (28s), mention 0.89/0.86, saved 0.92
+    models: [deepseek-v4-pro, deepseek-v4.1-flash]
+
+  job-digest:
+    description: Slack channel digest, vault memory maintenance.
+    # slack-summary 0.80/0.79 (vs Sonnet 5 0.67), memory-maintenance 0.94/0.93
+    models: [deepseek-v4.1-flash, glm-5.3]
+
+  job-finance-review:
+    description: Weekly rolling finance review (Plaid refresh, reconcile, checkpoints).
+    # 0.71/0.61 @218s vs Sonnet 5 0.58, Sonnet 4.6 0.42; the only eligible open model
+    # (glm-5.3 0.62, deepseek-v4-pro 0.60 were below the floor)
+    models: [deepseek-v4.1-flash]
+
+  job-categorizer:
+    description: Nightly Lunch Money transaction categorizer.
+    # deepseek-v4-pro 0.87/0.84 @19s, glm-5.3 0.85 @216s, v4.1-flash 0.80 @48s (Sonnet 4.6 0.86 @50s)
+    models: [deepseek-v4-pro, deepseek-v4.1-flash, glm-5.3]
+
+  failover-general:
+    description: Default model of the -ollama failover clones.
+    models: [deepseek-v4-pro, deepseek-v4.1-flash]

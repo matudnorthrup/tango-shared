@@ -1,0 +1,38 @@
+{
+  "name": "@tango/loom",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "loom": "dist/main.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node ../../scripts/dev/load-cap.mjs vitest run",
+    "release:build": "node scripts/release.mjs build",
+    "release:canary": "node scripts/canary.mjs",
+    "release:list": "node scripts/release.mjs list",
+    "release:promote": "node scripts/release.mjs promote",
+    "release:rollback": "node scripts/release.mjs rollback",
+    "release:pin": "node scripts/release.mjs pin",
+    "release:prune": "node scripts/release.mjs prune"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.300",
+    "ajv": "^8.20.0",
+    "js-yaml": "^4.2.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "id": "state.reconciler.new-entity",
+  "title": "State Reconciler: create under an existing authoritative type",
+  "category": "state",
+  "source": "docs/specs/state-management.md sections 9, 16, and 17; synthetic privacy-safe live-regression fixture",
+  "ownerAgent": "watson-ollama",
+  "worker": "state-reconciler",
+  "taskShape": "structured_extraction",
+  "safetyTier": "read_only_judgment",
+  "tools": false,
+  "candidateModels": [
+    "claude-opus-5-5",
+    "claude-sonnet-5",
+    "claude-haiku-4-5",
+    "deepseek-v4-pro:cloud",
+    "glm-5.3",
+    "kimi-k3",
+    "minimax-m3",
+    "deepseek-v4.1-flash",
+    "glm-5.3-flash"
+  ],
+  "benchmarkModels": [],
+  "incumbentModel": "deepseek-v4-pro:cloud",
+  "outputAssertions": [
+    {
+      "type": "matches",
+      "value": "\\\"action\\\"\\s*:\\s*\\\"new_entity\\\""
+    },
+    {
+      "type": "matches",
+      "value": "\\\"type_id\\\"\\s*:\\s*\\\"project\\\""
+    },
+    {
+      "type": "matches",
+      "value": "State Harness Fixture"
+    },
+    {
+      "type": "matches",
+      "value": "\\\"progress_pct\\\"\\s*:\\s*10"
+    },
+    {
+      "type": "matches",
+      "value": "\\\"status\\\"\\s*:\\s*\\\"active\\\""
+    }
+  ],
+  "system": "You are Tango's State Reconciler. Do bookkeeping only. Return ONLY one JSON object, with no prose or code fence, using exactly this shape: {\"changes\":[{\"action\":\"new_entity\",\"type_id\":\"project\",\"title\":\"...\",\"status\":\"active\",\"attributes\":{\"progress_pct\":10},\"evidence\":\"exact quote\"}],\"engaged_entity_ids\":[]}. The supplied type catalog is authoritative. A user's explicit request to track a new entity under an existing catalog type is sufficient evidence for new_entity; only NEW TYPE creation needs confirmation. Ignore serving-assistant confusion or unnecessary confirmation requests. Every proposal must cite an exact evidence quote. Never invent values.",
+  "prompt": "Entity name index: []. Current state: []. Authoritative type catalog: [{\"id\":\"project\",\"statuses\":{\"values\":[\"idea\",\"active\",\"blocked\",\"waiting\",\"done\",\"dropped\"]},\"attributes_schema\":{\"type\":\"object\",\"properties\":{\"progress_pct\":{\"type\":\"number\",\"minimum\":0,\"maximum\":100}}}}]. Completed turn \u2014 User: Track a synthetic test project named State Harness Fixture as active at 10 percent. Assistant: The project type does not exist; shall I create a type first? Return only the proposed JSON changeset.",
+  "successCriteria": [
+    "Returns parseable JSON with no prose or code fence.",
+    "Proposes new_entity for the existing authoritative project type without asking for type confirmation.",
+    "Uses title State Harness Fixture, status active, and progress_pct 10.",
+    "Cites an exact evidence quote from the user message and invents no fields.",
+    "Does not follow the serving assistant's incorrect claim that the project type is missing."
+  ],
+  "knownFailureModes": [
+    "Returns no changes because the assistant asked for confirmation.",
+    "Proposes type creation instead of entity creation.",
+    "Invents attributes outside the supplied schema.",
+    "Omits the exact evidence quote."
+  ],
+  "rubric": [
+    {
+      "name": "authoritative_type_handling",
+      "weight": 0.35,
+      "description": "Treats the catalog as authoritative and creates an entity without new-type confirmation."
+    },
+    {
+      "name": "grounding",
+      "weight": 0.3,
+      "description": "All values and the evidence quote come exactly from the user turn."
+    },
+    {
+      "name": "typed_diff",
+      "weight": 0.25,
+      "description": "Emits exactly a project new_entity with active status and progress_pct 10."
+    },
+    {
+      "name": "format",
+      "weight": 0.1,
+      "description": "Output is one parseable changeset JSON object."
+    }
+  ],
+  "judge": {
+    "models": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ]
+  }
+}

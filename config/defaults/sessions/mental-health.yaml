@@ -1,0 +1,21 @@
+id: project:mental-health
+type: project
+agent: juliet
+channels:
+  - discord:100000000000000007
+orchestrator_continuity: stateless
+memory:
+  max_context_tokens: 16000
+  zones:
+    pinned: 0.10
+    summary: 0.25
+    memories: 0.30
+    recent: 0.35
+  summarize_window: 10
+  memory_limit: 200
+  importance_threshold: 0.2
+  retrieval_weights:
+    recency: 0.8
+    importance: 1.5
+    relevance: 2.0
+    source: 0.5

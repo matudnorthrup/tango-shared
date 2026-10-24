@@ -1,0 +1,105 @@
+id: manual-test-weekly-finance-review
+display_name: Manual Test Finance Review Dry Run
+description: >
+  Manual dry-run validation clone of the rolling Finance Review.
+enabled: false
+runtime: v2
+
+obsidian_log:
+  domain: Finance
+  job_name: Finance Review Dry Run
+
+state_tracking:
+  enabled: true
+  domain: finance
+  cadence: weekly
+  verification: none
+  review_checklist: finance
+
+schedule:
+  cron: "0 7 * * 1"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  deterministic_agent_id: foxtrot
+  worker_id: personal-assistant
+  intent_ids:
+    - finance.budget_review
+    - finance.sinking_fund_reconciliation
+    - finance.transaction_lookup
+  task: |
+    Run a dry-run Finance Review for the Foxtrot finance thread.
+
+    Review parameters:
+    - review_phase: rolling
+    - dry_run: true
+    - review_window: current month-to-date
+    - lookback_window: since the most recent review note
+
+    IMPORTANT: Confirm today's date before doing any date math.
+
+    Follow the unified finance_review skill guidance in
+    agents/skills/finance-review.md. This manual schedule validates the process
+    without changing financial records.
+
+    The scheduler has already initialized this period's dry-run
+    `finance-review` state entity. Query it before Step 1 and record each of the
+    seven evidence-backed checkpoints exactly as the skill specifies. A prose
+    summary is not a checkpoint, and you must not mark the overall review
+    complete yourself. Update the one initialized entity with today's
+    `review_date`, `dry_run: true`, `last_execution_status: running`, and a
+    non-null `schedule_run_id`. Never create another `finance-review` entity;
+    stop as blocked if that lookup is not unique.
+
+    Dry-run rules:
+    - You may refresh stale Lunch Money/Plaid account data with POST
+      /plaid_accounts/fetch so the analysis is based on current data.
+    - For employer reimbursements, use receipt_registry structured actions
+      first. Reconcile against live ExpenseDesk history before claiming an item is
+      pending, unsubmitted, submitted, or reimbursed. Do not infer reimbursement
+      amounts from Base views, old review notes, or note search.
+    - Do not mutate Lunch Money categories/status.
+    - Do not submit to ExpenseDesk or create/manage ExpenseDesk drafts.
+    - Do not overwrite the canonical Finance Review note.
+    - If you write an Obsidian note, write only:
+      Records/Finance/Reviews/YYYY-MM-DD Finance Review Dry Run.md
+      Use the finance_review frontmatter standard:
+      types: [[Record]], areas: [[Finance]], record_kind: finance_review,
+      review_phase: rolling, dry_run: true.
+
+    Return a concise summary with review phase, data freshness, any refreshes
+    performed, top flags, sinking fund recommendations, reimbursement/receipt
+    gaps, budget pace signals, and any process deviations.
+
+    Rate limit: wait 0.3s between Lunch Money API calls.
+  timeout_seconds: 900
+
+provider:
+  model: role:job-finance-review
+
+delivery:
+  channel_id: "100000000000001001"
+  agent_id: foxtrot
+
+completion:
+  workflow_id: manual-test-weekly-finance-review
+  scope: daily
+  check_before_run: false
+  mark_on_success: false
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: ledger-test-tasks
+  priority: 5
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - foxtrot
+  - finance
+  - manual-test
+  - dry-run

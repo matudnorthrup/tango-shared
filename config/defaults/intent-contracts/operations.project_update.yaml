@@ -1,0 +1,31 @@
+id: operations.project_update
+domain: operations
+display_name: Update Operations Project
+description: Update durable operations tracking in Linear, optionally linking or summarizing supporting Obsidian context.
+mode: write
+route:
+  kind: worker
+  target_id: operations-assistant
+slots:
+  - name: project_query
+    required: true
+    inferable: false
+    description: Linear project, issue, or operational initiative to update.
+  - name: change_request
+    required: true
+    inferable: false
+    description: The specific issue, comment, milestone, status, owner, deadline, or project record change requested.
+  - name: context_source
+    required: false
+    inferable: true
+    description: Optional Obsidian note, document, conversation, or source reference that should ground the update.
+examples:
+  - Add a Linear issue for preparing advisor questions on the vendor agreement.
+  - Update the Victor Operations Chief project with the validation plan.
+  - Mark the side-hustle vendor research task blocked on accountant review.
+can_run_in_parallel: false
+classifier_hints:
+  - Use for explicit requests to create, update, comment on, or reconcile Linear operational project records.
+  - Use for personal/business/legal-operations follow-up tracking that should survive future sessions.
+  - Do not use for software implementation tasks; Tango development belongs with Codex or Claude Code outside Victor.
+  - Prefer notes.note_update when the user only asks to append or edit an Obsidian note without task/project tracking.

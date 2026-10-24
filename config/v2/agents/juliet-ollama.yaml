@@ -1,0 +1,114 @@
+id: juliet-ollama
+enabled: true
+display_name: Juliet (Ollama)
+type: mental-health
+
+# System prompt = personality + domain + rules
+system_prompt_file: agents/assistants/juliet/soul.md
+
+# MCP servers this agent can access
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: obsidian
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "obsidian"]
+    env:
+      ALLOWED_TOOL_IDS: "obsidian"
+  - name: agent-docs
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "agent-docs"]
+    env:
+      ALLOWED_TOOL_IDS: "agent_docs"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+  - name: screen
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "screen"]
+    env:
+      ALLOWED_TOOL_IDS: "screen"
+  - name: desk-mail
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "desk-mail"]
+    env:
+      ALLOWED_TOOL_IDS: "desk_mail"
+
+# Runtime configuration
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  fallback: codex
+  model: role:failover-general
+  reasoning_effort: high
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.80
+
+# Memory configuration
+memory:
+  post_turn_extraction: enabled
+  canonical_agent_id: juliet
+  alias_agent_ids:
+    - juliet
+    - juliet-ollama
+  extraction_provider: ollama
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.4
+  scheduled_reflection: enabled
+
+# Discord routing
+discord:
+  default_channel_id: "100000000000000008"
+  smoke_test_channel_id: "100000000000001007" # juliet-test (placeholder; real id in profile overlay)
+
+# Restrict this clone to its own channel plus its persona's -test smoke channel
+access:
+  mode: allowlist
+  allowlist_channel_ids:
+    - "100000000000000008"
+    - "100000000000001007" # juliet-test smoke channel (placeholder; real id in profile overlay)
+
+# Legacy registry fields
+avatar_path: agents/assistants/juliet/avatar.png
+default_project: mental-health
+response_mode: explain
+
+provider:
+  default: ollama
+  model: role:failover-general
+  reasoning_effort: high
+  fallback: []
+
+tools:
+  mode: allowlist
+  allowlist:
+    - memory_search
+    - memory_add
+    - memory_reflect
+
+deterministic_routing:
+  enabled: false
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex
+
+# Addressing: the bare name routes to the original Claude agent (TGO-809);
+# "Bravo Juliet" and "Zulu Juliet" address this clone by name.
+voice:
+  call_signs:
+    - "Bravo Juliet"
+    - "Zulu Juliet"
+  default_channel_id: "100000000000000008"
+  smoke_test_channel_id: "100000000000001007" # juliet-test (placeholder; real id in profile overlay)

@@ -1,0 +1,53 @@
+id: finance.sinking_fund_reconciliation
+domain: finance
+display_name: Reconcile Sinking Funds
+description: Reconcile sinking-fund-backed spending against Bank sinking fund balances, contribution timing, and outstanding reimbursement needs.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: fund_scope
+    required: false
+    inferable: true
+  - name: category_scope
+    required: false
+    inferable: true
+examples:
+  - Run a sinking fund reconciliation for April.
+  - How are the sinking funds looking this month?
+  - What do I need to transfer from the sinking funds to clear the books?
+classifier_hints:
+  - Use for sinking fund reconciliation, fund balance checks, sinking fund tracking inside Finance Review, close-prep, or reimbursement-to-zero analysis.
+  - Keep sinking fund transfers separate from employer reimbursements; use receipt_registry only for employer reimbursement visibility checks.
+  - Prefer finance.transaction_lookup when the user only wants raw transaction history rather than a fund reconciliation.
+evaluation:
+  task_class: reconciliation
+  success_criteria:
+    - Read the dedicated Obsidian note `References/Finance/Budget Notes` before concluding.
+    - Reconcile note-defined sinking funds in scope for the request, including the profile-configured Kilo spending reserve when Kilo spending is in scope.
+    - Keep owner spending reserves distinct from the Kilo spending reserve; do not merge separate accounts.
+    - Exclude Gas & Charging unless the user explicitly asks for it.
+    - Include balances, outstanding reimbursement needs, and contribution status in the final answer.
+  must_answer:
+    - What is the current period spend, already reimbursed amount, and outstanding reimbursement for Fund A?
+    - What is the current period spend, already reimbursed amount, and outstanding reimbursement for Fund B?
+    - What is the current period spend, already reimbursed amount, and outstanding reimbursement for Fund C?
+    - What is the current period spend, already reimbursed amount, and outstanding reimbursement for the Kilo spending reserve when Kilo spending is in scope?
+    - What are the current balances for the note-defined SB accounts, including the profile-configured Kilo backing account when Kilo spending is in scope?
+    - Are the expected contributions posted, missing, mismatched, or not yet due according to each fund's cadence?
+  required_fields:
+    - Fund A current balance
+    - Fund B current balance
+    - Fund C current balance
+    - Kilo spending reserve current balance when in scope
+    - Fund A outstanding reimbursement
+    - Fund B outstanding reimbursement
+    - Fund C outstanding reimbursement
+    - Kilo spending reserve outstanding reimbursement when in scope
+    - Contribution status
+  quality_gate_required: true
+  safe_noop_allowed: true

@@ -1,0 +1,218 @@
+{
+  "latest": {
+    "when": "2026-09-25T13:08:12.808Z",
+    "harnessVersion": "2.0.0",
+    "fixtureSource": "model-bakeoff/tasks/watson-slack-find-explainer.json",
+    "runsPerCandidate": 3,
+    "judges": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ],
+    "verdict": {
+      "fixtureId": "watson.slack.find-i18n-explainer",
+      "passRateThreshold": 0.8,
+      "rubricThreshold": 0.7,
+      "rubricFloor": 0.6,
+      "recommendation": "claude-haiku-4-5",
+      "reason": "cheapest reliable candidate (passRate 100%, 672 out-tok/success (price unknown))",
+      "winner": "claude-haiku-4-5",
+      "incumbent": "claude-opus-4-8",
+      "eligible": [
+        "claude-haiku-4-5",
+        "claude-sonnet-5"
+      ],
+      "infraIncomplete": false
+    },
+    "candidates": [
+      {
+        "model": "claude-opus-5-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.8045833333333334,
+        "rubricMin": 0.56,
+        "rubricStdDev": 0.17446445833527877,
+        "rubricByJudge": {
+          "sonnet": 0.8175,
+          "deepseek-v4-pro": 0.7916666666666666
+        },
+        "meanSeconds": 68.099,
+        "meanOutputTokens": 4066,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-sonnet-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.8870833333333333,
+        "rubricMin": 0.7675000000000001,
+        "rubricStdDev": 0.0848180241589146,
+        "rubricByJudge": {
+          "sonnet": 0.8591666666666667,
+          "deepseek-v4-pro": 0.915
+        },
+        "meanSeconds": 117.71666666666668,
+        "meanOutputTokens": 3956.3333333333335,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-haiku-4-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.80375,
+        "rubricMin": 0.77875,
+        "rubricStdDev": 0.019921721813136516,
+        "rubricByJudge": {
+          "sonnet": 0.7675000000000001,
+          "deepseek-v4-pro": 0.84
+        },
+        "meanSeconds": 18.314,
+        "meanOutputTokens": 672.3333333333334,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4-pro:cloud",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.61875,
+        "rubricMin": 0.12375,
+        "rubricStdDev": 0.3500907620413122,
+        "rubricByJudge": {
+          "sonnet": 0.5808333333333333,
+          "deepseek-v4-pro": 0.6566666666666666
+        },
+        "meanSeconds": 27.909000000000002,
+        "meanOutputTokens": 1135.3333333333333,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "glm-5.3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0.6666666666666666,
+        "rubricMean": 0.44375,
+        "rubricMin": 0.28125,
+        "rubricStdDev": 0.16249999999999998,
+        "rubricByJudge": {
+          "sonnet": 0.5499999999999999,
+          "deepseek-v4-pro": 0.3375
+        },
+        "meanSeconds": 86.53566666666666,
+        "meanOutputTokens": 3877,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "completion: Ollama request failed: status=400 body={\"error\":{\"message\":\"The prompt is too long: 1090814, model maximum context length: 1048576 (ref: 53533764-94f0-495b-9fa9-2cdeaa4be474)\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":null}}\n",
+          "tool:slack: called 0x, need >=1",
+          "tool:slack: no call satisfied argCheck {\"path\":\"action\",\"equals\":\"search_messages\"}"
+        ]
+      },
+      {
+        "model": "kimi-k3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.3383333333333333,
+        "rubricMin": 0.15749999999999997,
+        "rubricStdDev": 0.13964737336910024,
+        "rubricByJudge": {
+          "sonnet": 0.32666666666666666,
+          "deepseek-v4-pro": 0.3499999999999999
+        },
+        "meanSeconds": 75.219,
+        "meanOutputTokens": 1902,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "minimax-m3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.53625,
+        "rubricMin": 0.20750000000000002,
+        "rubricStdDev": 0.26944967062514663,
+        "rubricByJudge": {
+          "sonnet": 0.5825,
+          "deepseek-v4-pro": 0.49
+        },
+        "meanSeconds": 23.548666666666666,
+        "meanOutputTokens": 1121.6666666666667,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4.1-flash",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.4779166666666666,
+        "rubricMin": 0.27625,
+        "rubricStdDev": 0.16483051059261516,
+        "rubricByJudge": {
+          "sonnet": 0.5808333333333333,
+          "deepseek-v4-pro": 0.375
+        },
+        "meanSeconds": 65.29533333333333,
+        "meanOutputTokens": 6730.333333333333,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "glm-5.3-flash",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0.6666666666666666,
+        "rubricMean": 0.43,
+        "rubricMin": 0.19499999999999998,
+        "rubricStdDev": 0.19772929727281185,
+        "rubricByJudge": {
+          "sonnet": 0.32,
+          "deepseek-v4-pro": 0.5399999999999999
+        },
+        "meanSeconds": 45.72666666666667,
+        "meanOutputTokens": 1921,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "output:notMatches: \\b(I('ve| have)? (posted|sent|replied)|posted (it|a message) (to|in))\\b"
+        ]
+      },
+      {
+        "model": "claude-opus-4-8",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0.6666666666666666,
+        "rubricMean": 0.7637499999999999,
+        "rubricMin": 0.58625,
+        "rubricStdDev": 0.12621080249593003,
+        "rubricByJudge": {
+          "sonnet": 0.8075000000000001,
+          "deepseek-v4-pro": 0.7200000000000001
+        },
+        "meanSeconds": 179.78866666666667,
+        "meanOutputTokens": 9980.666666666666,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "output:notMatches: \\b(I('ve| have)? (posted|sent|replied)|posted (it|a message) (to|in))\\b"
+        ]
+      }
+    ]
+  },
+  "history": []
+}

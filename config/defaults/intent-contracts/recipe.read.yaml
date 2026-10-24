@@ -1,0 +1,19 @@
+id: recipe.read
+domain: wellness
+display_name: Read Recipe
+description: Read, inspect, explain, or summarize an existing recipe.
+mode: read
+route:
+  kind: worker
+  target_id: recipe-librarian
+slots:
+  - name: recipe_query
+    required: true
+    inferable: false
+examples:
+  - What's in my protein yogurt bowl recipe?
+  - Show me the lean taco bowl recipe
+  - obsidian://open?vault=main&file=Records%2FNutrition%2FRecipes%2FEgg%20%26%20Fries%20Hash here's the recipe link
+classifier_hints:
+  - Use for reading, explaining, or summarizing an existing recipe without changing it.
+  - If the user provides an Obsidian recipe URL or vault path, still treat it as recipe.read and extract the recipe name for wellness.db lookup; never open the linked note.

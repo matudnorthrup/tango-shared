@@ -1,0 +1,7 @@
+providers:
+  claude-oauth:
+    type: claude-oauth
+    account: primary
+  claude-oauth-secondary:
+    type: claude-oauth
+    account: secondary

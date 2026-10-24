@@ -1,0 +1,61 @@
+id: research.local_business
+domain: research
+display_name: Local Business and Activity Research
+description: Find, compare, and verify restaurants, local businesses, classes, tours, activities, venues, or event details.
+mode: read
+route:
+  kind: worker
+  target_id: research-coordinator
+slots:
+  - name: query
+    required: true
+    inferable: false
+    description: The restaurant, business type, activity, class, tour, venue, or event the user is researching.
+  - name: place
+    required: false
+    inferable: true
+    description: City, neighborhood, current-location reference, address, or area to search near.
+  - name: constraints
+    required: false
+    inferable: true
+    description: Cuisine, rating, budget, distance, timing, booking, family, dietary, accessibility, vibe, or other decision filters.
+  - name: must_verify
+    required: false
+    inferable: true
+    description: Exact facts that must be verified, such as hours, event time, WhatsApp, price, booking link, address, or meeting point.
+evaluation:
+  task_class: decision_support
+  success_criteria:
+    - Build a candidate inventory instead of relying on one or two search hits.
+    - Verify decision-critical details from official or high-quality sources.
+    - Surface contradictions, stale data, missing official sources, and unverified contact details.
+  must_answer:
+    - What is the strongest recommendation or shortlist for the user's local request?
+    - Which facts are verified versus unverified?
+    - What source supports each time, hours, contact, booking, address, or event-detail claim?
+  comparison_axes:
+    - fit_for_constraints
+    - rating_or_review_signal
+    - distance_or_area
+    - verified_hours_or_schedule
+    - verified_contact_or_booking
+    - evidence_strength
+  required_fields:
+    - source_urls
+    - verification_status
+    - official_or_strongest_source
+    - address_or_area
+    - hours_or_event_time
+    - contact_or_booking
+    - caveats
+  quality_gate_required: true
+examples:
+  - Find the best-rated restaurants near me in Playa Azul
+  - Verify what time the turtle release happens today and where to show up
+  - Find a cooking class and give me the correct WhatsApp number
+  - What activities are worth doing around this neighborhood tonight?
+can_run_in_parallel: false
+classifier_hints:
+  - Use for restaurants, cafes, bars, local businesses, activities, classes, tours, venues, and local events.
+  - Prefer this over research.web_lookup when the user needs a recommendation, shortlist, plan, contact detail, schedule, hours, booking link, or event information.
+  - Prefer research.fact_verification when the user only asks to verify one specific claim.

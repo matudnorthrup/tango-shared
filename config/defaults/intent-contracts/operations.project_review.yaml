@@ -1,0 +1,26 @@
+id: operations.project_review
+domain: operations
+display_name: Review Operations Project
+description: Read and summarize durable operations project state, including Linear project/issues, blockers, milestones, owners, deadlines, and linked Obsidian context.
+mode: read
+route:
+  kind: worker
+  target_id: operations-assistant
+slots:
+  - name: project_query
+    required: true
+    inferable: false
+    description: Linear project, issue, or operational initiative to review.
+  - name: focus
+    required: false
+    inferable: true
+    description: Optional lens such as blockers, next actions, advisor questions, deadlines, or validation.
+examples:
+  - Review the vendor agreement project and tell me what is blocked.
+  - Give me the current status of the side-hustle launch plan.
+  - What is left in the Victor Operations Chief Linear project?
+can_run_in_parallel: true
+classifier_hints:
+  - Use for long-running personal, business, legal-operations, or side-project project status reads.
+  - Use when the user asks Victor what is open, blocked, due, waiting on counsel, waiting on a accountant, or ready for review.
+  - Prefer notes.note_read when the request is only to read one named Obsidian note and no project/task state is needed.

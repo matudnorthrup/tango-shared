@@ -1,0 +1,77 @@
+id: cos-pulse
+display_name: CoS Pulse
+description: >
+  Chief-of-Staff monitoring pulse. Checks tmux PM sessions, worktree slots,
+  and bot health every 2 minutes. Posts to Victor's channel on state changes.
+  Silent when nothing has changed.
+enabled: false  # Disabled — Victor handles monitoring via persistent session crons and posts to Discord via webhook. No need to burn haiku tokens polling state.
+runtime: v2
+
+schedule:
+  every_seconds: 120
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: dev-assistant
+  task: |
+    You are running as a CoS monitoring pulse. Check the current state of
+    Tango development infrastructure and report ONLY if something changed.
+
+    Run these checks:
+
+    1. PM sessions:
+       tmux list-sessions -F '#{session_name}' 2>/dev/null | grep TANGO-PM || echo "no-pm-sessions"
+
+    2. Worktree slots:
+       repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+       "$repo_root/scripts/dev/list.sh" 2>/dev/null || echo "list-unavailable"
+
+    3. Bot health:
+       tmux capture-pane -t tango:discord -p -S -5 2>/dev/null || echo "bot-session-missing"
+
+    4. VICTOR-COS session:
+       tmux has-session -t VICTOR-COS 2>/dev/null && echo "VICTOR-COS: active" || echo "VICTOR-COS: inactive"
+
+    Compare the combined state against /tmp/cos-pulse-state.json.
+    If the file doesn't exist, create it with the current state and return
+    EXACTLY the text "__NO_OUTPUT__" (first run is silent baseline).
+
+    If state changed (PM sessions added/removed, slot status changed,
+    bot health changed, VICTOR-COS session appeared/disappeared), return
+    a brief status update like:
+
+    **CoS Pulse** — [timestamp]
+    - PM sessions: [list or "none"]
+    - Slots: [summary]
+    - Bot: [healthy/unhealthy]
+    - VICTOR-COS: [active/inactive]
+    - Changes: [what changed since last check]
+
+    If state is unchanged, return EXACTLY the text "__NO_OUTPUT__" and
+    nothing else.
+
+    Always update /tmp/cos-pulse-state.json with the current state before
+    returning.
+  timeout_seconds: 60
+
+provider:
+  model: claude-haiku-4-5-20251001
+
+delivery:
+  channel_id: "100000000000000004"
+  agent_id: victor
+  mode: none  # State tracking only — Victor posts to Discord proactively when needed
+
+policy:
+  max_consecutive_failures: 10
+  alert_channel_id: "100000000000000010"
+  concurrency_group: cos-pulse
+  priority: 1
+  backoff:
+    enabled: false
+
+tags:
+  - victor
+  - cos
+  - monitoring

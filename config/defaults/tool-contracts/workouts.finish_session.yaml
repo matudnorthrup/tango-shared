@@ -1,0 +1,26 @@
+id: workouts.finish_session
+family: workouts
+description: End an active workout session and persist end time and notes.
+owner_worker: workout-recorder
+mode: write
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: true
+integration:
+  system: postgres
+  target: workouts
+input_fields:
+  - workout_id
+  - notes?
+output_fields:
+  - workout_id
+  - started_at
+  - ended_at
+legacy:
+  commands:
+    - ~/.tango/tools/workout-tracker/workout.sh end <workout_id> [notes]
+  read_paths:
+    - ~/.tango/tools/workout-tracker/workout.sh
+  write_paths:
+    - "Postgres table: workouts"

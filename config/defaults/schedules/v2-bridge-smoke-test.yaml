@@ -1,0 +1,38 @@
+id: v2-bridge-smoke-test
+display_name: V2 Bridge Smoke Test
+description: >
+  One-shot test schedule to validate the v2 scheduled job bridge.
+  Fires once at 10:00am PT on 2026-04-22, then auto-deletes.
+enabled: false  # one-shot fire time (2026-04-22) expired; recreate with a future at: to reuse
+runtime: v2
+
+schedule:
+  at: "2026-04-22T10:00:00-07:00"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: wellness
+  task: |
+    Return a one-sentence hello message to confirm the v2 scheduled job
+    bridge is working. Do not use any tools. Just say hello and confirm
+    you are running as a v2 scheduled job.
+  timeout_seconds: 60
+
+provider:
+  model: claude-sonnet-5
+
+delivery:
+  channel_id: "100000000000001002"
+  agent_id: malibu
+  mode: message
+
+policy:
+  delete_after_run: true
+  max_consecutive_failures: 1
+  alert_channel_id: "100000000000000010"
+
+tags:
+  - malibu
+  - test
+  - v2-bridge

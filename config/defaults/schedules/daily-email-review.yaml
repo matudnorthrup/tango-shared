@@ -1,0 +1,76 @@
+id: daily-email-review
+display_name: Daily Email Review
+description: >
+  Triage and process emails across all accessible Gmail accounts. Categorizes,
+  flags actionable items, and archives processed mail.
+enabled: true
+runtime: v2
+
+obsidian_log:
+  domain: Email
+  job_name: Daily Email Review
+
+schedule:
+  cron: "30 4 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - email.inbox_maintenance
+  deterministic_agent_id: watson
+  task: |
+    Run the daily email review.
+
+    **First:** Read the triage rules at
+    References/Email Triage Rules.md
+    These rules define what to ignore, delegate, and flag. Apply them
+    before making triage decisions.
+
+    Since this is a scheduled run (not interactive), handle phases
+    autonomously:
+
+    Phase 1: Scan all accessible accounts. Categorize inbox mail into
+    newsletters/promotions, notifications, and actionable. Apply the
+    triage rules — auto-archive "Ignore" items, mark "Delegate" items
+    as not the owner's responsibility.
+
+    Phase 2: For actionable emails (not ignored or delegated), summarize
+    each thread. Skip ones that clearly don't need a response. For
+    important ones that need the user's input, flag them.
+
+    Phase 3: Review notifications and newsletters. Flag anything that
+    needs attention per the rules. Archive the rest in bulk.
+
+    Phase 4: Present a summary with sections:
+    - **Flagged** (actionable items the owner needs to handle)
+    - **Delegated** (noted but not the owner's job — brief mention only)
+    - **Archived** (counts of newsletters, notifications removed)
+    - Total inbox reduction
+  timeout_seconds: 420
+
+provider:
+  model: claude-sonnet-5
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: daily-email-review
+  scope: daily
+
+policy:
+  max_consecutive_failures: 1
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  priority: 5
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - email
+  - daily

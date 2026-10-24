@@ -1,0 +1,22 @@
+id: operations
+display_name: Operations
+aliases:
+  - business operations
+  - contract operations
+  - vendor operations
+  - side project operations
+default_agent: victor
+provider:
+  default: claude-oauth
+  fallback:
+    - claude-oauth-secondary
+    - codex
+worker_ids:
+  - operations-assistant
+  - note-librarian
+tool_contract_ids:
+  - linear
+  - obsidian
+policies:
+  topic_mode: optional
+  write_confirmation: on-ambiguity

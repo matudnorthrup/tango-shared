@@ -1,0 +1,18 @@
+id: kilo
+type: persistent
+agent: kilo
+channels:
+  - discord:100000000000000009
+memory:
+  max_context_tokens: 8000
+  zones:
+    pinned: 0.05
+    summary: 0.15
+    memories: 0.10
+    recent: 0.70
+  importance_threshold: 0.8
+  retrieval_weights:
+    recency: 1.0
+    importance: 0.5
+    relevance: 2.0
+    source: 0.3

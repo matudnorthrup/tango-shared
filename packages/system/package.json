@@ -1,0 +1,33 @@
+{
+  "name": "@tango/system",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "tango-event": "dist/cli/tango-event.js",
+    "tango-mode": "dist/cli/tango-mode.js",
+    "tango-run": "dist/cli/tango-run.js",
+    "tango-system": "dist/cli/tango-system.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node ../../scripts/dev/load-cap.mjs vitest run"
+  },
+  "dependencies": {
+    "@tango/core": "0.1.0",
+    "croner": "^10.0.1",
+    "js-yaml": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9"
+  }
+}

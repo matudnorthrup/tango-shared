@@ -1,0 +1,27 @@
+id: travel.diesel_lookup
+domain: travel
+display_name: Diesel Lookup
+description: Find and summarize diesel stations along a route or near a destination using the current location feed when available.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: destination
+    required: true
+    inferable: false
+  - name: near
+    required: false
+    inferable: true
+  - name: top
+    required: false
+    inferable: true
+examples:
+  - Find the best diesel stops on the route to Mesa Junction, Nevada
+  - Where should I stop for diesel near Pine Gap?
+  - Show me the top 3 diesel stations on the way to Springfield
+can_run_in_parallel: true
+classifier_hints:
+  - Use for finding diesel stations, route fuel-stop recommendations, or best-value diesel near a destination.
+  - Prefer travel.location_read when the user only wants the current location and not routing or fuel stops.
+  - Do not absorb separate Walmart queue or shopping-status requests into this intent; emit a separate shopping intent when both are present.

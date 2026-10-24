@@ -1,0 +1,5 @@
+id: foxtrot
+type: persistent
+agent: foxtrot
+channels:
+  - discord:100000000000000005

@@ -1,0 +1,31 @@
+id: wellness.log_recipe_meal
+display_name: Log Recipe Meal
+description: Log a named wellness.db recipe through nutrition_log_items using its name and servings; the tool expands nested components and resolves products.
+owner_worker: nutrition-logger
+mode: write
+status: implemented
+confirmation_required: false
+handler: log_recipe_meal
+tool_contract_ids:
+  - wellnessdb.recipes.lookup
+  - wellnessdb.ingredients.lookup
+  - fatsecret.log_food
+  - fatsecret.day_summary
+input_fields:
+  - recipe_query
+  - meal
+  - date_scope? (today by default)
+  - ingredient_mentions? (quantity overrides or extra ingredient logs inferred from the prompt)
+examples:
+  - Can you log my protein yogurt bowl for breakfast this morning?
+  - Log my lean taco bowl for dinner
+  - "Log today's lunch: asian power salad, but make it 200g chicken and 140g black beans, plus 12g honey for my walk"
+planning:
+  summary: Prefer this over asking the user to restate recurring recipes when a wellness.db recipe likely exists. Pass recipe names and servings, or component names and grams, to nutrition_log_items for expansion.
+  when_to_use:
+    - the user asks to log a named recurring meal or recipe
+    - the meal sounds like a saved recipe or staple
+    - the user includes quantity adjustments or a small extra ingredient to be logged in the same request
+  ask_for_clarification_when:
+    - multiple recipes match the description
+    - the wellness.db recipe exists but ingredient resolution is ambiguous

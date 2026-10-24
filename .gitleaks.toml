@@ -1,0 +1,19 @@
+# Known test fixtures that look like credentials. Each entry is a literal
+# placeholder value, not a pattern that could hide a real key.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Test fixtures: fake tokens and conversation keys"
+regexTarget = "match"
+regexes = [
+  '''abcdef123456''',
+  '''conversation-1''',
+  '''sk_live_abcdefghijklmnopqrstuvwx''',
+]
+
+[[allowlists]]
+description = "Doc comment about conversation keys, not a key"
+paths = ['''packages/discord/src/tango-router\.ts''']
+regexTarget = "line"
+regexes = ['''explicit key \(voice''']

@@ -1,0 +1,188 @@
+id: foxtrot
+enabled: false
+display_name: Foxtrot
+type: finance
+avatar_url: https://example.com/tango/avatars/foxtrot.png
+
+system_prompt_file: agents/assistants/foxtrot/soul.md
+
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: lunch-money
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "lunch-money"]
+    env:
+      ALLOWED_TOOL_IDS: "lunch_money"
+  - name: receipt-registry
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "receipt-registry"]
+    env:
+      ALLOWED_TOOL_IDS: "receipt_registry"
+  - name: expensedesk
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "expensedesk"]
+    env:
+      ALLOWED_TOOL_IDS: "expense_reimbursement"
+  - name: browser
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "browser"]
+    env:
+      ALLOWED_TOOL_IDS: "browser"
+  - name: obsidian
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "obsidian"]
+    env:
+      ALLOWED_TOOL_IDS: "obsidian"
+  - name: onepassword
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "onepassword"]
+    env:
+      ALLOWED_TOOL_IDS: "onepassword"
+  - name: walmart
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "walmart"]
+    env:
+      ALLOWED_TOOL_IDS: "walmart"
+  - name: google
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "google"]
+    env:
+      ALLOWED_TOOL_IDS: "gog_email"
+  - name: agent-docs
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "agent-docs"]
+    env:
+      ALLOWED_TOOL_IDS: "agent_docs"
+  - name: collaboration
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "collaboration"]
+    env:
+      ALLOWED_TOOL_IDS: "collaborate_with_agent"
+  - name: kilo-ledger
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "kilo-ledger"]
+    env:
+      ALLOWED_TOOL_IDS: "kilo_ledger"
+  - name: bank-transfer
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "bank-transfer"]
+    env:
+      ALLOWED_TOOL_IDS: "bank_transfer"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+  - name: screen
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "screen"]
+    env:
+      ALLOWED_TOOL_IDS: "screen"
+  - name: desk-mail
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "desk-mail"]
+    env:
+      ALLOWED_TOOL_IDS: "desk_mail"
+
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  fallback: codex
+  # 2026-09-25 fleet bake-off (PR #305): Opus 5.5 0.78 vs 4.8 0.62 on shopping research.
+  model: claude-opus-5-5
+  reasoning_effort: medium
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.80
+
+memory:
+  post_turn_extraction: enabled
+  canonical_agent_id: foxtrot
+  alias_agent_ids:
+    - foxtrot
+    - foxtrot-ollama
+  # 2026-07-18 claude-primary flip (TGO-809): extraction stays on DeepSeek —
+  # the clones have extracted with it since June and it conserves the Claude
+  # subscription budget for turn traffic.
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.4
+  scheduled_reflection: enabled
+
+state:
+  reconciliation: enabled
+  always_on_types:
+    - automation-job
+    - finance-review
+  focus_ttl_days: 7
+
+responsibilities:
+  - id: finance_support
+    description: Provide bounded finance, receipt, and reimbursement status support for other agents.
+    objectives:
+      - Verify finance status from configured source-of-record tools.
+      - Preserve confirmation requirements for writes, submissions, purchases, and payments.
+    autonomy:
+      default: supervised
+      writes_require_confirmation: true
+      purchase_or_payment: never
+    collaboration:
+      can_request:
+        - agent: kilo
+          purposes: ["kilo-spending-support"]
+      can_fulfill:
+        - purpose: receipt-status-check
+          max_turns: 1
+          max_duration_seconds: 180
+          max_tool_calls: 6
+          visibility_modes: ["summary", "digest", "thread", "transcript", "silent"]
+        - purpose: finance-summary
+          max_turns: 1
+          max_duration_seconds: 180
+          max_tool_calls: 6
+          visibility_modes: ["summary", "digest", "thread", "transcript", "silent"]
+
+voice:
+  call_signs:
+    - Foxtrot
+  default_channel_id: "100000000000000005"
+  smoke_test_channel_id: "100000000000001005"
+
+discord:
+  default_channel_id: "100000000000000005"
+  smoke_test_channel_id: "100000000000001005"
+
+# Legacy registry fields
+default_project: finance
+response_mode: concise
+
+provider:
+  default: claude-oauth
+  reasoning_effort: medium
+  fallback:
+    - claude-oauth-secondary
+    - codex
+    # 2026-07-18 (TGO-809): a full Claude outage fails over to the
+    # unmetered Ollama/DeepSeek path after codex.
+    - ollama
+
+tools:
+  mode: off
+
+deterministic_routing:
+  enabled: true
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex
+      # 2026-07-18 (TGO-809): a full Claude outage fails over to the
+      # unmetered Ollama/DeepSeek path after codex.
+      - ollama

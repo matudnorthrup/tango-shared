@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Optional private wrapper; keep the command foreground in Loom's process group.
+set -euo pipefail
+if [ "$#" -eq 0 ]; then
+  echo 'usage: loom-dev-server <foreground command> [args...]' >&2
+  exit 1
+fi
+case "${TANGO_DESK_ITEM:-}" in
+  loom:*) exec loom resource dev-server -- "$@" ;;
+  *) exec "$@" ;;
+esac

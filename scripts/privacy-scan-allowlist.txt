@@ -1,0 +1,68 @@
+# privacy-scan allowlist — files with VERIFIED-legitimate matches only.
+# Format: one repo-relative path per line, or a directory prefix ending in "/".
+# Applies to content scans only; the forbidden-tracked-file checks in
+# scripts/privacy-scan.sh can never be allowlisted.
+# Every entry needs a comment explaining why it is legitimate.
+
+# Retros documenting the private-data incidents; they name the categories of
+# data that were removed (and the scanner gaps that missed them), which is the
+# point of the documents — no live values, only pattern descriptions.
+docs/retros/personal-data-split-2026-06.md
+
+# Juliet is a mental-health support agent; her public files legitimately list
+# crisis resources and hotlines whose names can overlap denylisted topics.
+agents/assistants/juliet/knowledge.md
+agents/assistants/juliet/soul.md
+
+# Setup/deployment guides and host launch scripts that intentionally encode
+# machine-local install paths for this single-host deployment.
+docs/guides/post-reboot-startup.md
+scripts/startup.sh
+scripts/dev/claim-bot.sh
+scripts/dev/release-bot.sh
+scripts/tmux/
+
+# Unit tests using synthetic tester home-directory paths.
+packages/core/test/memory-reflection.test.ts
+packages/core/test/memory-system.test.ts
+packages/core/test/provider-artifacts.test.ts
+
+# 1Password integration code/docs/tests that must name the secret-reference
+# URI scheme and the service-account token env var (no secret values present).
+.env.example
+packages/discord/src/onepassword-agent-tools.ts
+packages/discord/src/op-secret.ts
+packages/discord/test/onepassword-agent-tools.test.ts
+packages/discord/test/op-secret.test.ts
+docs/specs/ollama-provider-parallel-instance.md
+
+# Legacy Obsidian-vault fallback constant + comments. The vault root resolves
+# from TANGO_OBSIDIAN_VAULT / the profile first; this hardcoded path is only a
+# backward-compat fallback for pre-profile installs (env-overridable).
+packages/core/src/obsidian-indexer.ts
+packages/discord/src/personal-agent-tools.ts
+
+# Historical eval fixture: a recorded runtime error string mentions a local
+# fallback script path. It is captured past output, not a live config value.
+
+# Agent operating guide documents the Linear credential MECHANISM (env var
+# names + .env read snippet) for agents; contains no secret values.
+AGENTS.md
+
+# The scanner itself contains the structural patterns it greps for.
+scripts/privacy-scan.sh
+
+# Synthetic Slack permalink timestamps (example.slack.com fixtures).
+packages/discord/test/slack-tools.test.ts
+
+# The shared-copy exporter rewrites machine home paths to a placeholder user;
+# its config and tests name that placeholder and a made-up user.
+scripts/export-shared/config.json
+scripts/export-shared/export.test.mjs
+
+# NOTE: A former "LEGACY: real Discord channel/avatar snowflake ids" block was
+# removed once those config defaults were genericized to placeholders and the
+# real ids moved to the profile overlay (see
+# scripts/migrate-personal-config-to-profile.mjs and docs/guides/profile-model.md).
+# New config files MUST use placeholder ids (1 followed by zeros, e.g.
+# 100000000000000003); never re-add real ids to the repo or this allowlist.

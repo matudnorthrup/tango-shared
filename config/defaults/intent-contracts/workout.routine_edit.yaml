@@ -1,0 +1,29 @@
+id: workout.routine_edit
+domain: wellness
+display_name: Edit Workout Routine
+description: Create, modify, rename, reorder, or delete a workout routine template or its exercises.
+mode: write
+route:
+  kind: worker
+  target_id: workout-recorder
+slots:
+  - name: routine_query
+    required: false
+    inferable: true
+  - name: change_request
+    required: true
+    inferable: false
+examples:
+  - Add lateral raises to Push Day A
+  - Swap rear delt fly for prone single arm rear delt fly in Pull Day B
+  - Remove hammer curls from Pull Day 2
+  - Create a new push day routine with bench, overhead press, and flies
+  - Rename Push Day C to Push Day Light
+  - Make prone single-arm rear delt fly the default for pull day 2
+  - Reorder the exercises in Leg Day Large
+  - Delete the old Push Day B routine
+classifier_hints:
+  - Use for modifying, creating, renaming, reordering, or deleting workout routine templates.
+  - Use when the user wants to swap, add, or remove exercises from a named routine (Push Day A, Pull Day B, Leg Day Large, etc.).
+  - Do NOT use for logging workout sets or querying workout history — those are workout.log and workout.history.
+  - Do NOT confuse with recipe.update — workout routines are stored in the workout database, not the recipe vault.

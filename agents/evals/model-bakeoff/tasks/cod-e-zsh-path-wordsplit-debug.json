@@ -1,0 +1,73 @@
+{
+  "id": "cod-e.debug.zsh-path-and-wordsplit",
+  "title": "Cod-E: debug a zsh script (loop var named `path` clobbers PATH; unquoted var doesn't word-split)",
+  "category": "coding",
+  "source": "Sept 2026 fleet bake-off: realistic shell-debugging question drawn from two real zsh traps (tied `path` array, no implicit word splitting). Code embedded; no tools.",
+  "ownerAgent": "cod-e",
+  "worker": "cod-e",
+  "systemFromAgent": "cod-e",
+  "taskShape": "single_turn_answer",
+  "safetyTier": "read_only_judgment",
+  "tools": false,
+  "runs": 3,
+  "reasoningEffort": "high",
+  "incumbentModel": "claude-opus-5-5",
+  "candidateModels": [
+    "claude-opus-5-5",
+    "claude-sonnet-5",
+    "claude-haiku-4-5",
+    "deepseek-v4-pro:cloud",
+    "glm-5.3",
+    "kimi-k3",
+    "minimax-m3",
+    "deepseek-v4.1-flash",
+    "glm-5.3-flash",
+    "claude-opus-4-8",
+    "kimi-k2.7-code"
+  ],
+  "benchmarkModels": [],
+  "judge": {
+    "models": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ]
+  },
+  "system": "Scenario context: the user is messaging you in Discord from their Mac (macOS, default zsh).",
+  "prompt": "This little zsh cleanup script is driving me nuts. Two problems: halfway through the loop I start getting `zsh: command not found: git` (and basename), even though git works fine in my terminal. And the kill at the end says `kill: illegal pid: 4121\n4188` even though those are real pids. What's going on?\n\n```zsh\n#!/bin/zsh\nfor path in ~/code/*/; do\n  name=$(basename \"$path\")\n  echo \"== $name\"\n  git -C \"$path\" fetch --prune --quiet\ndone\n\npids=$(pgrep -f 'node .*dev-server')\nif [[ -n $pids ]]; then\n  kill $pids\nfi\n```",
+  "successCriteria": [
+    "Diagnoses bug 1 correctly: in zsh the lowercase `path` parameter is an array tied to PATH, so assigning the loop variable `path` replaces PATH with the directory and external commands stop resolving.",
+    "Minimal fix for bug 1: rename the loop variable (e.g. `dir`); does not recommend hacks like hardcoding /usr/bin paths as the primary fix.",
+    "Diagnoses bug 2 correctly: zsh does not word-split unquoted parameter expansions, so `$pids` is passed as one argument containing a newline.",
+    "Minimal fix for bug 2: split explicitly, e.g. `pids=(${(f)\"$(pgrep -f ...)\"})` then `kill $pids`, or `kill ${=pids}` / `${(f)pids}`; mentions `setopt sh_word_split` at most as a less-preferred alternative.",
+    "Concise: shows the corrected script or the two changed lines without a long zsh tutorial."
+  ],
+  "knownFailureModes": [
+    "Blames PATH not being exported in scripts / suggests `source ~/.zshrc` instead of identifying the tied `path` array.",
+    "Says to quote `$pids` (makes bug 2 worse) or claims zsh splits like bash.",
+    "Only fixes one of the two bugs.",
+    "Rewrites the script in bash or adds unrelated changes.",
+    "Long lecture on zsh internals."
+  ],
+  "rubric": [
+    {
+      "name": "diagnosis_accuracy",
+      "weight": 0.45,
+      "description": "Both root causes identified correctly and explained in one or two sentences each."
+    },
+    {
+      "name": "fix_correctness",
+      "weight": 0.3,
+      "description": "Fixes are minimal, correct zsh, and would actually resolve both symptoms."
+    },
+    {
+      "name": "concision",
+      "weight": 0.15,
+      "description": "Tight answer with the corrected code; no tutorial sprawl."
+    },
+    {
+      "name": "tone",
+      "weight": 0.1,
+      "description": "Curious, direct, teaches without blame (Cod-E's temperament)."
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+id: contacts-sync
+display_name: Contacts Sync
+description: >
+  Export macOS Contacts (AddressBook) to JSON for iMessage contact name
+  resolution. Disabled while the iMessage integration is parked.
+enabled: false
+
+schedule:
+  cron: "0 4 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: contacts-sync
+  timeout_seconds: 30
+
+policy:
+  max_consecutive_failures: 3
+  priority: 1
+
+tags:
+  - imessage
+  - contacts
+  - sync

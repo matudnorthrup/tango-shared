@@ -1,0 +1,66 @@
+id: ai-intelligence-briefing
+display_name: AI Intelligence Briefing
+description: >
+  Synthesize AI-related Slack channels (ai, ai-tools, agents,
+  team-news, team-learning, ai-news, ai-updates, ai-lab)
+  into a daily briefing on what the team is discussing around AI.
+enabled: true
+runtime: v2
+
+schedule:
+  cron: "5 15 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: research-assistant
+  intent_ids:
+    - research.slack_digest
+  deterministic_agent_id: sierra
+  task: |
+    Run an AI-focused Slack digest. Follow the slack_digest skill guidance.
+
+    Use the slack tool to:
+    1. List all channels
+    2. Filter to AI-related channels: ai, ai-tools, agents,
+       team-news, team-learning, ai-news, ai-updates, ai-lab
+    3. Fetch the last 24 hours of history from each
+    4. Resolve user IDs to names
+    5. Read thread replies for high-engagement threads
+
+    Synthesize into a concise intelligence briefing focused on:
+    - New tools, models, or frameworks being discussed
+    - Interesting experiments or findings people are sharing
+    - Decisions about AI tooling or infrastructure
+    - Links and resources worth checking out
+
+    Organize by topic significance, not by channel. This should read
+    like a colleague catching you up on what the team is exploring
+    in AI today.
+  timeout_seconds: 300
+
+provider:
+  model: claude-opus-5-5
+
+delivery:
+  channel_id: "100000000000000015"
+  agent_id: sierra
+
+completion:
+  workflow_id: ai-intelligence-briefing
+  scope: daily
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 4
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - sierra
+  - research
+  - daily
+  - slack

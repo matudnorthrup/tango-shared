@@ -1,0 +1,8 @@
+# malibu-test smoke channel routes to the Ollama clone, not the classic
+# (Claude) persona — test channels exercise the Ollama fleet (TGO-739).
+# Placeholder channel id; the real binding lives in the profile overlay.
+id: smoke-testing-malibu
+type: project
+agent: malibu-ollama
+channels:
+  - "discord:100000000000001002"

@@ -1,0 +1,20 @@
+id: recipe.update
+domain: wellness
+display_name: Update Recipe
+description: Modify, rewrite, or update an existing wellness.db recipe.
+mode: write
+route:
+  kind: worker
+  target_id: recipe-librarian
+slots:
+  - name: recipe_query
+    required: true
+    inferable: false
+  - name: change_request
+    required: true
+    inferable: false
+examples:
+  - Update the recipe with the new macros
+  - Change the recipe to use 200g chicken
+classifier_hints:
+  - Use for modifying or rewriting an existing recipe rather than just reading it.

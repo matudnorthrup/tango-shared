@@ -1,0 +1,188 @@
+{
+  "latest": {
+    "when": "2026-09-25T13:08:12.676Z",
+    "harnessVersion": "2.0.0",
+    "fixtureSource": "model-bakeoff/tasks/memory-extraction-nothing-worth-saving.json",
+    "runsPerCandidate": 3,
+    "judges": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ],
+    "verdict": {
+      "fixtureId": "memory.extraction.nothing-worth-saving",
+      "passRateThreshold": 0.8,
+      "rubricThreshold": 0.7,
+      "rubricFloor": 0.6,
+      "recommendation": "claude-sonnet-5",
+      "reason": "claude-sonnet-5 beats incumbent deepseek-v4-pro:cloud (passRate 100% vs 100%, 4 out-tok/success (price unknown) vs 128 out-tok/success (price unknown))",
+      "winner": "claude-sonnet-5",
+      "incumbent": "deepseek-v4-pro:cloud",
+      "eligible": [
+        "claude-sonnet-5",
+        "nemotron-3-ultra",
+        "deepseek-v4.1-flash",
+        "kimi-k3",
+        "deepseek-v4-pro:cloud",
+        "claude-haiku-4-5"
+      ],
+      "infraIncomplete": false
+    },
+    "candidates": [
+      {
+        "model": "claude-haiku-4-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.8666666666666668,
+        "rubricMin": 0.8600000000000001,
+        "rubricStdDev": 0.00942809041582059,
+        "rubricByJudge": {
+          "sonnet": 0.92,
+          "deepseek-v4-pro": 0.8133333333333335
+        },
+        "meanSeconds": 7.473333333333334,
+        "meanOutputTokens": 455.3333333333333,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-sonnet-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 1,
+        "rubricMin": 1,
+        "rubricStdDev": 0,
+        "rubricByJudge": {
+          "sonnet": 1,
+          "deepseek-v4-pro": 1
+        },
+        "meanSeconds": 2.4193333333333333,
+        "meanOutputTokens": 4,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4-pro:cloud",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 1,
+        "rubricMin": 1,
+        "rubricStdDev": 0,
+        "rubricByJudge": {
+          "sonnet": 1,
+          "deepseek-v4-pro": 1
+        },
+        "meanSeconds": 2.010666666666667,
+        "meanOutputTokens": 127.66666666666667,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4.1-flash",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 1,
+        "rubricMin": 1,
+        "rubricStdDev": 0,
+        "rubricByJudge": {
+          "sonnet": 1,
+          "deepseek-v4-pro": 1
+        },
+        "meanSeconds": 1.7703333333333333,
+        "meanOutputTokens": 76,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "glm-5.3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0.6666666666666666,
+        "rubricMean": 0.7133333333333334,
+        "rubricMin": 0.14,
+        "rubricStdDev": 0.4054078878802872,
+        "rubricByJudge": {
+          "sonnet": 0.6933333333333334,
+          "deepseek-v4-pro": 0.7333333333333334
+        },
+        "meanSeconds": 4.075333333333333,
+        "meanOutputTokens": 530.6666666666666,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "output:matches: \\[\\s*\\]",
+          "output:notMatches: \"content\"\\s*:"
+        ]
+      },
+      {
+        "model": "kimi-k3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 1,
+        "rubricMin": 1,
+        "rubricStdDev": 0,
+        "rubricByJudge": {
+          "sonnet": 1,
+          "deepseek-v4-pro": 1
+        },
+        "meanSeconds": 2.936666666666667,
+        "meanOutputTokens": 112.33333333333333,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "gpt-oss:120b",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0,
+        "rubricMean": 0.13333333333333333,
+        "rubricMin": 0.13,
+        "rubricStdDev": 0.004714045207910321,
+        "rubricByJudge": {
+          "sonnet": 0.06666666666666667,
+          "deepseek-v4-pro": 0.20000000000000004
+        },
+        "meanSeconds": 1.5703333333333334,
+        "meanOutputTokens": 259.3333333333333,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "output:matches: \\[\\s*\\]",
+          "output:notMatches: \"content\"\\s*:",
+          "output:matches: \\[\\s*\\]",
+          "output:notMatches: \"content\"\\s*:",
+          "output:matches: \\[\\s*\\]",
+          "output:notMatches: \"content\"\\s*:"
+        ]
+      },
+      {
+        "model": "nemotron-3-ultra",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 1,
+        "rubricMin": 1,
+        "rubricStdDev": 0,
+        "rubricByJudge": {
+          "sonnet": 1,
+          "deepseek-v4-pro": 1
+        },
+        "meanSeconds": 1.5183333333333333,
+        "meanOutputTokens": 54.666666666666664,
+        "meanCostUsd": null,
+        "gateFailures": []
+      }
+    ]
+  },
+  "history": []
+}

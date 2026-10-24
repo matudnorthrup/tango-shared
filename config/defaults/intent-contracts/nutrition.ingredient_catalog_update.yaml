@@ -1,0 +1,25 @@
+id: nutrition.ingredient_catalog_update
+domain: wellness
+display_name: Update Ingredient Catalog
+description: Resolve a reusable ingredient or food item and create or update its Atlas nutrition catalog entry for future logging.
+mode: write
+route:
+  kind: worker
+  target_id: nutrition-logger
+slots:
+  - name: ingredient_query
+    required: true
+    inferable: false
+  - name: source_hint
+    required: false
+    inferable: true
+  - name: change_request
+    required: false
+    inferable: true
+examples:
+  - Find a pulled pork in FatSecret and add it to Atlas for future use.
+  - Update the Atlas entry for canned chicken breast with the better matching macros.
+  - Add this ingredient to the catalog so I can reuse it later.
+classifier_hints:
+  - Use for requests to add, normalize, or update reusable ingredient catalog entries, especially when the user explicitly mentions Atlas or future reuse.
+  - Prefer nutrition.log_food or nutrition.log_recipe when the primary request is diary logging rather than catalog maintenance.

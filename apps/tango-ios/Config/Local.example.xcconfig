@@ -1,0 +1,7 @@
+// Copy to Local.xcconfig (ignored). Use your existing Apple developer membership.
+DEVELOPMENT_TEAM = YOUR_TEAM_ID
+PRODUCT_BUNDLE_IDENTIFIER = org.example.TangoDesk
+// xcconfig treats two slashes as a comment. The empty expansion preserves the URL.
+DESK_URL = https:/$()/desk.example
+// Match the provisioning entitlement: development for development signing, production for distribution.
+TANGO_APS_ENTITLEMENT = development

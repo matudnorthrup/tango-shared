@@ -1,0 +1,28 @@
+id: wellness.analyze_nutrition_day
+display_name: Analyze Nutrition Day
+description: Read one or more nutrition days and answer freeform questions about totals, macro balance, meal composition, and day-to-day comparisons. The owning worker chooses the exact diary queries and comparisons.
+owner_worker: nutrition-logger
+mode: read
+status: implemented
+handler: analyze_nutrition_day
+tool_contract_ids:
+  - fatsecret.day_summary
+input_fields:
+  - date_scope? (today, yesterday, explicit date)
+  - compare_date_scopes? (ordered list such as today, yesterday)
+  - meal? (breakfast, lunch, dinner, snack, other)
+  - focus? (macros, totals, meals, trends)
+examples:
+  - Hello Malibu, tell me a little bit about my macro breakdowns yesterday
+  - What was my nutrition like yesterday?
+  - Tell me more about my dinner last night
+  - Could you compare today's breakfast to yesterday's?
+  - Compare today and yesterday side by side
+planning:
+  summary: Use when the user wants interpretation of one or more logged nutrition days rather than a transactional write. The workflow only scopes the objective; the nutrition worker still chooses the exact queries, comparisons, and reasoning steps.
+  when_to_use:
+    - the user asks about nutrition, food, macros, or a meal for today or yesterday
+    - the user asks for a comparison across multiple days or meals
+    - the user wants interpretation of existing diary data
+  ask_for_clarification_when:
+    - the requested date or comparison target is ambiguous and cannot be inferred from the prompt

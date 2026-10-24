@@ -1,0 +1,12 @@
+id: tango
+display_name: Tango MVP
+aliases:
+  - tango mvp
+  - tango app
+default_agent: watson
+provider:
+  default: claude-harness
+  fallback:
+    - claude-oauth
+    - claude-oauth-secondary
+    - codex

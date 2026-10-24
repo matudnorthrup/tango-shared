@@ -1,0 +1,20 @@
+id: accounts.identity_read
+domain: accounts
+display_name: Account Identity Read
+description: Read and summarize the current 1Password service-account identity, account URL, or other non-secret identity metadata.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Use the worker to run 1Password whoami and summarize only the account URL.
+  - What's the current 1Password account URL?
+  - Check the 1Password service account identity.
+classifier_hints:
+  - Use for 1Password identity reads like whoami, account URL, service account identity, or sign-in domain.
+  - Prefer this over research.web_lookup when the request is specifically about the current 1Password service account rather than external web research.
+  - This is read-only identity metadata, not secret retrieval.

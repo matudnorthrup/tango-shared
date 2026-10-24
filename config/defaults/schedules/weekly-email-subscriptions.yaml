@@ -1,0 +1,66 @@
+id: weekly-email-subscriptions
+display_name: Weekly Email Subscription Review
+description: >
+  Legacy weekly subscription review. Superseded by
+  nightly-email-unsubscribe-review, which feeds the daily brief and uses the
+  confirmed unsubscribe workflow.
+enabled: false
+runtime: v2
+
+obsidian_log:
+  domain: Email
+  job_name: Weekly Email Subscription Review
+
+schedule:
+  cron: "0 10 * * 0"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  deterministic_agent_id: watson
+  worker_id: personal-assistant
+  intent_ids:
+    - email.subscription_review
+  task: |
+    Run the weekly email subscription review.
+
+    1. Read the subscriptions tracking note from Obsidian at
+       Records/Finance/Email Subscriptions.md for previously reviewed
+       senders.
+    2. Scan all accessible email accounts for emails containing "unsubscribe"
+       in the past 7 days.
+    3. Identify NEW senders not already categorized in the tracking note.
+    4. For each new sender, recommend KEEP (transactional, important
+       notifications) or UNSUBSCRIBE (marketing, promotions, newsletters
+       you don't read).
+    5. Update the subscriptions tracking note with the new entries.
+
+    Summarize findings: new senders found, recommendations, and note
+    update status. If all senders were already categorized, say
+    "All clean this week."
+  timeout_seconds: 300
+
+provider:
+  model: claude-sonnet-5
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: weekly-email-subscriptions
+  scope: weekly
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  priority: 3
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - email
+  - weekly

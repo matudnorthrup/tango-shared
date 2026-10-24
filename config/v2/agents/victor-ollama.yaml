@@ -1,0 +1,118 @@
+id: victor-ollama
+enabled: true
+display_name: Victor (Ollama)
+type: operations
+
+# System prompt = personality + domain + rules
+system_prompt_file: agents/assistants/victor/soul.md
+
+# MCP servers this agent can access
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: linear
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "linear"]
+    env:
+      ALLOWED_TOOL_IDS: "linear"
+  - name: obsidian
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "obsidian"]
+    env:
+      ALLOWED_TOOL_IDS: "obsidian"
+  - name: notion
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "notion"]
+    env:
+      ALLOWED_TOOL_IDS: "notion"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+  - name: screen
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "screen"]
+    env:
+      ALLOWED_TOOL_IDS: "screen"
+  - name: desk-mail
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "desk-mail"]
+    env:
+      ALLOWED_TOOL_IDS: "desk_mail"
+
+# Runtime configuration
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  fallback: codex
+  # Victor is judgment-heavy PM/CoS work. Bake-off (2026-06-08): GLM-5 produced
+  # the strongest project-status reads with real judgment; deepseek-v4-pro
+  # over-explores (39 calls on a slack digest) and is slow on multi-tool turns.
+  model: role:failover-general
+  reasoning_effort: max
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.80
+
+# Memory configuration
+memory:
+  post_turn_extraction: enabled
+  canonical_agent_id: victor
+  alias_agent_ids:
+    - victor
+    - victor-ollama
+  extraction_provider: ollama
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.4
+  scheduled_reflection: enabled
+
+# Discord routing
+discord:
+  default_channel_id: "100000000000000004"
+  smoke_test_channel_id: "100000000000001004" # victor-test (placeholder; real id in profile overlay)
+
+# Restrict this clone to its own channel plus its persona's -test smoke channel
+access:
+  mode: allowlist
+  allowlist_channel_ids:
+    - "100000000000000004"
+    - "100000000000001004" # victor-test smoke channel (placeholder; real id in profile overlay)
+
+# Legacy registry fields
+avatar_url: https://example.com/tango/avatars/victor.png
+default_project: operations
+response_mode: concise
+
+provider:
+  default: ollama
+  model: role:failover-general
+  reasoning_effort: max
+  fallback: []
+
+tools:
+  mode: off
+
+deterministic_routing:
+  enabled: false
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex
+
+# Addressing: the bare name routes to the original Claude agent (TGO-809);
+# "Bravo Victor" and "Zulu Victor" address this clone by name.
+voice:
+  call_signs:
+    - "Bravo Victor"
+    - "Zulu Victor"
+  default_channel_id: "100000000000000004"
+  smoke_test_channel_id: "100000000000001004" # victor-test (placeholder; real id in profile overlay)

@@ -1,0 +1,5 @@
+id: malibu-ollama
+type: persistent
+agent: malibu-ollama
+channels:
+  - "discord:100000000000000002"

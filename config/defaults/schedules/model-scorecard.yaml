@@ -1,0 +1,40 @@
+id: model-scorecard
+display_name: Model Scorecard
+description: >
+  Weekly model-reliability scorecard: aggregate model_runs by agent x model
+  (error rates, tool-iteration cap hits, latency, tokens), compare against the
+  prior window, and flag regressions and never-baked-off assignments for
+  re-evaluation. Production is the continuous eval
+  (docs/guides/model-selection.md, "operating rule").
+enabled: true
+
+schedule:
+  cron: "30 6 * * 1"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: model-scorecard
+  timeout_seconds: 120
+
+delivery:
+  channel_id: "100000000000000026"
+  agent_id: watson
+
+completion:
+  workflow_id: model-scorecard
+  scope: weekly
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 3
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - models
+  - eval
+  - weekly

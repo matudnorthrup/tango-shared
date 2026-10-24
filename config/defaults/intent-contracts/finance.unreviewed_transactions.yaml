@@ -1,0 +1,23 @@
+id: finance.unreviewed_transactions
+domain: finance
+display_name: Review Unreviewed Transactions
+description: Read and summarize unreviewed, unconfirmed, uncategorized, or inbox-style Lunch Money transactions that need review.
+mode: read
+route:
+  kind: worker
+  target_id: personal-assistant
+slots:
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Can you summarize our unconfirmed transactions for me please so we can go through them?
+  - What unreviewed transactions do I still need to categorize?
+  - Show me my Lunch Money inbox for the last week
+can_run_in_parallel: true
+classifier_hints:
+  - Use for Lunch Money review, uncategorized transaction review, unreviewed transactions, or inbox cleanup requests.
+  - Prefer this over generic finance analysis when the request is specifically about transactions needing review or categorization.

@@ -1,0 +1,30 @@
+id: healthdb.recovery_summary
+family: healthdb
+description: Recovery summary with sleep, HRV, RHR, baseline assessment, and seven-day deltas.
+owner_worker: health-analyst
+mode: read
+status: implemented
+live_execution:
+  enabled: true
+  write_enabled: false
+integration:
+  system: mongodb
+  target: health-auto-export
+input_fields:
+  - date? (defaults to today)
+output_fields:
+  - date
+  - night_of
+  - sleep
+  - hrv
+  - rhr
+  - seven_day_avg
+  - vs_trend
+legacy:
+  commands:
+    - node ~/.tango/tools/health-data/scripts/health-query.js --recovery
+  read_paths:
+    - ~/.tango/tools/health-data/SKILL.md baseline table
+    - "MongoDB health-auto-export collections: sleep_analysis, heart_rate_variability, resting_heart_rate, weight_body_mass, blood_pressure"
+  write_paths:
+    - none (legacy flow was read-only)

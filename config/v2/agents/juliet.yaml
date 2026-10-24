@@ -1,0 +1,115 @@
+id: juliet
+enabled: false
+display_name: Juliet
+type: mental-health
+
+# System prompt = personality + domain + rules
+system_prompt_file: agents/assistants/juliet/soul.md
+
+# MCP servers this agent can access
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: obsidian
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "obsidian"]
+    env:
+      ALLOWED_TOOL_IDS: "obsidian"
+  - name: agent-docs
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "agent-docs"]
+    env:
+      ALLOWED_TOOL_IDS: "agent_docs"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+  - name: screen
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "screen"]
+    env:
+      ALLOWED_TOOL_IDS: "screen"
+  - name: desk-mail
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "desk-mail"]
+    env:
+      ALLOWED_TOOL_IDS: "desk_mail"
+
+# Runtime configuration
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  fallback: codex
+  # 2026-09-25 fleet bake-off (PR #305): Opus 5.5 0.90/0.90 vs Sonnet 5 0.81/0.80, faster.
+  model: claude-opus-5-5
+  reasoning_effort: high
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.80
+
+# Memory configuration
+memory:
+  post_turn_extraction: enabled
+  canonical_agent_id: juliet
+  alias_agent_ids:
+    - juliet
+    - juliet-ollama
+  # 2026-07-18 claude-primary flip (TGO-809): extraction stays on DeepSeek —
+  # the clones have extracted with it since June and it conserves the Claude
+  # subscription budget for turn traffic.
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.4
+  scheduled_reflection: enabled
+
+# Voice configuration
+voice:
+  call_signs:
+    - Juliet
+  default_channel_id: "100000000000000007"
+  smoke_test_channel_id: "100000000000001007"
+
+# Discord routing
+discord:
+  default_channel_id: "100000000000000007"
+  smoke_test_channel_id: "100000000000001007"
+
+# Legacy registry fields
+avatar_url: https://example.com/tango/avatars/juliet.png
+default_project: mental-health
+response_mode: explain
+
+provider:
+  default: claude-oauth
+  reasoning_effort: high
+  fallback:
+    - claude-oauth-secondary
+    - codex
+    # 2026-07-18 (TGO-809): a full Claude outage fails over to the
+    # unmetered Ollama/DeepSeek path after codex.
+    - ollama
+
+tools:
+  mode: allowlist
+  allowlist:
+    - memory_search
+    - memory_add
+    - memory_reflect
+
+deterministic_routing:
+  enabled: true
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex
+      # 2026-07-18 (TGO-809): a full Claude outage fails over to the
+      # unmetered Ollama/DeepSeek path after codex.
+      - ollama

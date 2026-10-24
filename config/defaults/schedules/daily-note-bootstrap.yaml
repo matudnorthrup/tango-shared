@@ -1,0 +1,37 @@
+id: daily-note-bootstrap
+display_name: Daily Note Bootstrap
+description: >
+  Deterministically create or repair today's daily note before any morning
+  agent jobs run.
+enabled: true
+
+schedule:
+  cron: "55 4 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: daily-note-bootstrap
+  timeout_seconds: 30
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: daily-note-bootstrap
+  scope: daily
+
+policy:
+  max_consecutive_failures: 1
+  alert_channel_id: "100000000000000010"
+  priority: 20
+  backoff:
+    enabled: true
+    initial_seconds: 60
+    max_seconds: 600
+
+tags:
+  - watson
+  - planning
+  - daily
+  - deterministic

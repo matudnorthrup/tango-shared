@@ -1,0 +1,181 @@
+id: sierra-ollama
+enabled: true
+display_name: Sierra (Ollama)
+type: research
+
+# System prompt = personality + domain + rules
+system_prompt_file: agents/assistants/sierra/soul.md
+
+# MCP servers this agent can access
+mcp_servers:
+  - name: memory
+    command: node
+    args: ["packages/atlas-memory/dist/index.js"]
+  - name: attachments
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "attachments"]
+    env:
+      ALLOWED_TOOL_IDS: "attachment_search,attachment_read,attachment_status"
+  - name: google
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "google"]
+    env:
+      ALLOWED_TOOL_IDS: "gog_email,gog_calendar,gog_docs,gog_docs_update_tab"
+  - name: exa
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "exa"]
+    env:
+      ALLOWED_TOOL_IDS: "exa_search,exa_answer"
+  - name: browser
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "browser"]
+    env:
+      ALLOWED_TOOL_IDS: "browser"
+  - name: obsidian
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "obsidian"]
+    env:
+      ALLOWED_TOOL_IDS: "obsidian"
+  - name: onepassword
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "onepassword"]
+    env:
+      ALLOWED_TOOL_IDS: "onepassword"
+  - name: printer
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "printer"]
+    env:
+      ALLOWED_TOOL_IDS: "printer_command,openscad_render,prusa_slice,paper_print"
+  - name: location
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "location"]
+    env:
+      ALLOWED_TOOL_IDS: "location_read,local_business_search,driving_route,walking_route,route_ahead_search,find_diesel"
+  - name: file-ops
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "file-ops"]
+    env:
+      ALLOWED_TOOL_IDS: "file_ops"
+  - name: slack
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "slack"]
+    env:
+      ALLOWED_TOOL_IDS: "slack"
+  - name: youtube
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "youtube"]
+    env:
+      ALLOWED_TOOL_IDS: "youtube_transcript,youtube_analyze"
+  - name: agent-docs
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "agent-docs"]
+    env:
+      ALLOWED_TOOL_IDS: "agent_docs"
+  - name: notion
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "notion"]
+    env:
+      ALLOWED_TOOL_IDS: "notion"
+  - name: send-image
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "send-image"]
+    env:
+      ALLOWED_TOOL_IDS: "discord_send_image"
+  - name: screen
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "screen"]
+    env:
+      ALLOWED_TOOL_IDS: "screen"
+  - name: desk-mail
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "desk-mail"]
+    env:
+      ALLOWED_TOOL_IDS: "desk_mail"
+  # Read-only off-road surface for the clone: checks and the library, no ride book writes.
+  - name: offroad
+    command: node
+    args: ["packages/core/dist/mcp-proxy.js", "offroad"]
+    env:
+      ALLOWED_TOOL_IDS: "offroad_check,offroad_plan,offroad_networks,offroad_photos,trail_app_library,ridebook_status"
+
+mcp:
+  default_servers:
+    - memory
+    - exa
+
+# Runtime configuration
+runtime:
+  mode: persistent
+  provider: claude-code-v2
+  fallback: codex
+  # Portfolio bake-off (2026-06-09, harness v2): minimax-m2.5 wins bounded
+  # route tasks but fails the quality/consistency
+  # gates on judgment (0.60 mean) and composite diesel tasks. The FALLBACK
+  # DEFAULT must pass the whole portfolio — deepseek-v4-pro:cloud is the only
+  # candidate that does (and the most consistent: itinerary rubric 0.81-0.83).
+  # Bounded jobs can still pin minimax per-schedule/per-task where verdicts say
+  # so. Evidence: agents/evals/model-bakeoff/verdicts/ + assignments.json.
+  model: role:failover-general
+  reasoning_effort: high
+  idle_timeout_hours: 24
+  context_reset_threshold: 0.80
+
+# Memory configuration
+memory:
+  post_turn_extraction: enabled
+  canonical_agent_id: sierra
+  alias_agent_ids:
+    - sierra
+    - sierra-ollama
+  extraction_provider: ollama
+  extraction_model: role:memory-extraction
+  importance_threshold: 0.4
+  scheduled_reflection: enabled
+
+# Discord routing
+discord:
+  default_channel_id: "100000000000000003"
+  smoke_test_channel_id: "100000000000001003" # sierra-test (placeholder; real id in profile overlay)
+
+# Restrict this clone to its own channel plus its persona's -test smoke channel
+access:
+  mode: allowlist
+  allowlist_channel_ids:
+    - "100000000000000003"
+    - "100000000000001003" # sierra-test smoke channel (placeholder; real id in profile overlay)
+
+# Legacy registry fields
+avatar_url: https://example.com/tango/avatars/sierra.png
+default_project: personal
+response_mode: concise
+
+provider:
+  default: ollama
+  model: role:failover-general
+  reasoning_effort: high
+  fallback: []
+
+tools:
+  mode: allowlist
+  allowlist:
+    - WebSearch
+    - WebFetch
+
+deterministic_routing:
+  enabled: false
+  confidence_threshold: 0.8
+  provider:
+    default: claude-oauth
+    reasoning_effort: low
+    fallback:
+      - claude-oauth-secondary
+      - codex
+
+# Addressing: the bare name routes to the original Claude agent (TGO-809);
+# "Bravo Sierra" and "Zulu Sierra" address this clone by name.
+voice:
+  call_signs:
+    - "Bravo Sierra"
+    - "Zulu Sierra"
+  default_channel_id: "100000000000000003"
+  smoke_test_channel_id: "100000000000001003" # sierra-test (placeholder; real id in profile overlay)

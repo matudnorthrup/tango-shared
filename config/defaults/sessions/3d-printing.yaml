@@ -1,0 +1,5 @@
+id: project:3d-printing
+type: project
+agent: sierra
+channels:
+  - discord:100000000000000023

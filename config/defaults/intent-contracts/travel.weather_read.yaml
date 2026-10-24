@@ -1,0 +1,22 @@
+id: travel.weather_read
+domain: travel
+display_name: Weather Read
+description: Read and summarize current weather or forecast conditions for a destination, route, or travel context.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: location_query
+    required: true
+    inferable: false
+  - name: date_scope
+    required: false
+    inferable: true
+examples:
+  - What's the weather in Mesa Junction, Nevada right now?
+  - How does the forecast look on the drive to Pine Gap tomorrow?
+classifier_hints:
+  - Use for weather or forecast requests tied to a place or trip.
+  - Prefer travel.route_plan when the user is mainly asking for directions or drive planning, even if weather is secondary.
+  - Emit separately from travel.route_plan or travel.diesel_lookup when the user explicitly asks for both.

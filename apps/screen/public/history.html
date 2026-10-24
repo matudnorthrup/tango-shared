@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dictation history</title><link rel="stylesheet" href="history.css"><script type="module" src="history.js"></script></head>
+<body><main><a href="./">Back to desk</a><h1>Dictation history</h1><p>New dictations from devices with desk sync on. Kept for 7 days, up to 200 entries. No audio is saved.</p><p>Sync is on by default on supported devices. Turn it off in each device’s settings; local history is independent. Devices begin uploading after their sync update is installed.</p>
+<div class="controls"><label>Search <input id="search" type="search" autocomplete="off"></label><button id="refresh">Refresh</button><button id="clear">Clear all devices…</button></div>
+<p id="status" role="status">Loading…</p><section id="entries" aria-label="Recent dictations"></section>
+<dialog id="confirm"><h2>Clear history on all devices?</h2><p>Deletes desk history now. Offline copies remain until reconnection or local expiry. Reconnecting devices discard all uploads queued before they learn of this clear, including offline captures; those captures remain in their local history. Clipboard contents are unaffected.</p><button id="cancel">Cancel</button><button id="confirm-clear">Clear all devices</button></dialog>
+</main></body></html>

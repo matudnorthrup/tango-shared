@@ -1,0 +1,434 @@
+{
+  "pills": [
+    "needs",
+    "failed",
+    "working",
+    "waiting",
+    "stuck",
+    "finished",
+    "idle",
+    "unknown"
+  ],
+  "live": [
+    "needs",
+    "failed",
+    "ready",
+    "todo",
+    "working",
+    "watching",
+    "fyi",
+    "sent",
+    "held",
+    null
+  ],
+  "kinds": [
+    "needs",
+    "failed",
+    "decided",
+    "shipped",
+    "fyi"
+  ],
+  "commands": [
+    "ask.resolve",
+    "seen",
+    "unseen",
+    "viewed",
+    "heard",
+    "done",
+    "reopen",
+    "snooze",
+    "park",
+    "pickup",
+    "reply",
+    "answer",
+    "respond",
+    "approve",
+    "dismiss",
+    "retry",
+    "undo",
+    "sweep",
+    "briefed",
+    "label",
+    "pin",
+    "rename",
+    "tag",
+    "watch",
+    "project",
+    "stop",
+    "role",
+    "space",
+    "run",
+    "pause",
+    "keep",
+    "fresh",
+    "raise"
+  ],
+  "waitingReasons": [
+    "queued",
+    "disk_low",
+    "recovery_unhealthy",
+    "memory",
+    "host_cap",
+    "account_limit",
+    "provider_busy",
+    "budget",
+    "maintenance",
+    "waiting_for_room"
+  ],
+  "voiceCommands": [
+    "seen",
+    "unseen",
+    "heard",
+    "briefed",
+    "done",
+    "reopen",
+    "snooze",
+    "park",
+    "pickup",
+    "reply",
+    "answer",
+    "respond",
+    "approve",
+    "dismiss",
+    "retry",
+    "sweep",
+    "stop",
+    "pin",
+    "rename",
+    "project",
+    "undo"
+  ],
+  "policies": {
+    "discussion": {
+      "policy": "when asked"
+    },
+    "ownerReceipts": {
+      "sending": {
+        "policy": "when asked"
+      },
+      "delivered": {
+        "policy": "when asked"
+      },
+      "queued": {
+        "policy": "when asked"
+      },
+      "picked-up": {
+        "policy": "when asked"
+      },
+      "failed": {
+        "policy": "when asked"
+      },
+      "uncertain": {
+        "policy": "when asked"
+      }
+    },
+    "pills": {
+      "needs": {
+        "policy": "knock"
+      },
+      "failed": {
+        "policy": "knock"
+      },
+      "working": {
+        "policy": "when asked"
+      },
+      "waiting": {
+        "policy": "when asked"
+      },
+      "stuck": {
+        "policy": "when asked"
+      },
+      "finished": {
+        "policy": "when asked"
+      },
+      "idle": {
+        "policy": "when asked"
+      },
+      "unknown": {
+        "policy": "when asked"
+      }
+    },
+    "kinds": {
+      "needs": {
+        "policy": "knock"
+      },
+      "failed": {
+        "policy": "knock"
+      },
+      "decided": {
+        "policy": "when asked"
+      },
+      "shipped": {
+        "policy": "when asked"
+      },
+      "fyi": {
+        "policy": "when asked"
+      }
+    },
+    "commands": {
+      "ask.resolve": {
+        "policy": "silent",
+        "reason": "The ask card records completion; voice wiring is separate.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "seen": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Marked seen; it stays in the rotation"
+        }
+      },
+      "unseen": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Marked unread"
+        }
+      },
+      "viewed": {
+        "policy": "silent",
+        "reason": "Opening a screen is visual bookkeeping, not a spoken command.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "heard": {
+        "policy": "silent",
+        "reason": "Listening marks a line heard without a separate spoken receipt.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "briefed": {
+        "policy": "silent",
+        "reason": "The spoken briefing itself is the receipt.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "done": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Marked done (and stopped the job when requested)"
+        }
+      },
+      "reopen": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Reopened"
+        }
+      },
+      "snooze": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Snoozed until the requested time or trigger"
+        }
+      },
+      "park": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Parked"
+        }
+      },
+      "pickup": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Picked back up"
+        }
+      },
+      "reply": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Sent the message"
+        }
+      },
+      "answer": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Answered the selected option"
+        }
+      },
+      "respond": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Answered the question"
+        }
+      },
+      "approve": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Recorded the approval choice"
+        }
+      },
+      "dismiss": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Dismissed the question"
+        }
+      },
+      "retry": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Retrying it"
+        }
+      },
+      "undo": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Undid the last voice desk change"
+        }
+      },
+      "sweep": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "The sweep result summary"
+        }
+      },
+      "pin": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Pinned or Unpinned"
+        }
+      },
+      "rename": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Renamed the conversation"
+        }
+      },
+      "project": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Filed under the selected project"
+        }
+      },
+      "stop": {
+        "policy": "when asked",
+        "receipt": {
+          "source": "fixed",
+          "sentence": "Stopped the turn that was running; the conversation stays open for the next message"
+        }
+      },
+      "label": {
+        "policy": "silent",
+        "reason": "Legacy labels have no voice command.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "tag": {
+        "policy": "silent",
+        "reason": "Desk stage and type tags have no voice command.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "watch": {
+        "policy": "silent",
+        "reason": "Desk watch configuration has no voice command.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "role": {
+        "policy": "silent",
+        "reason": "Thread role configuration has no voice command.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "space": {
+        "policy": "silent",
+        "reason": "Desk space configuration has no voice command.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "run": {
+        "policy": "silent",
+        "reason": "System run controls use their separate interface.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "pause": {
+        "policy": "silent",
+        "reason": "System pause controls use their separate interface.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "keep": {
+        "policy": "silent",
+        "reason": "System keep controls use their separate interface.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "fresh": {
+        "policy": "silent",
+        "reason": "System fresh controls use their separate interface.",
+        "receipt": {
+          "source": "server"
+        }
+      },
+      "raise": {
+        "policy": "silent",
+        "reason": "System raise controls use their separate interface.",
+        "receipt": {
+          "source": "server"
+        }
+      }
+    },
+    "waitingReasons": {
+      "queued": {
+        "policy": "when asked"
+      },
+      "disk_low": {
+        "policy": "when asked"
+      },
+      "recovery_unhealthy": {
+        "policy": "when asked"
+      },
+      "memory": {
+        "policy": "when asked"
+      },
+      "host_cap": {
+        "policy": "when asked"
+      },
+      "account_limit": {
+        "policy": "when asked"
+      },
+      "provider_busy": {
+        "policy": "when asked"
+      },
+      "budget": {
+        "policy": "when asked"
+      },
+      "maintenance": {
+        "policy": "when asked"
+      },
+      "waiting_for_room": {
+        "policy": "when asked"
+      }
+    }
+  }
+}

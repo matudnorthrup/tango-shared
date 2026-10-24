@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    # Loom's worktree code relies on APFS copy-on-write clones and a
+    # case-insensitive filesystem, so the suite runs on macOS like upstream.
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+
+      - name: Screen service
+        run: |
+          npm run typecheck -w @tango/screen
+          npm run test -w @tango/screen
+
+      - name: Voice operator
+        run: |
+          npm run typecheck -w @tango/tango-voice
+          npm run test:ci -w @tango/tango-voice

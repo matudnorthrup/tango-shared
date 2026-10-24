@@ -1,0 +1,33 @@
+id: orientation-nudge
+display_name: Orientation Nudge
+description: >
+  Checks whether the daily note/task rotation has gone stale during active
+  hours and, when appropriate, sends a low-friction Discord orientation nudge.
+enabled: true
+
+schedule:
+  every_seconds: 900
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: orientation-nudge
+  timeout_seconds: 30
+
+delivery:
+  mode: none
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  concurrency_group: planning-nudges
+  backoff:
+    enabled: true
+    initial_seconds: 300
+    max_seconds: 1800
+
+tags:
+  - watson
+  - planning
+  - daily
+  - deterministic

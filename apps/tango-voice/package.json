@@ -1,0 +1,70 @@
+{
+  "name": "@tango/tango-voice",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node ../../scripts/dev/load-cap.mjs vitest run",
+    "test:ci": "node ../../scripts/dev/load-cap.mjs vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lab:live-operator": "tsx src/testing/live-operator-lab.ts",
+    "lab:live-operator:report": "tsx src/testing/live-operator-lab-report.ts",
+    "playground:live-operator": "tsx src/testing/live-operator-playground.ts",
+    "discord:live-operator": "tsx src/testing/live-operator-discord.ts",
+    "lab:desk-e2e": "tsx src/testing/desk-e2e.ts",
+    "lab:tts-session": "tsx src/testing/live-operator-tts.ts",
+    "build": "tsc -p tsconfig.clients.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "description": "Tango voice operator: the GPT-Live voice operator for Discord voice channels",
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "dependencies": {
+    "@discordjs/voice": "^0.19.0",
+    "@snazzah/davey": "^0.1.9",
+    "@tango/core": "0.1.0",
+    "discord.js": "^14.25.1",
+    "js-yaml": "^4.2.0",
+    "libopus-wasm": "^0.4.1",
+    "playwright-core": "^1.52.0",
+    "sodium-native": "^5.0.10",
+    "werift": "^0.24.4",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.2",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "exports": {
+    "./live/create-live-client": {
+      "types": "./dist/live/create-live-client.d.ts",
+      "default": "./dist/live/create-live-client.js"
+    },
+    "./live/gpt-live-client": {
+      "types": "./dist/live/gpt-live-client.d.ts",
+      "default": "./dist/live/gpt-live-client.js"
+    },
+    "./live/live-audio": {
+      "types": "./dist/live/live-audio.d.ts",
+      "default": "./dist/live/live-audio.js"
+    },
+    "./live/operator-profile": {
+      "types": "./dist/live/operator-profile.d.ts",
+      "default": "./dist/live/operator-profile.js"
+    },
+    "./live/responses-caller": {
+      "types": "./dist/live/responses-caller.d.ts",
+      "default": "./dist/live/responses-caller.js"
+    },
+    "./turn/turn-policy": {
+      "types": "./dist/turn/turn-policy.d.ts",
+      "default": "./dist/turn/turn-policy.js"
+    }
+  }
+}

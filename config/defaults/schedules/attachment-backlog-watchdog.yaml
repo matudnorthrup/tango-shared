@@ -1,0 +1,37 @@
+id: attachment-backlog-watchdog
+display_name: Attachment Backlog Watchdog
+description: >
+  Recover stale attachment processing locks and surface stuck partial or
+  processing attachments for review. This job never deletes or retires files.
+enabled: true
+
+schedule:
+  cron: "*/30 * * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: deterministic
+  handler: attachment-backlog-watchdog
+  timeout_seconds: 120
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: attachment-backlog-watchdog
+  scope: daily
+  check_before_run: false
+
+policy:
+  max_consecutive_failures: 3
+  alert_channel_id: "100000000000000010"
+  priority: 0
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - maintenance
+  - attachments
+  - watchdog

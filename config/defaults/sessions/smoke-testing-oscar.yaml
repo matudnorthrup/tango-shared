@@ -1,0 +1,5 @@
+id: smoke-testing-oscar
+type: project
+agent: oscar
+channels:
+  - discord:100000000000001033

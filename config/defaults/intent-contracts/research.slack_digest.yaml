@@ -1,0 +1,24 @@
+id: research.slack_digest
+domain: research
+display_name: Slack Digest
+description: Read multiple Slack channels or threads, gather the meaningful activity, and synthesize a focused digest or briefing.
+mode: read
+route:
+  kind: worker
+  target_id: research-assistant
+slots:
+  - name: channel_scope
+    required: false
+    inferable: true
+  - name: date_scope
+    required: false
+    inferable: true
+  - name: focus
+    required: false
+    inferable: true
+examples:
+  - Give me a Slack digest for the AI channels from the last day.
+  - Summarize what mattered across the team Slack today.
+classifier_hints:
+  - Use for multi-channel Slack digests, intelligence briefings, or team catch-ups where the worker should synthesize across several channels or threads.
+  - Prefer slack.channel_review for narrower single-channel catch-up requests owned by Watson.

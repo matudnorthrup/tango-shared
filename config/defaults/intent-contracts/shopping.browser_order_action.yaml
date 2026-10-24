@@ -1,0 +1,23 @@
+id: shopping.browser_order_action
+domain: shopping
+display_name: Browser Order Action
+description: Perform browser-backed shopping actions such as modifying a cart, adding items, or advancing an order flow.
+mode: write
+route:
+  kind: worker
+  target_id: foxtrot
+slots:
+  - name: retailer
+    required: false
+    inferable: true
+  - name: action_request
+    required: true
+    inferable: false
+examples:
+  - Add those items to my Walmart cart.
+  - Remove the duplicate item from the Costco cart.
+  - Go ahead and place the order.
+classifier_hints:
+  - Use for browser-backed shopping mutations such as cart edits, order actions, or retailer-side changes.
+  - Prefer shopping.browser_order_lookup when the request is read-only.
+  - Prefer research.product_selection when the user only wants product comparison or recommendation before purchase execution.

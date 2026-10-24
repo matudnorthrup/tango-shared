@@ -1,0 +1,181 @@
+{
+  "latest": {
+    "when": "2026-09-25T13:08:12.487Z",
+    "harnessVersion": "2.0.0",
+    "fixtureSource": "model-bakeoff/tasks/job-memory-maintenance.json",
+    "runsPerCandidate": 3,
+    "judges": [
+      "sonnet",
+      "deepseek-v4-pro"
+    ],
+    "verdict": {
+      "fixtureId": "job.memory-maintenance",
+      "passRateThreshold": 0.8,
+      "rubricThreshold": 0.7,
+      "rubricFloor": 0.6,
+      "recommendation": "claude-sonnet-4-6",
+      "reason": "incumbent retained (hysteresis): claude-haiku-4-5 did not strictly beat it on pass rate, or cost/rubric advantage was insufficient",
+      "winner": "claude-haiku-4-5",
+      "incumbent": "claude-sonnet-4-6",
+      "eligible": [
+        "claude-haiku-4-5",
+        "claude-opus-5-5",
+        "claude-sonnet-4-6",
+        "kimi-k3",
+        "claude-sonnet-5",
+        "deepseek-v4-pro:cloud",
+        "deepseek-v4.1-flash"
+      ],
+      "infraIncomplete": false
+    },
+    "candidates": [
+      {
+        "model": "claude-opus-5-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.903,
+        "rubricMin": 0.8825000000000001,
+        "rubricStdDev": 0.015508062419270817,
+        "rubricByJudge": {
+          "sonnet": 0.8668333333333335,
+          "deepseek-v4-pro": 0.9391666666666666
+        },
+        "meanSeconds": 50.59566666666666,
+        "meanOutputTokens": 5077.333333333333,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-sonnet-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.9021666666666667,
+        "rubricMin": 0.891,
+        "rubricStdDev": 0.015264792461376209,
+        "rubricByJudge": {
+          "sonnet": 0.8985,
+          "deepseek-v4-pro": 0.9058333333333334
+        },
+        "meanSeconds": 55.782333333333334,
+        "meanOutputTokens": 5786,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-haiku-4-5",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.8054166666666668,
+        "rubricMin": 0.7450000000000001,
+        "rubricStdDev": 0.04308824923598335,
+        "rubricByJudge": {
+          "sonnet": 0.8541666666666666,
+          "deepseek-v4-pro": 0.7566666666666667
+        },
+        "meanSeconds": 55.68333333333334,
+        "meanOutputTokens": 4954.333333333333,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "claude-sonnet-4-6",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.8704166666666667,
+        "rubricMin": 0.8400000000000001,
+        "rubricStdDev": 0.03072616510764438,
+        "rubricByJudge": {
+          "sonnet": 0.8675,
+          "deepseek-v4-pro": 0.8733333333333334
+        },
+        "meanSeconds": 80.31333333333333,
+        "meanOutputTokens": 5425.333333333333,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4-pro:cloud",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.9098333333333334,
+        "rubricMin": 0.8787500000000001,
+        "rubricStdDev": 0.023018410505988914,
+        "rubricByJudge": {
+          "sonnet": 0.9130000000000001,
+          "deepseek-v4-pro": 0.9066666666666667
+        },
+        "meanSeconds": 61.10333333333333,
+        "meanOutputTokens": 6462,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "glm-5.3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 0.6666666666666666,
+        "rubricMean": 0.8620833333333332,
+        "rubricMin": 0.8337500000000001,
+        "rubricStdDev": 0.027182510717166753,
+        "rubricByJudge": {
+          "sonnet": 0.8975000000000001,
+          "deepseek-v4-pro": 0.8266666666666667
+        },
+        "meanSeconds": 180.6783333333333,
+        "meanOutputTokens": 32018.666666666668,
+        "meanCostUsd": null,
+        "gateFailures": [
+          "forbidden:memory_add: forbidden tool was called"
+        ]
+      },
+      {
+        "model": "kimi-k3",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.83725,
+        "rubricMin": 0.79375,
+        "rubricStdDev": 0.03383045964807455,
+        "rubricByJudge": {
+          "sonnet": 0.8778333333333334,
+          "deepseek-v4-pro": 0.7966666666666667
+        },
+        "meanSeconds": 76.80033333333334,
+        "meanOutputTokens": 5617.666666666667,
+        "meanCostUsd": null,
+        "gateFailures": []
+      },
+      {
+        "model": "deepseek-v4.1-flash",
+        "benchmarkOnly": false,
+        "validRuns": 3,
+        "infraRuns": 0,
+        "passRate": 1,
+        "rubricMean": 0.9410000000000002,
+        "rubricMin": 0.9337500000000001,
+        "rubricStdDev": 0.009043874538419148,
+        "rubricByJudge": {
+          "sonnet": 0.9336666666666668,
+          "deepseek-v4-pro": 0.9483333333333333
+        },
+        "meanSeconds": 100.62433333333333,
+        "meanOutputTokens": 22261.666666666668,
+        "meanCostUsd": null,
+        "gateFailures": []
+      }
+    ]
+  },
+  "history": []
+}

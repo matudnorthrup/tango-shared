@@ -1,0 +1,19 @@
+# Reimbursement config — GENERIC starter defaults.
+#
+# Real installations override/extend this via the profile overlay at
+# ~/.tango/profiles/<profile>/config/reimbursement-config.yaml (deep-merged:
+# profile categories/vendors override repo entries by key and add new ones).
+# Keep personal merchant names, amounts, and program memos OUT of the repo.
+default_system: "ExpenseDesk"
+categories:
+  reimbursable_expenses:
+    memo: "Reimbursable expense"
+    vendors: [walmart_tip, venmo_services]
+vendors:
+  walmart_tip:
+    receipt_dir: Walmart
+    reimbursable_item: "Driver tip"
+    default_category: reimbursable_expenses
+  venmo_services:
+    receipt_dir: Venmo
+    default_category: reimbursable_expenses

@@ -1,0 +1,132 @@
+id: morning-planning
+display_name: Morning Planning Backstop
+description: >
+  Generate the morning planning briefing if the user hasn't already done it
+  manually. Checks calendar, email priorities, and outstanding tasks.
+enabled: true
+runtime: v2
+
+obsidian_log:
+  domain: Planning
+  job_name: Morning Planning
+
+schedule:
+  cron: "15 5 * * *"
+  timezone: America/Los_Angeles
+
+execution:
+  mode: agent
+  worker_id: personal-assistant
+  intent_ids:
+    - planning.morning_review
+  deterministic_agent_id: watson
+  task: |
+    Run the morning planning session.
+
+    **Step 1: Create today's daily note from template.**
+    Check if Planning/Daily/YYYY-MM-DD.md exists.
+    If it does NOT exist, create it from the template at
+    _Schema/Templates/Daily Notes Template.md.
+    Substitute these tokens in the template:
+    - {{date:YYYY-MM-DD}} → today's date (e.g. 2026-04-30)
+    - {{date:YYYY [Week] w [Plan]}} → e.g. "2026 Week 18 Plan"
+    - {{date:YYYY [Q]Q [Plan]}} → e.g. "2026 Q2 Plan"
+
+    The frontmatter MUST include:
+    - brief: "[[Records/Briefs/YYYY-MM-DD]]"
+    - All other fields from the template exactly as specified
+
+    If the daily note already exists, verify the frontmatter has the
+    `brief:` field. Add it if missing.
+
+    **Step 2: Read today's brief, triage rules, and yesterday's note.**
+    - Read Records/Briefs/YYYY-MM-DD.md for today's
+      brief (flagged items, calendar, overnight job summaries)
+    - Read References/Email Triage Rules.md before
+      selecting any email-derived priorities or Other Work tasks. These rules
+      define Ignore, Delegate, and Flag behavior for email sources.
+    - Read yesterday's daily note for carryover tasks (unchecked items)
+    - Get today's calendar events from both accounts (--all for
+      non-primary calendars)
+
+    **Step 3: Fill in generated daily-note sections only.**
+    Read Planning/Daily/YYYY-MM-DD.md immediately before writing.
+    Before writing, filter every email-sourced item from the brief or email
+    logs through the triage rules. Do not add ignored or delegated email items
+    to "Today's Priorities", "Other Work", or action
+    recommendations.
+    Use the Obsidian `section` command to update only these sections:
+    - "Today's Priorities" — 3-5 items max, per the "What Belongs in Today's
+      Priorities" rules in the daily_planning skill. Include dates in format:
+      task—YYYY-MM-DD. Fewer accurate items beats a padded list.
+    - "Other Work" — lower-priority / spare-capacity items. APPEND only
+      (`section ... --append`); this section is human-owned and also holds
+      unscheduled work and completed rotation items. Never list an OPEN
+      Current Task Rotation item here.
+    - If the brief has flagged/urgent items that require the user personally,
+      note them in priorities with an action recommendation
+    - Leave "Current Task Rotation" alone. It carries forward automatically and
+      is human-owned.
+
+    Do NOT use `create --overwrite` on an existing daily note. Preserve
+    these human-owned sections exactly: "Other Work",
+    "Notes", "Interstitial Log", "Energy Reflection", and "Notes from
+    Last Night".
+
+    **Filtering rules — do NOT surface these as priorities:**
+    - Current Task Rotation items. The rotation and the orientation nudge
+      already cover them; copying them into priorities is duplicate noise.
+    - Recurring meetings of any kind.
+    - Work meetings, recurring or not. Non-recurring PERSONAL or family
+      calendar events (doctor's appointment, school event, one-off
+      appointment) ARE allowed and often useful.
+    - Email items marked Ignore or Delegate by
+      References/Email Triage Rules.md. This applies to
+      both priorities and Other Work tasks. For example, emails from
+      alerts@example.com must not become daily-note tasks when the triage rules
+      say to ignore that source.
+    - Domain renewals: these are handled through other monitoring channels
+    - GitHub PAT expiration alerts: only flag if the token belongs to the owner
+      personally (not service accounts or shared org tokens)
+    - Linear login alerts: these are informational, not actionable
+    - "Check email log" reminders: email review is handled separately
+    - Vault Audit "Known Review" items: these stay in the brief/log as
+      maintenance context. Only add Vault Audit items to today's priorities
+      when they appear under the brief's Flagged section.
+    - Role-addressed, delegated, or system-owned notices defined in the
+      profile's email triage rules. Do not turn them into personal priorities.
+    - Finance review work that is already routed to a finance specialist. Do
+      not duplicate it into the daily plan; receipt or reimbursement tasks that
+      require the user to act are still allowed.
+
+    Do NOT modify the frontmatter fields other than adding `brief:` if
+    missing. Do NOT add a Morning Brief section to the daily note — that
+    content lives in Records/Briefs/.
+
+    **Step 4: Return a concise summary** of what was planned.
+  timeout_seconds: 300
+
+provider:
+  model: role:job-planning
+
+delivery:
+  mode: none
+
+completion:
+  workflow_id: morning-planning
+  scope: daily
+
+policy:
+  max_consecutive_failures: 1
+  alert_channel_id: "100000000000000010"
+  concurrency_group: watson-tasks
+  priority: 10
+  backoff:
+    enabled: true
+    initial_seconds: 120
+    max_seconds: 3600
+
+tags:
+  - watson
+  - morning
+  - planning
