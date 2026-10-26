@@ -108,6 +108,7 @@ export interface RecordedAsk {
 }
 
 export interface DeskFacts {
+  phoneNote?: { noteId: string; text: string; uncertain: boolean; sent?: string };
   /** Latest explicit owner answer, retained across source reads and reloads. */
   answeredBrief?: { id: string; choice: string; at: number } | null;
   discussing?: Array<{ id: string; ask: string; since: number; runId?: string | null }>;
@@ -260,17 +261,15 @@ export interface DeskFacts {
   lastAuthor?: Author | null;
   /** On a failed turn: the last step that went right (the activity line before the error). */
   lastGoodStep?: string | null;
-  /** The owner's legacy List view label, retained for seeding stage and type. */
+  /** The owner's legacy List view label, retained for seeding type. */
   listLabel?: ListLabel | null;
-  /** The owner's stage for the work (desk-only). */
-  stage?: Stage | null;
   /** The owner's type tag (desk-only). */
   type?: ItemType | null;
-  /** Stage and type were seeded from the old prefix or label once; the desk owns them from then on. */
+  /** Type was seeded from the old prefix or label once; the desk owns it from then on. */
   tagsSeeded?: boolean;
   /**
    * The desk's guess at a new coding thread's type (desk/autotag.ts), made once. `applied`: confident enough
-   * to set type and stage. `unconfirmed`: the owner hasn't opened or touched it since (the List's dot).
+   * to set type. `unconfirmed`: the owner hasn't opened or touched it since (the List's dot).
    */
   autoTag?: { at: number; type: ItemType; confidence: number; applied: boolean; unconfirmed: boolean } | null;
   /** The owner's project this conversation is in (desk/projects.ts), any source. Separate from `project`, the source workspace. */
@@ -299,7 +298,7 @@ export interface DeskFacts {
   /** A job's timing (source-schedules.ts): in words, its last run, when it runs next, and whether it's paused. */
   schedule?: { every: string; lastRunAt: number | null; nextRunAt: number | null; paused?: boolean } | null;
   /** A critical incident from the system ledger (desk/system.ts): which one, its job, how often it happened. */
-  system?: { incidentId: number; jobId: string | null; count: number; /** The cleanup worker under way (System page Fix). */ fix?: { itemId: string } | null } | null;
+  system?: { incidentId: number; jobId: string | null; count: number; severity?: string; /** The cleanup worker under way (System page Fix). */ fix?: { itemId: string } | null } | null;
   /** A job's latest runs, newest first. */
   runs?: Array<{ at: number; outcome: 'ok' | 'quiet' | 'failed'; note: string }> | null;
   /** The owner placed it in an agent's space (desk-only): a coding thread an agent like Compass owns. */
@@ -678,6 +677,7 @@ export interface MessageMail {
 }
 
 export interface MessageMeta {
+  phase?: 'note' | 'answer' | null;
   commandId?: string;
   /** Source-recorded start of the run receiving this owner message. */
   runStartedAt?: number;
@@ -750,24 +750,21 @@ export function isAttentionEvent(type: string): boolean {
 export const COMMAND_TYPES = ['ask.resolve', 'seen', 'unseen', 'viewed', 'heard', 'done', 'reopen', 'snooze', 'park', 'pickup', 'reply', 'answer', 'respond', 'approve', 'dismiss', 'retry', 'undo', 'sweep', 'briefed', 'label', 'pin', 'rename', 'tag', 'watch', 'project', 'stop', 'role', 'space', 'run', 'pause', 'keep', 'fresh', 'raise'] as const;
 
 /**
- * The owner's workflow, kept on the desk (not in source titles), two separate things:
- * - stage: where the work is (Discovery → Building → Feedback; pausing it is Parked, a disposition);
+ * The owner's workflow, kept on the desk (not in source titles), as an optional tag:
  * - type: what kind of work it is (an optional tag).
  * The live state (Needs you, Working, Watching, Ready) is derived from the sources, never set.
  */
-export const STAGES = ['discovery', 'building', 'feedback'] as const;
-export type Stage = (typeof STAGES)[number];
 export const ITEM_TYPES = ['project', 'feat', 'bug', 'enh', 'chore', 'ops', 'skill'] as const;
 export type ItemType = (typeof ITEM_TYPES)[number];
 
 /**
- * The old T3 title prefixes (and the desk's old Discord labels), read once to seed stage and type:
+ * The old T3 title prefixes (and the desk's old Discord labels), read once to seed type:
  * after that the desk owns them. `hold` was the owner's way of parking a thread.
  */
-export const LEGACY_LABELS: Record<string, { stage?: Stage; type?: ItemType; park?: true }> = {
-  disc: { stage: 'discovery' },
-  epic: { stage: 'building', type: 'project' },
-  watch: { stage: 'feedback' },
+export const LEGACY_LABELS: Record<string, { type?: ItemType; park?: true }> = {
+  disc: {},
+  epic: { type: 'project' },
+  watch: {},
   hold: { park: true },
   bug: { type: 'bug' },
   fix: { type: 'bug' },
@@ -780,12 +777,12 @@ export const LEGACY_LABELS: Record<string, { stage?: Stage; type?: ItemType; par
 
 /**
  * Legacy labels for the List view's sections, read from old title prefixes
- * ("epic: Notification System") or facts.listLabel when seeding stage and type.
+ * ("epic: Notification System") or facts.listLabel when seeding type.
  */
 export const LIST_LABELS = ['epic', 'disc', 'bug', 'feat', 'enh', 'chore', 'ops', 'skill', 'watch', 'hold'] as const;
 export type ListLabel = (typeof LIST_LABELS)[number];
-/** The List view's stage sections the owner can put in order: each stage, then Chats and No stage (Pinned stays on top). */
-export const LIST_SECTIONS = [...STAGES, 'chat', 'none'] as const;
+/** The remaining List sections (Pinned stays on top). */
+export const LIST_SECTIONS = ['chat', 'none'] as const;
 export type ListSection = (typeof LIST_SECTIONS)[number];
 export type CommandType = (typeof COMMAND_TYPES)[number];
 

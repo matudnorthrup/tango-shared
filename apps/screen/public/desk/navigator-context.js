@@ -1,8 +1,12 @@
+import { loadApps, safePath } from './app-list.js';
 import { threadPrs } from './next/pr-model.js';
 import { nextListReport, agentsOf, threadTitle } from './next/model.js';
 import { sameNavigatorAction, validNavigatorAction } from './navigator-actions.js';
-export function navigatorContext(store) {
-  const s = store.state, report = nextListReport(s), choices = [];
+export function appChoices(apps) {
+  return (Array.isArray(apps) ? apps : []).filter(app => app && !app.hidden && !['desk', 'home'].includes(app.id) && validNavigatorAction({ op: 'app', id: app.id }) && typeof app.name === 'string' && safePath(app.path)).map(app => ({ action: { op: 'app', id: app.id }, label: app.name.slice(0, 600), confirmation: `Opened ${app.name}.`.slice(0, 300) }));
+}
+export function navigatorContext(store, apps = loadApps.peek()) {
+  const s = store.state, report = nextListReport(s), choices = appChoices(apps);
   const add = (op, target, label, confirmation, when) => choices.push({ action: { op, target, ...(when ? { when } : {}) }, label, confirmation });
   add('back', '', 'Go back', 'Back.');
   for (const [id, name] of [['inbox', 'Inbox'], ['catchup', 'Catch me up'], ['projects', 'Spaces'], ['agents', 'Agents']]) add('page', id, id === 'catchup' ? 'Catch me up (includes Decided for you)' : name, `Opened ${name}.`);
@@ -23,10 +27,17 @@ export function navigatorContext(store) {
   }
   return { place: report.place.name, choices: choices.slice(0, 1500) };
 }
-export async function executeNavigator(store, resolution, context) {
+export async function executeNavigator(store, resolution, context, { apps = loadApps, navigateApp = path => window.location.assign(path) } = {}) {
   const a = resolution.action;
   if (!a) return true;
   if (!validNavigatorAction(a) || !context.choices.some(c => sameNavigatorAction(a, c.action))) return false;
+  if (a.op === 'app') {
+    const list = await apps();
+    if (!appChoices(list).some(c => sameNavigatorAction(a, c.action))) return false;
+    const app = list.find(app => app.id === a.id && !app.hidden && safePath(app.path));
+    navigateApp(app.path);
+    return true;
+  }
   // Re-check the current catalog: deleted threads, tabs and spaces cannot become stale commands.
   if (!navigatorContext(store).choices.some(c => sameNavigatorAction(a, c.action))) return false;
   const navigate = fn => { fn(); return true; };

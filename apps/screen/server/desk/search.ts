@@ -1,5 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
-import type { Author, Log } from './types.js';
+import { readItemFacts } from './store.js';
+import type { Author, DeskFacts, Log } from './types.js';
 
 // Search mirrors desk items and messages into full-text and semantic indexes.
 // Previously indexed history remains searchable without contacting retired sources.
@@ -46,7 +47,7 @@ export interface SearchDoc {
   place: string | null;
   area: string | null;
   title: string;
-  facts: Record<string, unknown>;
+  facts: DeskFacts;
   summary: Record<string, unknown> | null;
   createdAt: number;
   lastActivityAt: number;
@@ -696,7 +697,7 @@ function toDoc(row: Row): SearchDoc {
     place: (row.place as string | null) ?? null,
     area: (row.area as string | null) ?? null,
     title: row.title as string,
-    facts: json(row.facts, {}),
+    facts: readItemFacts(row.facts as string),
     summary: json(row.summary, null),
     createdAt: row.created_at as number,
     lastActivityAt: row.last_activity_at as number,

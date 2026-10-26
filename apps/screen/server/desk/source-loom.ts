@@ -215,6 +215,7 @@ interface LoomDetail {
     id: string;
     run_id?: string | null;
     role: 'user' | 'assistant';
+    phase?: 'note' | 'answer' | null;
     command_id?: string | null;
     text: string;
     created_at: number;
@@ -1185,7 +1186,7 @@ export class DeskLoomSource implements DeskSourceAdapter {
     // Older messages are known already, but a queued one may have started since (Codex review on #575).
     let metaMoved = false;
     for (const message of messages.slice(0, -20)) {
-      if ((message.author === 'owner' && message.meta && !message.meta.mail) || message.meta?.runId) metaMoved = store.setMessageMeta(PREFIX + message.id, message.meta) || metaMoved;
+      if ((message.author === 'owner' && message.meta && !message.meta.mail) || message.meta?.runId || message.meta?.phase) metaMoved = store.setMessageMeta(PREFIX + message.id, message.meta) || metaMoved;
     }
     if (metaMoved) store.bumpRevision(itemId);
     // On first read the ask may be older than the usual ingestion window. Retain its whole run and
@@ -1657,8 +1658,8 @@ export class DeskLoomSource implements DeskSourceAdapter {
  * still queued (false once it started). For an assistant message, the wake it answers (its run was
  * Loom waking the thread), plus its run id for brief/report anchoring.
  */
-export function loomMessageMeta(message: { role: string; text: string; run_id?: string | null; origin?: string | null; command_id?: string | null }, queuedRuns: Set<string>, wakeRuns: Map<string, { note: string | null; cause?: 'trigger' | 'corrective'; answersRun?: string }> = new Map()): MessageMeta | undefined {
-  if (message.role === 'assistant') return message.run_id ? { runId: message.run_id, ...(wakeRuns.has(message.run_id) ? { wake: { run: message.run_id, ...wakeRuns.get(message.run_id)! } } : {}) } : undefined;
+export function loomMessageMeta(message: { phase?: 'note' | 'answer' | null; role: string; text: string; run_id?: string | null; origin?: string | null; command_id?: string | null }, queuedRuns: Set<string>, wakeRuns: Map<string, { note: string | null; cause?: 'trigger' | 'corrective'; answersRun?: string }> = new Map()): MessageMeta | undefined {
+  if (message.role === 'assistant') return { ...(message.phase ? { phase: message.phase } : {}), ...(message.run_id ? { runId: message.run_id, ...(wakeRuns.has(message.run_id) ? { wake: { run: message.run_id, ...wakeRuns.get(message.run_id)! } } : {}) } : {}) };
   const origin = parse<{ kind?: string; name?: string; from?: string; to?: string; mailId?: string; inline?: boolean }>(message.origin ?? null);
   const header = parseMailHeader(message.text);
   if (origin?.kind === 'peer-out') {

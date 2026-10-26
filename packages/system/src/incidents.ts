@@ -141,7 +141,7 @@ export function recordEvent(l: Ledger, e: RecordEventInput): { eventId: number; 
         incidentId = inc.id;
         const raise = severityRank(e.severity) > severityRank(inc.severity);
         const pending = open.notify_pending as string | null;
-        const nextPending = raise && pending !== "opened" && pending !== "regressed" ? "escalated" : pending;
+        const nextPending = raise && (incidentHasOwnerWait(l, inc) || (pending !== "opened" && pending !== "regressed")) ? "escalated" : pending;
         l.db
           .prepare(
             "UPDATE incidents SET count = count + 1, last_seen = MAX(last_seen, ?), title = ?, severity = ?, notify_pending = ?, held_recovery_at = NULL WHERE id = ?",
@@ -244,6 +244,42 @@ export function listEvents(
   return (l.db.prepare(sql).all(...args) as Raw[]).map(mapEvent);
 }
 
+/** Link a diagnosed check to the one conversation carrying its owner errand.
+ * Linking several checks to the same conversation does not merge their recovery evidence.
+ */
+export function linkIncidentOwnerWait(l: Ledger, id: number, itemId: string, opts: { automatic?: boolean } = {}): void {
+  if (!itemId.startsWith("loom:") || !itemId.slice(5).trim()) throw new Error("owner wait requires a Loom item id");
+  const inc = getIncident(l, id);
+  if (!inc) throw new Error("incident not found");
+  // Automatic discovery must not revive an answered errand or replace an explicit link.
+  // A new repair request can still be linked explicitly through the CLI.
+  const conflict = opts.automatic ? "DO NOTHING" : "DO UPDATE SET item_id = excluded.item_id, active = 1";
+  l.db.prepare(`INSERT INTO incident_owner_waits(fingerprint, item_id, active) VALUES(?, ?, 1)
+    ON CONFLICT(fingerprint) ${conflict}`).run(inc.fingerprint, itemId);
+}
+
+export function incidentHasOwnerWait(l: Ledger, inc: IncidentRow): boolean {
+  return !!l.db.prepare("SELECT 1 FROM incident_owner_waits WHERE fingerprint = ? AND active = 1").get(inc.fingerprint);
+}
+
+/** The desk refreshes known conversations; missing readings retain the last known state. */
+export function refreshIncidentOwnerWaits(l: Ledger, isWaiting: (itemId: string) => boolean | null): void {
+  tx(l, () => {
+    const rows = l.db.prepare("SELECT DISTINCT item_id FROM incident_owner_waits WHERE active = 1").all() as Array<{ item_id: string }>;
+    for (const row of rows) {
+      const active = isWaiting(row.item_id);
+      if (active === null) continue;
+      if (!active) {
+        // An unanswered failure becomes actionable again when its repair request ends.
+        l.db.prepare(`UPDATE incidents SET notify_pending = CASE WHEN notified_at IS NULL THEN 'opened' ELSE 'reminder' END
+          WHERE status = 'open' AND notify_pending IS NULL AND fingerprint IN
+            (SELECT fingerprint FROM incident_owner_waits WHERE item_id = ? AND active = 1)`).run(row.item_id);
+      }
+      l.db.prepare("UPDATE incident_owner_waits SET active = ? WHERE item_id = ? AND active = 1").run(active ? 1 : 0, row.item_id);
+    }
+  });
+}
+
 export function setIncidentStatus(
   l: Ledger,
   id: number,
@@ -259,7 +295,8 @@ export function setIncidentStatus(
     until = new Date(Number.isFinite(parsed) ? parsed : Date.now() + 4 * HOUR).toISOString();
   }
   // Muting drops anything not yet sent.
-  const clearPending = status === "muted" ? ", notify_pending = NULL" : "";
+  const clearPending = status === "muted" ? ", notify_pending = NULL"
+    : status === "acked" ? ", notify_pending = CASE WHEN notify_pending = 'reminder' THEN NULL ELSE notify_pending END" : "";
   l.db.prepare(`UPDATE incidents SET status = ?, snoozed_until = ?${clearPending} WHERE id = ?`).run(status, until, id);
   return getIncident(l, id);
 }
@@ -308,6 +345,7 @@ export function scheduleReminders(l: Ledger, now = nowIso()): void {
       const inc = mapIncident(r);
       // A stale owner question is raised once, never a repeating reminder.
       if (l.db.prepare("SELECT 1 FROM events WHERE incident_id = ? AND kind = 'wait.question' LIMIT 1").get(inc.id)) continue;
+      if (incidentHasOwnerWait(l, inc)) continue;
       const route = incidentRoute(l, inc);
       if (route === "quiet") continue;
       const every = REMINDER_MS[route];
@@ -330,6 +368,13 @@ export function pendingNotifications(l: Ledger, route: NotifyRoute, now = nowIso
     const transition = String(r.notify_pending) as NotifyTransition;
     const incRoute = incidentRoute(l, inc);
     if (inc.status === "muted" || incRoute === "quiet") {
+      l.db.prepare("UPDATE incidents SET notify_pending = NULL WHERE id = ?").run(inc.id);
+      continue;
+    }
+    // A repair request already carries the ask. Keep escalation and real recovery visible.
+    // Drop repeats instead of queuing a burst when the request is answered.
+    if ((inc.status === "acked" && transition === "reminder") ||
+      (incidentHasOwnerWait(l, inc) && ["opened", "regressed", "reminder"].includes(transition))) {
       l.db.prepare("UPDATE incidents SET notify_pending = NULL WHERE id = ?").run(inc.id);
       continue;
     }

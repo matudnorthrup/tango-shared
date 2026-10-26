@@ -13,7 +13,14 @@ public enum DeskError: Error, LocalizedError, Sendable {
 }
 public struct DeskAddress: Codable, Equatable, Sendable {
     public let base: URL
-    public init(_ text: String) throws {
+    public let appPaths: Set<String>
+    private enum CodingKeys: String, CodingKey { case base, appPaths }
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(values.decode(URL.self, forKey: .base).absoluteString,
+                      appPaths: values.decodeIfPresent(Set<String>.self, forKey: .appPaths) ?? [])
+    }
+    public init(_ text: String, appPaths: Set<String> = []) throws {
         guard var parts = URLComponents(string: text.trimmingCharacters(in: .whitespacesAndNewlines)),
               let host = parts.host, parts.user == nil, parts.password == nil,
               parts.scheme == "https" || (parts.scheme == "http" && ["localhost", "127.0.0.1", "::1"].contains(host)) else { throw DeskError.invalidURL }
@@ -22,6 +29,7 @@ public struct DeskAddress: Codable, Equatable, Sendable {
         if !parts.path.isEmpty { parts.path = "/" + parts.path }
         guard let url = parts.url else { throw DeskError.invalidURL }
         base = url
+        self.appPaths = Set(appPaths.compactMap(DeskAppPaths.safePath))
     }
     public func endpoint(_ path: String) -> URL { base.appendingPathComponent(path) }
     public func decision(_ id: String) -> URL? {
@@ -32,10 +40,24 @@ public struct DeskAddress: Codable, Equatable, Sendable {
         guard url.scheme == "tango", url.host == "decision" else { return nil }
         return decision(String(url.path.dropFirst()))
     }
-    public func contains(_ url: URL) -> Bool {
-        url.scheme == base.scheme && url.host == base.host && url.port == base.port &&
-        (base.path.isEmpty || base.path == "/" || url.path == base.path || url.path.hasPrefix(base.path + "/"))
+    public var origin: URL {
+        var parts = URLComponents(url: base, resolvingAgainstBaseURL: false)!
+        parts.path = ""; parts.port = effectivePort(base)
+        return parts.url!
     }
+    private func effectivePort(_ url: URL) -> Int { url.port ?? (url.scheme == "https" ? 443 : 80) }
+    public func contains(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == base.scheme?.lowercased(),
+              url.host?.lowercased() == base.host?.lowercased(),
+              effectivePort(url) == effectivePort(base), url.user == nil, url.password == nil else { return false }
+        // Home is an exact destination, never a wildcard for other apps.
+        if url.path.isEmpty || url.path == "/" { return true }
+        let path = url.standardized.path
+        return ([base.path] + Array(appPaths)).contains { root in
+            root.isEmpty || root == "/" || path == root || path.hasPrefix(root + "/")
+        }
+    }
+
 }
 public struct DecisionPush: Codable, Sendable {
     public struct Option: Codable, Sendable { public let key: String; public let label: String; public let answer: String }
@@ -102,6 +124,16 @@ public struct DeskClient: Sendable {
     public init(address: DeskAddress, session: URLSession? = nil) {
         self.address = address
         self.session = session ?? Self.nativeSession
+    }
+    public func appPaths() async throws -> Set<String> {
+        var request = URLRequest(url: address.origin.appendingPathComponent("apps.json"))
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = 20
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw DeskError.invalidResponse
+        }
+        return try DeskAppPaths.decode(data)
     }
     private func post<T: Encodable & Sendable>(_ value: T, path: String) async throws -> Data {
         var request = URLRequest(url: address.endpoint(path))
@@ -188,5 +220,48 @@ public actor AnswerQueue {
                 }
             } catch { /* Durable entry remains for launch, refresh, or the next action. */ }
         }
+    }
+}
+
+/// Only paths are persisted, keyed by origin so switching desks cannot carry access across hosts.
+@MainActor public final class DeskAppPaths {
+    private let defaults: UserDefaults
+    public init(defaults: UserDefaults = .standard) { self.defaults = defaults }
+    private func key(_ address: DeskAddress) -> String { "appPaths:" + address.origin.absoluteString }
+    public func cached(for address: DeskAddress) -> Set<String> {
+        Set((defaults.stringArray(forKey: key(address)) ?? []).compactMap(Self.safePath))
+    }
+    public func refresh(using client: DeskClient) async -> Set<String> {
+        do {
+            let paths = try await client.appPaths()
+            defaults.set(paths.sorted(), forKey: key(client.address))
+            return paths
+        } catch { return cached(for: client.address) }
+    }
+    nonisolated public static func safePath(_ path: String) -> String? {
+        guard path.hasPrefix("/"), !path.hasPrefix("//"),
+              !path.contains("\\"), path.rangeOfCharacter(from: .whitespacesAndNewlines.union(.controlCharacters)) == nil,
+              !path.contains("?"), !path.contains("#"),
+              let decoded = path.removingPercentEncoding, !decoded.hasPrefix("//"), !decoded.contains("\\"),
+              decoded.rangeOfCharacter(from: .whitespacesAndNewlines.union(.controlCharacters)) == nil,
+              !decoded.split(separator: "/").contains(where: { $0 == "." || $0 == ".." }) else { return nil }
+        let normalized = decoded.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        return normalized.isEmpty ? nil : "/" + normalized
+    }
+    nonisolated public static func decode(_ data: Data) throws -> Set<String> {
+        guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            throw DeskError.invalidResponse
+        }
+        // A malformed response must not replace a known-good catalog.
+        var paths = Set<String>()
+        for row in rows {
+            guard let path = row["path"] as? String, let name = row["name"] as? String, !name.isEmpty else {
+                throw DeskError.invalidResponse
+            }
+            if row["hidden"] as? Bool == true || path == "/" { continue }
+            guard let safe = safePath(path) else { throw DeskError.invalidResponse }
+            paths.insert(safe)
+        }
+        return paths
     }
 }

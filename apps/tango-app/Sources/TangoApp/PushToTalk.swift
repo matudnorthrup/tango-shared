@@ -308,6 +308,10 @@ import TangoDeskKit
                     let permitted = await Microphone.permission()
                     guard session.generation == id, session.active else { throw CancellationError() }
                     if !permitted { privacyDenied = true }
+                    if permitted, !live.armed {
+                        startCapture(id)
+                        guard session.generation == id, session.active else { throw CancellationError() }
+                    }
                     return permitted
                 }
                 guard session.generation == id, session.active else { return }
@@ -341,7 +345,12 @@ import TangoDeskKit
             if session.state == .preparing {
                 let id = session.generation
                 guard session.ready(resolved, generation: id) else { return }
-                startCapture(id)
+                // Keep the same microphone/converter: restarting would discard the opening.
+                transport.beginBuffering()
+                for frame in session.takeStartupAudio() {
+                    transport.audio(frame)
+                    session.observeAudio(frame)
+                }
             }
         } else if type == "status", value == "ended", session.active { connectionFailed("Voice connection ended before the reply was sent.") }
     }
@@ -350,10 +359,12 @@ import TangoDeskKit
             if mic.running { try mic.unmute() } else { try mic.start() }
             session.captureStarted()
             capturePump = Task {
-                while session.generation == id, session.state == .listening, !Task.isCancelled {
+                while session.generation == id, [.preparing, .listening].contains(session.state), !Task.isCancelled {
                     let (frames, error) = mic.drain()
                     if let error { session.fail(error, code: .capture); return }
                     for frame in frames {
+                        guard session.generation == id else { break }
+                        if session.state == .preparing { session.bufferStartupAudio(frame); continue }
                         guard session.state == .listening else { break }
                         transport.audio(frame)
                         session.observeAudio(frame)

@@ -325,10 +325,6 @@ img.nx-tile { background: var(--card-hi); }
 .nx-mlink { color: var(--fg-2); }
 .nx-mlink:hover { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; }
 .nx-anchor { position: relative; display: inline-flex; }
-.nx-stage { display: inline-flex; align-items: center; gap: 3px; height: calc(18px + 4px * var(--fs)); padding: 0 6px 0 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg-2); font-size: calc(12px * var(--fs)); font-weight: 600; }
-.nx-stage:hover { border-color: var(--muted); color: var(--fg); }
-.nx-stage.unset { color: var(--dim); border-style: dashed; font-weight: 500; }
-.nx-stage svg { width: 12px; height: 12px; }
 .nx-tbody { padding-bottom: 8px; }
 .nx-thread .rd-needs, .nx-thread .rd-reply { max-width: none; }
 /* Done, Snooze…, Park under the latest reply */
@@ -1217,7 +1213,6 @@ textarea.ss-json { resize: vertical; }
 .nx-pill.unknown::before { background: transparent; border: 1px solid currentColor; }
 .nx-unread { color: var(--fg-2); font-size: 10px; margin-right: 7px; }
 .nx-fact.nx-overdue { color: var(--muted); }
-.nx-stage { color: var(--muted); background: transparent; }
 .rd-needs { border-color: var(--line); }
 .rd-needs.needs { border-color: var(--move); }
 /* The pill and, beside it in gray, why: what it waits on, what failed (owner, 10/21). */
@@ -1232,7 +1227,6 @@ textarea.ss-json { resize: vertical; }
 .nx-pill.finished { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
 .nx-pill.finished::before { content: "✓"; width: auto; height: auto; border-radius: 0; background: none; font-size: .9em; line-height: 1; }
 .nx-gdot.unknown { background: transparent; border: 1px solid var(--muted); }
-.nx-meta .nx-stage { border-radius: 999px; padding: 0 7px; font-size: inherit; }
 
 .nx-children { margin-left: 24px; border-left: 1px solid var(--line); padding-left: 10px; }
 /* A lead's "N reporting" chip sits beside its pill and folds the workers on its own tap (rows.js RowCard). */
@@ -1307,3 +1301,14 @@ textarea.ss-json { resize: vertical; }
 .rd-voice-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; flex-basis: 100%; order: 10; font-size: 12px; padding: 6px 0; }
 .rd-voice-strip .linkish { font-size: inherit; }
 .swc-foot:has(.rd-voice-strip) { flex-wrap: wrap; }
+
+/* App navigation uses the same menu and sheet as other desk actions. */
+.nx-app-switcher { display: inline-flex; }
+.nx-app-brand { display: inline-flex; align-items: center; gap: 6px; border-radius: 5px; }
+.nx-app-brand:hover { color: var(--fg); }
+.nx-app-chevron { width: 12px; height: 12px; color: var(--muted); }
+.nx-app-logo svg { stroke-width: 2.6; }
+.nx-app-switcher .nx-menu { max-height: calc(100dvh - 24px); overflow-y: auto; }
+/* A filtered header would contain the fixed sheet; keep it rooted in the viewport. */
+.nx-bar.phone:has(.nx-app-switcher) { backdrop-filter: none; background: var(--bg); }
+.nx-bar.phone:has(.nx-app-switcher .nx-sheet-scrim) { z-index: 100; }

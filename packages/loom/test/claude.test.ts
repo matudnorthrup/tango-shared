@@ -163,6 +163,25 @@ function setup() {
 }
 
 describe("ClaudeRuntime through the host", () => {
+  it.each(['mcp__loom__handoff', 'loom.wait_for', 'mcp__loom__decision_check'])("labels text promptly, preserving answers around %s", async bookkeeping => {
+    const { fake, host, store } = setup();
+    try {
+      const result = await host.execute({ type: "submit", commandId: "phases", text: "Explain", cwd: "/work/repo", provider: "claude" });
+      await flush();
+      const text = (value: string, parent_tool_use_id: string | null = null) => fake.send({ type: "assistant", parent_tool_use_id, message: { content: [{ type: "text", text: value }] } });
+      const tool = (name: string) => fake.send({ type: "assistant", message: { content: [{ type: "tool_use", id: name, name, input: {} }] } });
+      text('Working'); await flush();
+      expect(store.messages(result.threadId!).at(-1)).toMatchObject({ text: 'Working', phase: null });
+      tool('Bash'); text('Subagent', 'child');
+      fake.send({ type: 'assistant', message: { content: [{ type: 'tool_use', id: 'lookup', name: 'Read', input: {} }, { type: 'text', text: 'Full answer' }] } });
+      tool(bookkeeping); text('Closing answer');
+      fake.send({ type: "result", subtype: "success", is_error: false, result: "Closing answer" }); await flush();
+      expect(store.messages(result.threadId!).filter(m => m.role === 'assistant').map(m => [m.text, m.phase])).toEqual([
+        ['Working', 'note'], ['Full answer', 'answer'], ['Closing answer', 'answer'],
+      ]);
+    } finally { await host.closeAll(); store.close(); }
+  });
+
   it.each(["/workspace/example/foo.ts is failing", "/tmp/x", "/ hi"])("keeps resource identity for ordinary text %s", async text => {
     const { fake, host, store } = setup();
     try {

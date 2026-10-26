@@ -76,7 +76,7 @@ for await (const line of createInterface({ input: process.stdin })) {
     event('item/completed', { item: { type: 'commandExecution', id: 'exec', command: 'pwd', status: 'completed', aggregatedOutput: 'scratch', exitCode: 0 } });
     event('item/agentMessage/delta', { delta: 'o' });
     event('item/agentMessage/delta', { delta: 'k' });
-    event('item/completed', { item: { type: 'agentMessage', id: 'msg', text: 'ok' } });
+    event('item/completed', { item: { type: 'agentMessage', id: 'msg', text: 'ok', ...(text.includes('phase:') ? { phase: JSON.parse(text.split('phase:')[1]) } : {}) } });
     event('thread/tokenUsage/updated', { tokenUsage: { last: { inputTokens: 40, cachedInputTokens: 10, outputTokens: 2 }, modelContextWindow: 200000 } });
     event('turn/completed', { turn: { ...t, status: 'completed' } });
   } else if (m.method === 'turn/steer') reply({});

@@ -2,6 +2,9 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import {
   getJob,
+  incidentHasOwnerWait,
+  linkIncidentOwnerWait,
+  refreshIncidentOwnerWaits,
   incidentRoute,
   jobAction,
   setJobState,
@@ -464,6 +467,20 @@ export class DeskSystem implements DeskSourceAdapter {
    * feed; and a `system` event to the open pages when anything changed. Never throws.
    */
   async tick(): Promise<SystemSnapshot> {
+    const ledger = this.open();
+    const core = this.deps.core;
+    try {
+      if (ledger && core) {
+        // A Fix worker's explicit owner ask replaces the incident's generic ask.
+        for (const inc of listIncidents(ledger)) {
+          const fix = readFix(ledger, inc.id);
+          if (fix && this.ownerWaiting(fix.itemId) === true) linkIncidentOwnerWait(ledger, inc.id, fix.itemId, { automatic: true });
+        }
+        refreshIncidentOwnerWaits(ledger, (itemId) => this.ownerWaiting(itemId));
+      }
+    } catch (err) {
+      this.log('desk.system.error', { stage: 'owner-wait', message: redactPaths((err as Error).message) });
+    }
     const snapshot = await this.snapshot({ fresh: true });
     try {
       this.syncItems(snapshot);
@@ -481,30 +498,43 @@ export class DeskSystem implements DeskSourceAdapter {
     return snapshot;
   }
 
+  private ownerWaiting(itemId: string): boolean | null {
+    const item = this.deps.core?.item(itemId);
+    if (!item) return null; // A missing source is not an answered request.
+    if (item.disposition === 'done') return false;
+    const ownerAsk = item.facts.openAsk && !item.facts.openAsk.to;
+    return !!(ownerAsk || item.facts.pending || item.facts.openBrief);
+  }
+
   /** Critical open incidents are Needs you in the Inbox; one that's held or gone is settled. */
   private syncItems(snapshot: SystemSnapshot): void {
     const core = this.deps.core;
     if (!core || snapshot.error && !snapshot.incidents.length) return;
     const now = this.now();
     const live = new Map<string, SystemIncident>();
-    for (const incident of snapshot.incidents) if (incident.route === 'critical' && incident.status === 'open') live.set(`${SYSTEM_ITEM_PREFIX}${incident.id}`, incident);
+    for (const incident of snapshot.incidents) if (incident.route === 'critical' && incident.status === 'open' && !(this.ledger && incidentHasOwnerWait(this.ledger, incident))) live.set(`${SYSTEM_ITEM_PREFIX}${incident.id}`, incident);
     // Held (acked, muted, snoozed), resolved or gone: done. A snoozed one that comes back reopens below.
     for (const item of core.store.items()) {
-      if (item.source !== 'system' || live.has(item.id) || core.store.attention(item.id)?.disposition === 'done') continue;
+      if (!this.owns(item) || live.has(item.id) || core.store.attention(item.id)?.disposition === 'done') continue;
       core.setFacts(item.id, { failed: null });
       core.settle(item.id, { done: true, summarize: false });
     }
     for (const [itemId, incident] of live) {
       const before = core.store.item(itemId);
       const lastSeen = isoMs(incident.lastSeen) ?? now;
+      // Repeat evidence updates counts, not attention, unread state or voice knock identity.
+      const rank = { recovery: 0, info: 1, warning: 2, error: 3, critical: 4 };
+      const previousSeverity = before?.facts.system?.severity as Severity | undefined;
+      const escalated = previousSeverity != null && rank[incident.severity] > rank[previousSeverity];
+      const activityAt = escalated ? lastSeen : before?.lastActivityAt ?? isoMs(incident.firstSeen) ?? now;
       const job = incident.jobId ? snapshot.jobs.find((j) => j.id === incident.jobId) : null;
       core.ensureItem({ id: itemId, source: 'system', kind: 'thread', conversationKey: itemId, agentId: 'system', agentName: 'System', place: incident.title, area: 'System', createdAt: before?.createdAt ?? isoMs(incident.firstSeen) ?? now }, 'agent');
       core.roles.follow(itemId, { role: 'default', parentItemId: null });
       const message = `${incident.count}× since ${new Date(isoMs(incident.firstSeen) ?? now).toISOString().slice(0, 16).replace('T', ' ')}${job ? ` · ${job.name}` : ''}`;
-      core.setFacts(itemId, { failed: { at: lastSeen, reason: 'system', message: incident.title }, lastAuthor: 'agent', system: { incidentId: incident.id, jobId: incident.jobId, count: incident.count, fix: incident.fix && !incident.fix.done ? { itemId: incident.fix.itemId } : null } }, { summary: incidentSummary(incident, message, lastSeen), lastActivityAt: lastSeen });
+      core.setFacts(itemId, { failed: { at: activityAt, reason: 'system', message: incident.title }, lastAuthor: 'agent', system: { incidentId: incident.id, jobId: incident.jobId, count: incident.count, severity: incident.severity, fix: incident.fix && !incident.fix.done ? { itemId: incident.fix.itemId } : null } }, { summary: incidentSummary(incident, message, activityAt), lastActivityAt: activityAt });
       const done = core.store.attention(itemId)?.disposition === 'done';
-      // New, back (unacked or the snooze ran out), or seen again: news for its row, never a summarizer call.
-      if (!before || done || before.lastActivityAt !== lastSeen) core.settle(itemId, { activity: { what: 'failed', at: done ? Math.max(now, lastSeen) : lastSeen }, summarize: false });
+      // Only new or reopened asks renew attention; retries remain in the ledger.
+      if (!before || done || escalated) core.settle(itemId, { activity: { what: 'failed', at: done ? Math.max(now, lastSeen) : lastSeen }, summarize: false });
     }
     core.flush();
   }
@@ -529,7 +559,7 @@ export class DeskSystem implements DeskSourceAdapter {
 
   // ── the items' adapter: a critical incident's row in the Inbox ──
   owns(item: DeskItemRow): boolean {
-    return item.source === 'system';
+    return item.source === 'system' && !item.facts.phoneNote;
   }
 
   /** Done on its row acknowledges it: it stays listed on the System page, with no more reminders. */
@@ -571,5 +601,5 @@ export class DeskSystem implements DeskSourceAdapter {
 // A critical incident is the owner's move (docs/specs/system-visibility.md, Notification): it sits in the
 // Inbox as Needs you until it is acked, muted, snoozed or resolves.
 function incidentSummary(incident: IncidentRow, message: string, at: number): DeskSummary {
-  return { title: incident.title, gist: message, headline: incident.title, step: 'your_move', ask: 'Fix, ack, mute or snooze it on the System page.', options: [], context: [], ownerAsk: null, watchUntil: null, ackOnly: false, waitingOn: null, source: 'text', contentKey: `incident:${incident.id}:${incident.count}`, at };
+  return { title: incident.title, gist: message, headline: incident.title, step: 'your_move', ask: 'Fix, ack, mute or snooze it on the System page.', options: [], context: [], ownerAsk: null, watchUntil: null, ackOnly: false, waitingOn: null, source: 'text', contentKey: `incident:${incident.id}:${at}`, at };
 }

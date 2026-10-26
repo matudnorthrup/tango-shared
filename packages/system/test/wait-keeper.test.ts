@@ -264,6 +264,38 @@ describe("runWaitKeeper", () => {
     return { fetch, dir, d: { fetch, loomUrl: "http://loom", loomToken: null, loomDbPath: join(dir, "none.sqlite"), deskUrl: "http://desk", screenDbPath: join(dir, "none.db"), statePath: join(dir, "state.json"), now: () => NOW } };
   }
 
+  it.each(['sent', 'unanswered'])('excludes %s mail with eligible back-mail from the SQLite query', async (state) => {
+    const { d, dir } = deps([]);
+    const screenDbPath = join(dir, "mail.sqlite");
+    const db = new DatabaseSync(screenDbPath);
+    db.exec(`CREATE TABLE desk_mail (from_item TEXT, to_item TEXT, from_title TEXT, to_title TEXT,
+      state TEXT, kind TEXT, expect TEXT, created_at INTEGER, sent_at INTEGER)`);
+    const insert = db.prepare("INSERT INTO desk_mail VALUES (?, ?, 'Sender', 'Recipient', ?, 'mail', ?, ?, ?)");
+    insert.run('loom:a', 'loom:b', state, 'reply', NOW - 40 * H, NOW - 30 * H);
+    const check = async () => (await runWaitKeeper(null, { ...d, screenDbPath }, { dryRun: true })).findings.filter((f) => f.kind === 'wait.mail');
+    expect(await check()).toHaveLength(1);
+    // A worker's report-up is stored lead -> worker, but is not the lead's answer.
+    insert.run('loom:b', 'loom:a', 'answered', 'none', NOW - 20 * H, null);
+    db.exec("UPDATE desk_mail SET kind = 'report' WHERE from_item = 'loom:b'");
+    expect(await check()).toHaveLength(1);
+    db.exec("DELETE FROM desk_mail WHERE from_item = 'loom:b'");
+    for (const excluded of ['draft', 'dropped', 'failed']) {
+      insert.run('loom:b', 'loom:a', excluded, 'none', NOW - 20 * H, null);
+      expect(await check()).toHaveLength(1);
+      db.exec("DELETE FROM desk_mail WHERE from_item = 'loom:b'");
+    }
+    insert.run('loom:b', 'loom:a', 'done', 'none', NOW - 30 * H, null);
+    expect(await check()).toHaveLength(1); // Strictly after delivery, not creation.
+    db.exec("DELETE FROM desk_mail WHERE from_item = 'loom:b'");
+    insert.run('loom:b', 'loom:other', 'done', 'none', NOW - 20 * H, null);
+    expect(await check()).toHaveLength(1);
+    insert.run('loom:b', 'loom:a', 'done', 'none', NOW - 20 * H, null);
+    expect(await check()).toEqual([]);
+    db.exec("UPDATE desk_mail SET state = 'queued' WHERE from_item = 'loom:a'");
+    expect(await check()).toHaveLength(1); // Back-mail never clears undelivered mail.
+    db.close();
+  });
+
   it("accumulates sub-threshold time across restarts, extending beats and presence pruning", async () => {
     const l = tempLedger();
     const rows = [row({ watching: null, facts: { pending: { requestId: "q1", question: "Choose", at: NOW - 60 * 24 * H } } })];

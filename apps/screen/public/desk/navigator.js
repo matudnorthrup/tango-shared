@@ -1,3 +1,4 @@
+import { loadApps } from './app-list.js';
 import { html, useEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { sameNavigatorAction } from './navigator-actions.js';
 import { NavigatorSession } from './navigator-session.js';
@@ -8,7 +9,7 @@ export function NavigatorButton({ store, phone }) {
   const own = useRef(null);
   useEffect(() => () => own.current?.cancel(), []);
   function start() {
-    const context = navigatorContext(store);
+    let context = navigatorContext(store);
     const ctx = new AudioContext(), unlocked = ctx.resume();
     let socket, stream, node, source, stopped = false, playHead = 0;
     const sounds = new Set();
@@ -38,6 +39,7 @@ export function NavigatorButton({ store, phone }) {
     void (async () => {
       try {
         await unlocked;
+        context = navigatorContext(store, await loadApps());
         if (stopped) return;
         stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, channelCount: 1 } });
         if (stopped) { closeMic(); return; }

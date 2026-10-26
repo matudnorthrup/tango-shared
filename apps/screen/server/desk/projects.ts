@@ -197,7 +197,7 @@ export function viewsWithWorkspaces(saved: unknown): unknown[] | null {
 }
 
 /** The To-dos built-in view (list-views.js DEFAULT_VIEWS), as it is added to saved views that predate it. */
-export const TODOS_VIEW = { id: 'todos', name: 'To-dos', status: ['active'], live: ['todo'], group: 'stage', sort: 'asks', fold: true } as const;
+export const TODOS_VIEW = { id: 'todos', name: 'To-dos', status: ['active'], live: ['todo'], group: 'live', sort: 'asks', fold: true } as const;
 
 /**
  * Views saved before the To-dos built-in (owner, 10/18: a to-do has its own list) never show it, since saved
@@ -241,10 +241,11 @@ export function projectHolds(away: ProjectAway | null | undefined, now: number, 
 /** Split only untouched built-ins; saved owner edits remain their own views. */
 export function viewsWithInboxTabs(saved: unknown, split = true): unknown[] | null {
   if (!Array.isArray(saved) || !saved.length) return null;
-  const old = (id: string, name: string, live?: string[]) => ({ id, name, status: ['active'], ...(live ? { live } : {}), group: 'stage', sort: id === 'ready' ? 'asks' : 'recent', fold: true, showProjects: ['active'] });
+  const old = (id: string, name: string, live?: string[]) => ({ id, name, status: ['active'], ...(live ? { live } : {}), group: 'live', sort: id === 'ready' ? 'asks' : 'recent', fold: true, showProjects: ['active'] });
   const same = (a: unknown, b: Record<string, unknown>) => {
     if (!a || typeof a !== 'object' || Array.isArray(a)) return false;
-    const value = a as Record<string, unknown>;
+    const value = { ...a } as Record<string, unknown>;
+    if (value.group === 'stage') value.group = 'live';
     return Object.keys(value).length === Object.keys(b).length && Object.entries(b).every(([k, v]) => JSON.stringify(value[k]) === JSON.stringify(v));
   };
   let changed = false;

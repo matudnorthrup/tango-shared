@@ -232,6 +232,7 @@ export function createLiveClient({ screenName = '', screenRole = () => 'full', d
     chapterDefer: (spaceId, body) => request(`api/desk/chapters/${encodeURIComponent(spaceId)}/defer`, body),
     decidedConfirm: (body) => request('api/desk/decided/confirm', body),
     resolveAsk: (id, body) => request(`api/desk/asks/${encodeURIComponent(id)}/resolve`, body),
+    updatesRestoreSnooze: (body) => request('api/desk/updates/restore-snooze', body),
     updatesSeen: (body) => request('api/desk/updates/seen', body),
     decidedReverse: (body) => request('api/desk/decided/reverse', body),
     decidedRule: (body) => request('api/desk/decided/rule', body),

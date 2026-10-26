@@ -183,6 +183,12 @@ class ClaudeSession implements RuntimeSession {
   private runId: string | null = null;
   private resourceIdentityEnabled = true;
   private wroteMessage = false;
+  private pendingPhases: string[] = [];
+
+  private resolvePhases(runId: string, phase: "note" | "answer"): void {
+    if (!this.pendingPhases.length) return;
+    this.emit({ type: "message.phase", runId, messageIds: this.pendingPhases.splice(0), phase });
+  }
   /** The SDK sends one assistant message per content block, each with the call's usage: count each call once. */
   private lastCallId: string | null = null;
   private partial = "";
@@ -316,6 +322,7 @@ class ClaudeSession implements RuntimeSession {
       this.pumping = true;
       void this.pump();
     }
+    this.pendingPhases = [];
     this.runId = run.runId;
     this.wroteMessage = false;
     this.partial = "";
@@ -487,13 +494,22 @@ class ClaudeSession implements RuntimeSession {
           this.emit({ type: "context.observed", runId, context: Number(usage.input_tokens ?? 0) + cacheRead + cacheWrite, cacheRead, cacheWrite, output: Number(usage.output_tokens ?? 0), ...(typeof m.message?.model === "string" ? { model: m.message.model } : {}) });
         }
         const blocks: any[] = Array.isArray(m.message?.content) ? m.message.content : [];
-        const text = blocks.filter((b) => b.type === "text").map((b) => b.text).join("");
-        if (text.trim()) {
-          this.emit({ type: "message.completed", runId, text });
-          this.wroteMessage = true;
-        }
+        let text = "";
+        const flushText = () => {
+          if (text.trim()) {
+            const messageId = randomUUID();
+            this.pendingPhases.push(messageId);
+            this.emit({ type: "message.completed", runId, text, messageId });
+            this.wroteMessage = true;
+          }
+          text = "";
+        };
         for (const b of blocks) {
+          if (b.type === "text") text += b.text;
           if (b.type === "tool_use") {
+            flushText();
+            // Only Loom bookkeeping may follow a final answer without making it a working note.
+            if (!/^(?:mcp__loom__|loom\.)(?:handoff|save_handoff|wait_for|cancel_wait|list_waits|decision_[a-z_]+|desk_update|chapter_note)$/.test(b.name)) this.resolvePhases(runId, "note");
             this.emit({ type: "tool.updated", runId, itemId: b.id, name: b.name, input: JSON.stringify(b.input ?? {}), status: "running" });
             // A message this session sends another (native cross-session messaging): a note of what it sent.
             // Filed once its tool result says it went (a refused send never shows as sent; Codex review on #575).
@@ -504,6 +520,7 @@ class ClaudeSession implements RuntimeSession {
             }
           }
         }
+        flushText();
         this.readPeers();
         return;
       }
@@ -531,12 +548,13 @@ class ClaudeSession implements RuntimeSession {
       case "result": {
         this.readPeers();
         const runId = this.currentRun();
+        this.resolvePhases(runId, "answer");
         const failure = classifyResult(m as any, this.lastRateLimit);
         if (failure) {
           this.emit({ type: "turn.failed", runId, failure });
         } else {
           if (!this.wroteMessage && typeof m.result === "string" && m.result.trim()) {
-            this.emit({ type: "message.completed", runId, text: m.result });
+            this.emit({ type: "message.completed", runId, text: m.result, phase: "answer" });
           }
           this.emit({ type: "turn.completed", runId });
         }

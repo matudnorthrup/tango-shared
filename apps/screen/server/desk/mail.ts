@@ -47,7 +47,7 @@ export interface DeskMailRecord {
   urgent: boolean;
   /** Reopen the recipient only after the owner approves a held draft. */
   wake?: boolean;
-  /** Delivered into a turn in progress (a Loom thread): its answer is an explicit reply. */
+  /** Delivered into a turn in progress (a Loom thread): answered by explicit reply or back-mail. */
   steered?: boolean;
   /** Queued delivery deadline; zero pauses expiry behind an owner request. */
   deliveryExpiresAt?: number | null;
@@ -59,7 +59,7 @@ export interface DeskMailRecord {
   answeredAt: number | null;
   /** The answer reached the sender: relayed as a turn, or read by `tango-screen wait`. */
   relayedAt: number | null;
-  relayedVia: 'turn' | 'wait' | null;
+  relayedVia: 'turn' | 'wait' | 'mail' | null;
   error: string | null;
   /** A notice owed to the sender: its mail is held (still queued after `HELD_NOTICE_MS`), dropped or unanswered. */
   notice?: MailNotice | null;
@@ -907,8 +907,9 @@ export class DeskMail {
 
   private collect(mail: DeskMailRecord): void {
     const to = this.core.item(mail.toItemId);
-    // Read mid-turn: answered only by the agent's explicit reply (`answer`), or given up on.
+    // Read mid-turn: otherwise requires the agent's explicit reply (`answer`), or is given up on.
     if (mail.steered) {
+      if (to && isIdle(to) && this.collectBackMail(mail)) return;
       if (!to || this.now() - (mail.sentAt ?? mail.createdAt) > ANSWER_WAIT_MS) this.giveUp(mail, 'unanswered', to ? 'no answer in two days' : 'that conversation is gone');
       return;
     }
@@ -920,6 +921,7 @@ export class DeskMail {
     const floor = landed?.at ?? mail.createdAt;
     const since = mail.sentAt ? (this.deps.db.prepare('SELECT author, at, text FROM desk_messages WHERE item_id = ? AND at >= ? ORDER BY at, message_id LIMIT 2000').all(mail.toItemId, floor - 60_000) as Array<{ author: string; at: number; text: string }>) : [];
     const found = to && mail.sentAt ? mailAnswer(since, mail.id, floor) : null;
+    if (!found && to && isIdle(to) && this.collectBackMail(mail)) return;
     // A thread just started: its source reports it within a poll or two.
     if (!to && this.now() - (mail.sentAt ?? mail.createdAt) < START_GRACE_MS) return;
     if (!to || (!found && this.now() - (mail.sentAt ?? mail.createdAt) > ANSWER_WAIT_MS)) {
@@ -930,6 +932,21 @@ export class DeskMail {
     if (!found || !isIdle(to)) return;
     this.set(mail.id, { state: 'answered', answer: clip(found.text, MAX_ANSWER), answeredAt: found.at });
     this.log('desk.mail.answered', { id: mail.id });
+  }
+
+  /** Called only once the recipient is idle and no transcript answer was found. */
+  private collectBackMail(mail: DeskMailRecord): boolean {
+    // A separately sent answer already travels back as mail; do not relay it a second time.
+    const back = this.deps.db.prepare(`SELECT text, created_at FROM desk_mail
+      WHERE from_item = ? AND to_item = ? AND created_at > ? AND created_at <= ?
+        AND state NOT IN ('draft', 'dropped', 'failed') AND kind != 'report'
+      ORDER BY created_at DESC, id DESC LIMIT 1`).get(mail.toItemId, mail.fromItemId, mail.sentAt ?? mail.createdAt, this.now()) as { text: string; created_at: number } | undefined;
+    if (back) {
+      this.set(mail.id, { state: 'answered', answer: clip(back.text, MAX_ANSWER), answeredAt: back.created_at, relayedAt: this.now(), relayedVia: 'mail' });
+      this.log('desk.mail.answered', { id: mail.id, via: 'mail' });
+      return true;
+    }
+    return false;
   }
 
   /** Mail delivered together shares one answer (mailAnswer): the one turn that relays it answers all of it. */

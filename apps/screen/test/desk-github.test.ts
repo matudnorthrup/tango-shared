@@ -158,25 +158,6 @@ describe('PR review state (gh)', () => {
     expect(dispatched.filter((command) => command.type !== 'settle')).toHaveLength(0);
   });
 
-  it('watching a PR never changes an owner stage or seeds one', async () => {
-    thread('a');
-    thread('b');
-    await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:a', args: { stage: 'building' } });
-    const watched = await watch('loom:a', { url: 'https://github.com/acme/api/pull/5' });
-    expect(watched).toMatchObject({ status: 'applied', outcome: { stage: 'building' } });
-    expect(item('loom:a').facts.stage).toBe('building');
-    // Stopping the watch leaves the stage where it is.
-    await watch('loom:a', { url: 'https://github.com/acme/api/pull/5', off: true });
-    expect(item('loom:a').facts.stage).toBe('building');
-    expect(item('loom:b').facts.stage ?? null).toBeNull();
-    await watch('loom:b', { url: 'https://github.com/acme/api/pull/6' });
-    expect(item('loom:b').facts.stage ?? null).toBeNull();
-    // An unseeded item stays unseeded.
-    thread('c', 'epic: Maps');
-    h.core.setFacts('loom:c', { tagsSeeded: false, stage: null, type: null });
-    await watch('loom:c', { url: 'https://github.com/acme/api/pull/7' });
-    expect(item('loom:c').facts).toMatchObject({ type: null, stage: null, tagsSeeded: false });
-  });
 
   it('a notify watch only tells the owner; off stops watching', async () => {
     thread('a');

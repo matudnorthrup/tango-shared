@@ -113,7 +113,7 @@ async function readLists(state: LabListState): Promise<void> {
   const [active, snoozed, history, settings] = await Promise.all(['/api/desk/items?view=active&group=step', '/api/desk/items?view=snoozed', '/api/desk/items?view=history', '/api/desk/settings'].map(getJson));
   Object.assign(state, { now: Date.now(), projects: settings.projects, listViews: settings.listViews, labelOrder: settings.labelOrder, lists: { active: { items: active.items, loaded: true }, snoozed: { items: snoozed.items, loaded: true }, history: { items: history.items, loaded: true } } });
 }
-const listState: LabListState = { nextRoute: { page: 'inbox', view: 'ready' }, listTab: 'ready', nextPageViews: {}, listGroup: 'stage', listCollapsed: [] };
+const listState: LabListState = { nextRoute: { page: 'inbox', view: 'ready' }, listTab: 'ready', nextPageViews: {}, listGroup: 'live', listCollapsed: [] };
 await readLists(listState);
 const screen = new LabScreen({ state: listState, report: listModel.nextListReport, refresh: readLists, relay: { now: Date.now }, record: (kind, data) => log(kind, data) });
 const desk = new LabDesk(BASE, { scratch, screen, record: (kind, data) => log(kind, data) }, { log: (event, data) => console.log(`[desk] ${event} ${JSON.stringify(data ?? {})}`) });

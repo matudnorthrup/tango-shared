@@ -223,10 +223,9 @@ describe('acting on the selection', () => {
 
 describe('the bar and the menus', () => {
   it('the bar holds Done, Snooze, Park and Move; Back to Active takes Park’s place when all are away', () => {
-    const active = storeWith([thread('t1'), thread('t2', { disposition: 'snoozed' })], { flags: { stageLabels: true } });
+    const active = storeWith([thread('t1'), thread('t2', { disposition: 'snoozed' })], {});
     expect(selectionActions(active).bar).toEqual(['read', 'done', 'snooze', 'park', 'move']);
-    expect(labels(selectionActions(active).more)).toEqual(expect.arrayContaining(['Back to Active', 'Stage', 'Type', 'Pin']));
-    // Stage leaves the menus while its flag is off.
+    expect(labels(selectionActions(active).more)).toEqual(expect.arrayContaining(['Back to Active', 'Type', 'Pin']));
     expect(labels(selectionActions(storeWith([thread('t1')])).more)).not.toContain('Stage');
     const away = storeWith([thread('t1', { disposition: 'snoozed' }), thread('t2', { disposition: 'parked' })]);
     expect(selectionActions(away).bar).toEqual(['read', 'done', 'snooze', 'pickup', 'move']);

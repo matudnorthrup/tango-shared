@@ -183,23 +183,16 @@ describe('HTTP: settings, facets and the stream', () => {
     expect((await (await post({ feed: { chatter: 'shown' } })).json()).feed).toEqual({ chatter: 'shown', needsYou: true, summaries: false, usage: true });
   });
 
-  it('the feature flags start with stage labels off, validate, and persist', async () => {
-    expect((await (await app.request('/api/desk/settings')).json()).flags).toEqual({ stageLabels: false });
-    expect((await post({ flags: { stageLabels: 'yes' } })).status).toBe(400);
-    expect((await post({ flags: { somethingElse: true } })).status).toBe(400);
-    expect((await (await post({ flags: { stageLabels: true } })).json()).flags).toEqual({ stageLabels: true });
-    expect((await (await app.request('/api/desk/settings')).json()).flags).toEqual({ stageLabels: true });
-  });
 
   it('settings carry the filters; a POST validates, persists and normalizes them, and keeps the sweep day', async () => {
-    expect(await (await app.request('/api/desk/settings')).json()).toEqual({ sweepDay: 'saturday', filters: { hideAgents: [], hideRepos: [], hideTypes: [] }, agentIcons: {}, repoIcons: {}, labelOrder: expect.arrayContaining(['discovery', 'chat', 'none']), snoozeTimes: { morning: '06:00', evening: '18:00' }, listViews: null, spaceViews: null, projects: [], projectsRev: 0, mailOff: [], projectSectionsHidden: ['done'], feed: { chatter: 'hidden', needsYou: false, summaries: false, usage: true }, flags: { stageLabels: false }, spaces: {} });
+    expect(await (await app.request('/api/desk/settings')).json()).toEqual({ sweepDay: 'saturday', filters: { hideAgents: [], hideRepos: [], hideTypes: [] }, agentIcons: {}, repoIcons: {}, labelOrder: expect.arrayContaining(['chat', 'none']), snoozeTimes: { morning: '06:00', evening: '18:00' }, listViews: null, spaceViews: null, projects: [], projectsRev: 0, mailOff: [], projectSectionsHidden: ['done'], feed: { chatter: 'hidden', needsYou: false, summaries: false, usage: true }, spaces: {} });
     expect((await post({ filters: { hideTypes: 'bug' } })).status).toBe(400);
     expect((await post({ filters: { hideTypes: ['bug'] }, sweepDay: 'sunday' })).status).toBe(400);
     expect(readFilters(h.core.store).hideTypes).toEqual([]);
     const saved = await (await post({ filters: { hideAgents: ['Watson-ollama'], hideTypes: ['Ops:'] } })).json();
-    expect(saved).toEqual({ sweepDay: 'saturday', filters: { hideAgents: ['watson'], hideRepos: [], hideTypes: ['ops'] }, agentIcons: {}, repoIcons: {}, labelOrder: expect.any(Array), snoozeTimes: { morning: '06:00', evening: '18:00' }, listViews: null, spaceViews: null, projects: [], projectsRev: 0, mailOff: [], projectSectionsHidden: ['done'], feed: { chatter: 'hidden', needsYou: false, summaries: false, usage: true }, flags: { stageLabels: false }, spaces: {} });
+    expect(saved).toEqual({ sweepDay: 'saturday', filters: { hideAgents: ['watson'], hideRepos: [], hideTypes: ['ops'] }, agentIcons: {}, repoIcons: {}, labelOrder: expect.any(Array), snoozeTimes: { morning: '06:00', evening: '18:00' }, listViews: null, spaceViews: null, projects: [], projectsRev: 0, mailOff: [], projectSectionsHidden: ['done'], feed: { chatter: 'hidden', needsYou: false, summaries: false, usage: true }, spaces: {} });
     await post({ sweepDay: 'monday' });
-    expect(await (await app.request('/api/desk/settings')).json()).toEqual({ sweepDay: 'monday', filters: { hideAgents: ['watson'], hideRepos: [], hideTypes: ['ops'] }, agentIcons: {}, repoIcons: {}, labelOrder: expect.any(Array), snoozeTimes: { morning: '06:00', evening: '18:00' }, listViews: null, spaceViews: null, projects: [], projectsRev: 0, mailOff: [], projectSectionsHidden: ['done'], feed: { chatter: 'hidden', needsYou: false, summaries: false, usage: true }, flags: { stageLabels: false }, spaces: {} });
+    expect(await (await app.request('/api/desk/settings')).json()).toEqual({ sweepDay: 'monday', filters: { hideAgents: ['watson'], hideRepos: [], hideTypes: ['ops'] }, agentIcons: {}, repoIcons: {}, labelOrder: expect.any(Array), snoozeTimes: { morning: '06:00', evening: '18:00' }, listViews: null, spaceViews: null, projects: [], projectsRev: 0, mailOff: [], projectSectionsHidden: ['done'], feed: { chatter: 'hidden', needsYou: false, summaries: false, usage: true }, spaces: {} });
   });
 
   it('GET /api/desk/items?view=active (what the voice operator reads) and the briefing apply the filters', async () => {

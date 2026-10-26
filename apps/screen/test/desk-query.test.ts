@@ -27,7 +27,7 @@ const row = (id: string, patch: Record<string, any> = {}) => ({
 const rows = [
   ...['needs', 'working', 'waiting', 'failed', 'idle', 'unknown'].map((live) => row(live, { seen: live === 'needs' ? 'new' : 'seen', status: { pill: live, countsForOwner: ['needs', 'failed'].includes(live), busy: live === 'working' ? 'working' : null, audience: 'owner' } })),
   ...['snoozed', 'parked', 'done'].map((disposition) => row(disposition, { disposition })),
-  row('default', { facts: { role: 'default', projectId: 'p1', stage: 'building', type: 'bug', pinned: true } }),
+  row('default', { facts: { role: 'default', projectId: 'p1', type: 'bug', pinned: true } }),
   row('job', { facts: { role: 'ops', projectId: 'p1' }, status: { pill: 'working', busy: 'background', audience: 'owner' } }),
   row('worker-with-lead', { facts: { role: 'worker', parentItemId: 'default', projectId: 'p2' }, status: { pill: 'failed', countsForOwner: false, busy: null, audience: 'lead' } }),
   row('orphan-worker', { facts: { role: 'worker' }, seen: 'new', status: { pill: 'needs', countsForOwner: true, busy: null, audience: 'owner' } }),
@@ -107,10 +107,10 @@ describe('one Desk query contract', () => {
   });
 
   it('conditions facet counts on every other facet, including None and zero-count picks', () => {
-    const items = [row('a', { facts: { type: 'bug', stage: 'building' } }), row('b', { facts: { type: 'feat', stage: 'building' } }), row('c', { facts: { type: 'feat' } })];
-    expect([...facetCounts(items, query({ type: { in: ['bug'] }, stage: { in: ['building'] } }), 'type')]).toEqual([['bug', 1], ['feat', 1]]);
-    expect([...facetCounts(items, query({ type: { in: ['feat'] } }), 'stage')]).toEqual([['building', 1], [null, 1]]);
-    expect(filterOptions(items, [], { type: ['feat'] }).stage.map((v: any) => v.n)).toEqual([1, 1]);
+    const items = [row('a', { source: 'loom', area: 'main', facts: { type: 'bug' } }), row('b', { source: 'loom', area: 'main', facts: { type: 'feat' } }), row('c', { facts: { type: 'feat' } })];
+    expect([...facetCounts(items, query({ type: { in: ['bug'] }, repo: { in: ['main'] } }), 'type')]).toEqual([['bug', 1], ['feat', 1]]);
+    expect([...facetCounts(items, query({ type: { in: ['feat'] } }), 'repo')]).toEqual([['main', 1], [null, 1]]);
+    expect(filterOptions(items, [], { type: ['feat'] }).repo.map((v: any) => v.n)).toEqual([1, 1]);
   });
 
   it('converts saved JSON without mutation and treats stale project ids as unset', () => {

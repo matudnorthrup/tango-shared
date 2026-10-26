@@ -333,7 +333,7 @@ async function boot() {
       // Seen already counts, except a guessed label the owner hasn't looked at yet (the List's dot),
       // or a new Loom thread whose guess hasn't come in: a look now means no dot later (Codex review on #515).
       const f = item?.facts || {};
-      const guessing = (item?.source === 'loom') && !f.autoTag && f.type === undefined && f.stage === undefined;
+      const guessing = (item?.source === 'loom') && !f.autoTag && f.type === undefined;
       if (item && item.seen === 'seen' && !f.autoTag?.unconfirmed && !guessing) return;
       store.command('viewed', itemId, { ms: Date.now() - opened }, { quiet: true });
     }, 3000);

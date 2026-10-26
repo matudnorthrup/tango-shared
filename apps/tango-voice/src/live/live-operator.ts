@@ -1500,7 +1500,7 @@ export class LiveOperator {
       if (drafted.handled) {
         this.ownerClock.addressedAt = this.now(); // dictating into a draft is talking to the operator
         // A released "Is that everything?" request can still need "main chat, or the … thread?".
-        const released = drafted.actions?.length ? await this.holdUnplacedDispatch(drafted.actions, delegationId, (drafted.handles as ExtractionHandles | undefined) ?? { desk: new Map(this.deskHandles), scenes: new Map(this.sceneHandles), speech: latestUserSpeech }) : [];
+        const released = drafted.actions?.length ? await this.holdUnplacedDispatch(drafted.actions, delegationId, (drafted.handles as ExtractionHandles | undefined) ?? { desk: new Map(this.deskHandles), scenes: new Map(this.sceneHandles), speech: latestUserSpeech }, generation) : [];
         for (const action of released) {
           if (!this.alive(generation)) return;
           await this.apply(action, delegationId, drafted.handles as ExtractionHandles | undefined);
@@ -1828,7 +1828,7 @@ export class LiveOperator {
     // ── repeat guard: "I'm done, send that" right after a send, or the same ask again, sends nothing new ──
     actions = await this.dropRepeatSends(actions, speech, delegationId);
     // ── destination hook: a dispatch the router couldn't place waits for "main chat, or the … thread?" ──
-    if (place) actions = await this.holdUnplacedDispatch(actions, delegationId, handles);
+    if (place) actions = await this.holdUnplacedDispatch(actions, delegationId, handles, generation);
     for (const action of actions) {
       if (!this.alive(generation)) return;
       await this.apply(action, delegationId, handles);
@@ -1913,12 +1913,15 @@ export class LiveOperator {
    * and the owner is asked where it goes; the other actions go ahead. Options that aren't live threads
    * of that agent are dropped, and with none left the dispatch goes to the main channel as usual.
    */
-  private async holdUnplacedDispatch(actions: OperatorAction[], delegationId: string | null, handles: ExtractionHandles): Promise<OperatorAction[]> {
+  private async holdUnplacedDispatch(actions: OperatorAction[], delegationId: string | null, handles: ExtractionHandles, generation: number): Promise<OperatorAction[]> {
+    if (!this.alive(generation)) return [];
     const index = actions.findIndex((action) => action.type === 'dispatch' && action.threadOptions?.length);
     if (index < 0) return actions;
     const action = actions[index] as Extract<OperatorAction, { type: 'dispatch' }>;
     const agent = this.options.agents.find((candidate) => candidate.id === action.agentId);
     const live = agent ? await this.threadList() : [];
+    // The destination is shared with the replacement connection; a retired lookup must not write it.
+    if (!this.alive(generation)) return [];
     const options: DestinationOption[] = (action.threadOptions ?? [])
       .map((id) => live.find((thread) => thread.id === id && persona(thread.agentId) === persona(agent!.id)))
       .filter((thread): thread is ThreadInfo => thread !== undefined)

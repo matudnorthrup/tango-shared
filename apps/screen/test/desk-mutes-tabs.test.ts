@@ -10,8 +10,8 @@ import { inboxViews, threadsIn, ownMatch, tallyOf, rowOf } from '../public/desk/
 // @ts-expect-error browser module
 import { createStore } from '../public/desk/store.js';
 
-const oldReady = { id: 'ready', name: 'Ready', status: ['active'], live: ['needs', 'ready', 'failed'], group: 'stage', sort: 'asks', fold: true, showProjects: ['active'] };
-const oldActive = { id: 'active', name: 'Active', status: ['active'], group: 'stage', sort: 'recent', fold: true, showProjects: ['active'] };
+const oldReady = { id: 'ready', name: 'Ready', status: ['active'], live: ['needs', 'ready', 'failed'], group: 'live', sort: 'asks', fold: true, showProjects: ['active'] };
+const oldActive = { id: 'active', name: 'Active', status: ['active'], group: 'live', sort: 'recent', fold: true, showProjects: ['active'] };
 
 it('splits untouched built-ins in place, preserves owner edits, and is idempotent', () => {
   const custom = { ...oldReady, name: 'My queue' };
@@ -29,6 +29,15 @@ it('splits untouched built-ins in place, preserves owner edits, and is idempoten
   // Twenty tabs already: no room to split, so Ready stays as it was.
   const full = [oldReady, ...Array.from({ length: 19 }, (_, i) => ({ ...mine, id: `t${i}`, name: `T${i}` }))];
   expect(viewsWithInboxTabs(full)).toBeNull();
+});
+
+it('recognizes untouched legacy built-ins with retired grouping without changing saved inputs', () => {
+  const saved = [{ ...oldActive, group: 'stage' }, { ...oldReady, group: 'stage' }];
+  const original = JSON.stringify(saved);
+  const migrated = viewsWithInboxTabs(saved);
+  expect(migrated).toMatchObject([{ id: 'needs', live: ['needs', 'failed'] }, { id: 'ready', live: ['ready'] }]);
+  expect(viewsWithInboxTabs(migrated)).toBeNull();
+  expect(JSON.stringify(saved)).toBe(original);
 });
 
 it('marks startup migration once, preserving later owner changes', () => {

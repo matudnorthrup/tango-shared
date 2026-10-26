@@ -4,7 +4,7 @@
 // The server ranks (keyword + meaning, GET /api/desk/search) and hands back each hit with its List
 // row; saved views and picker choices travel to the server before it ranks and limits.
 
-import { agentId, facetCounts, matches, viewForFlags, viewToQuery } from './query.js';
+import { agentId, facetCounts, matches, normalizeRetiredView, viewToQuery } from './query.js';
 import { viewsOf } from './list-views.js';
 import { liveState, rowTitle } from './list-model.js';
 
@@ -66,9 +66,9 @@ export function markParts(snippet) {
 export const plainSnippet = (snippet) => String(snippet ?? '').replace(/[\u0002\u0003]/g, '');
 
 /** The hits a view keeps, with the project and agent picks on top. */
-export function filterHits(hits, { view = null, project = '', agent = '', projects = [], flags } = {}) {
+export function filterHits(hits, { view = null, project = '', agent = '', projects = [] } = {}) {
   // `project` is the workspace picker (Loom's projects); `projects` the owner's, for a view that filters on them.
-  const query = view ? viewToQuery(viewForFlags(view, flags), { audience: 'owner' }) : { scope: { kind: 'global' }, audience: 'all', where: {} };
+  const query = view ? viewToQuery(normalizeRetiredView(view), { audience: 'owner' }) : { scope: { kind: 'global' }, audience: 'all', where: {} };
   return hits.filter(({ row }) => matches(row, query, { projects }) && matches(row, { scope: { kind: 'global' }, audience: 'all', where: { ...(project ? { workspace: { in: [project] } } : {}), ...(agent ? { agent: { in: [agent] } } : {}) } }, { projects }));
 }
 
@@ -76,7 +76,7 @@ export function filterHits(hits, { view = null, project = '', agent = '', projec
 export function searchOptions(state) {
   const s = state.search;
   const view = viewsOf(state.listViews, state.listGroup).find((v) => v.id === s.tab);
-  const query = view ? viewToQuery(viewForFlags(view, state.flags), { audience: 'owner' }) : { audience: 'all', where: {} };
+  const query = view ? viewToQuery(normalizeRetiredView(view), { audience: 'owner' }) : { audience: 'all', where: {} };
   const where = { ...query.where };
   for (const [facet, value] of [['project', s.project], ['workspace', s.repo], ['agent', s.agent]]) {
     if (!value) continue;

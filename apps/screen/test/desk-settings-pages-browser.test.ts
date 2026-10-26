@@ -37,17 +37,16 @@ describe('Settings in six pages', () => {
     const page = await fixture();
     try {
       await open(page, 'device');
-      expect(await nav(page).allTextContents()).toEqual(['This device', 'Inbox tabs', 'Projects & agents', 'Notifications', 'Accounts', 'Labs', 'Activity log']);
-      for (const [old, home, heading] of [['display', 'This device', 'Text and previews'], ['windows', 'This device', 'Windows'], ['mutes', 'Inbox tabs', 'Mutes'], ['agents', 'Projects & agents', 'Agents'], ['repos', 'Projects & agents', 'Repos not in a project'], ['feed', 'Notifications', 'Feed'], ['snooze', 'Notifications', 'Snooze times'], ['routing', 'Accounts', 'Routing'], ['flags', 'Labs', 'Flags']]) {
+      expect(await nav(page).allTextContents()).toEqual(['This device', 'Inbox tabs', 'Projects & agents', 'Notifications', 'Accounts', 'Activity log']);
+      for (const [old, home, heading] of [['display', 'This device', 'Text and previews'], ['windows', 'This device', 'Windows'], ['mutes', 'Inbox tabs', 'Mutes'], ['agents', 'Projects & agents', 'Agents'], ['repos', 'Projects & agents', 'Repos not in a project'], ['feed', 'Notifications', 'Feed'], ['snooze', 'Notifications', 'Snooze times'], ['routing', 'Accounts', 'Routing']]) {
         await open(page, old);
         await page.locator(`#stg-sec-${old}`).getByRole('heading', { name: heading, exact: true }).waitFor();
         expect(await page.locator('.stg-nav button.on').textContent()).toBe(home);
       }
-      // Stage order sits in Labs only while stage labels are on.
-      await open(page, 'labs');
+      // Retired controls do not appear in Labs.
+      await open(page, 'device');
       expect(await page.locator('#stg-sec-stages').count()).toBe(0);
-      await page.evaluate(() => (window as any).__desk.store.saveFlags({ stageLabels: true }));
-      await page.locator('#stg-sec-stages').waitFor();
+      expect(await page.locator('#stg-sec-flags').count()).toBe(0);
     } finally { await page.close(); }
   }, 60_000);
   it('opens space views straight from a project page, with the way back to Projects & agents', async (ctx) => {

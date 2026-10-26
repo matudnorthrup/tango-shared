@@ -122,14 +122,14 @@ export function SnoozePicker({ store, phone }) {
   // Held by its project (snoozed or parked as a whole): what it shows is the project's state.
   const heldBy = item?.heldBy ? state.projects.find((p) => p.id === item.heldBy) : null;
   const catchup = /^(chapter|line):/.test(state.snoozeFor) ? state.catchupSnooze : null;
-  const choices = store.snoozeChoices(new Date()).filter((c) => !catchup || ['soon', 'evening', 'morning', 'monday'].includes(c.key));
+  const choices = store.snoozeChoices(new Date()).filter((c) => !(catchup || state.snoozeChapter) || ['soon', 'evening', 'morning', 'monday'].includes(c.key));
   // Already snoozed or parked (the List's Snoozed and Parked tabs): the picker changes it, on the current choice.
   // Held by its project: the project's state isn't this conversation's own snooze (Codex review on #537).
   const current = item?.heldBy ? null : currentSnoozeKey(item, choices);
   const away = item?.disposition === 'snoozed' || item?.disposition === 'parked';
   // A selection (next/select.js): every thread or project picked gets the snooze.
   const bulk = state.snoozeFor === 'bulk' ? state.nextBulkSnooze : null;
-  const close = () => store.set({ snoozeFor: null, catchupSnooze: null, ...(bulk ? { nextBulkSnooze: null } : {}) });
+  const close = () => store.set({ snoozeFor: null, catchupSnooze: null, snoozeChapter: null, ...(bulk ? { nextBulkSnooze: null } : {}) });
   const choose = bulk ? (c) => chooseBulkSnooze(store, c) : (c) => store.chooseSnooze(c);
   const pick = (c) => (c.key === current ? close() : choose(c));
   const first = Math.max(0, choices.findIndex((c) => c.key === current));

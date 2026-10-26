@@ -115,17 +115,6 @@ describe('read-time status integration', () => {
 });
 
 describe('owner records and diagnostics', () => {
-  it('keeps stages owner-only and a PR watch never moves one', async () => {
-    h = makeHarness();
-    make('loom:stage');
-    await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:stage', args: { stage: 'building' } });
-    await h.core.command({ commandId: cid(), type: 'watch', itemId: 'loom:stage', args: { url: 'https://github.com/example/project/pull/12' } });
-    expect(h.core.item('loom:stage')!.facts.stage).toBe('building');
-    const changed = await h.core.command({ commandId: cid(), type: 'tag', actor: 'agent', itemId: 'loom:stage', args: { stage: 'feedback' } });
-    expect(changed.status).toBe('failed');
-    await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:stage', args: { stage: 'feedback' } });
-    expect(h.core.item('loom:stage')!.disposition).toBe('active');
-  });
   it('logs a missed ask by id once per summary, with no status change', () => {
     const log = vi.fn();
     h = makeHarness({ log });

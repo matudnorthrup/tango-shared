@@ -125,7 +125,6 @@ struct MaintenanceControl: View {
     }
 }
 struct MenuPanel: View {
-    @State private var voice = PushToTalk.shared
     @Bindable var store: Store
     @Environment(\.openWindow) private var openWindow
     var body: some View {
@@ -135,8 +134,7 @@ struct MenuPanel: View {
             ForEach(["running", "starting", "stopped", "failing", "down", "unknown"], id: \.self) { state in
                 Text("\(store.services.filter { $0.state == state }.count) \(state)")
             }
-            Toggle("Live mic", isOn: Binding(get: { voice.live.armed || voice.arming }, set: { _ in voice.toggleLive() }))
-            if voice.live.armed { Text(voice.live.keepMicrophone ? "Armed · muted until you dictate" : "Armed · Bluetooth mic opens on dictation").font(.caption) }
+            LiveMicMenuControl()
             MaintenanceControl(store: store)
             if let error = store.actionError { Text(error).font(.caption).foregroundStyle(.red); Button("Dismiss error") { store.actionError = nil } }
             Divider()
@@ -343,6 +341,25 @@ struct SettingsView: View {
             while !Task.isCancelled {
                 if !loginBusy { await refreshLogin() }
                 try? await Task.sleep(for: .seconds(5))
+            }
+        }
+    }
+}
+
+/// Both menus expose the capability gate and arming failures at the point of use.
+struct LiveMicMenuControl: View {
+    @State private var voice = PushToTalk.shared
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Toggle("Live mic", isOn: Binding(get: { voice.live.armed || voice.arming }, set: { _ in voice.toggleLive() }))
+                .disabled(!voice.allowsLiveMic)
+            if let message = LiveMicPresentation.unavailableMessage(allowsLiveMic: voice.allowsLiveMic, keyCode: voice.keyCode, modifiers: voice.modifiers) {
+                Text(message).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            } else if voice.live.armed {
+                Text(voice.live.keepMicrophone ? "Armed · muted until you dictate" : "Armed · Bluetooth mic opens on dictation").font(.caption)
+            }
+            if let error = voice.settingsError {
+                Text(error).font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
             }
         }
     }

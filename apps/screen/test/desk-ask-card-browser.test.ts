@@ -86,7 +86,7 @@ describe('recorded hand-off ask cards', () => {
       await card.getByRole('button', { name: 'Send reply', exact: true }).click();
       expect(await card.locator('.ac-status').innerText()).toBe('Answered');
       const calls = await page.evaluate(() => (window as any).askFixture.calls);
-      expect(calls.map((c: any) => c.type)).toEqual(['defer', 'open', 'reply']);
+      expect(calls.map((c: any) => c.type)).toEqual(['snooze', 'open', 'reply']);
       expect(calls[2].text).toBe('The blue drive');
     } finally { await page.close(); }
   });

@@ -5,7 +5,7 @@ import { doneLabel } from '../query-identity.js';
 // from its own menu, and the toast's Undo takes the whole batch back.
 
 import { html, useRef, useState } from '../../vendor/preact-htm.js';
-import { MENU_STAGES, MENU_TYPES, canActOnRow, stageName, stageOf, typeName, typeOf, wantsOwner } from '../list-model.js';
+import { MENU_TYPES, canActOnRow, typeName, typeOf, wantsOwner } from '../list-model.js';
 import { isFresh, runningJob, waitAge } from '../util.js';
 import { agentsOf, nestedProjectList, projectGroup } from './model.js';
 import { Menu } from './menu.js';
@@ -110,7 +110,7 @@ export async function bulkNudge(store, items) {
 /**
  * Sends one command per thread, then one toast for the lot: how many it changed, how many it left, how many
  * failed, and an Undo that takes the batch back (the server's undo for status changes; the old value re-sent for
- * a project, stage, type or pin).
+ * a project, type or pin).
  */
 async function runThreads(store, items, { can = () => true, send, label, restore = null, note = null, none = null, summary = null, reuse = {} }) {
   const go = items.filter(can);
@@ -214,11 +214,11 @@ export function bulkMove(store, items, projectId) {
   });
 }
 export function bulkTag(store, items, field, value) {
-  const of = field === 'stage' ? stageOf : typeOf;
-  const name = value ? (field === 'stage' ? stageName(value) : typeName(value)) : 'none';
+  const of = typeOf;
+  const name = value ? typeName(value) : 'none';
   return runThreads(store, items, {
     can: (item) => (of(item) || null) !== (value || null),
-    label: `${field === 'stage' ? 'Stage' : 'Type'} · ${name}`,
+    label: `Type · ${name}`,
     send: (item, o = quiet) => store.command('tag', item.id, { [field]: value || null }, o),
     restore: (item) => store.command('tag', item.id, { [field]: of(item) || null }, quiet),
   });
@@ -305,7 +305,6 @@ export function selectionActions(store) {
       short: 'Move',
       sub: [...projects.map(({ project: p, label }) => ({ label, icon: tile(p, store), onSelect: () => bulkMove(store, items, p.id) })), 'sep', { label: 'No project', onSelect: () => bulkMove(store, items, null) }],
     },
-    stage: store.state.flags?.stageLabels ? { icon: MI.sections, label: 'Stage', sub: [...MENU_STAGES.map((key) => ({ label: stageName(key), onSelect: () => bulkTag(store, items, 'stage', key) })), { label: 'No stage', onSelect: () => bulkTag(store, items, 'stage', null) }] } : null,
     type: { icon: MI.tag, label: 'Type', sub: [...MENU_TYPES.map((key) => ({ label: typeName(key), onSelect: () => bulkTag(store, items, 'type', key) })), { label: 'None', onSelect: () => bulkTag(store, items, 'type', null) }] },
     pin: any((i) => !i.facts?.pinned) ? { icon: MI.pin, label: 'Pin', onSelect: () => bulkPin(store, items, true) } : null,
     unpin: any((i) => i.facts?.pinned) ? { icon: MI.pin, label: 'Unpin', onSelect: () => bulkPin(store, items, false) } : null,
@@ -314,7 +313,7 @@ export function selectionActions(store) {
   const allAway = items.length > 0 && items.every(away);
   // Mark read leads the bar: Needs you to Ready in one tap, wherever the threads are.
   const bar = ['read', 'done', 'snooze', allAway ? 'pickup' : 'park', 'move'];
-  const menu = ['read', 'unread', 'sep', 'done', 'snooze', 'park', 'pickup', 'nudge', 'sep', 'move', 'stage', 'type', 'sep', 'pin', 'unpin'].map((k) => (k === 'sep' ? k : acts[k])).filter(Boolean);
+  const menu = ['read', 'unread', 'sep', 'done', 'snooze', 'park', 'pickup', 'nudge', 'sep', 'move', 'type', 'sep', 'pin', 'unpin'].map((k) => (k === 'sep' ? k : acts[k])).filter(Boolean);
   return { acts, bar, menu, more: menu.filter((it) => it === 'sep' || !bar.some((k) => acts[k] === it)) };
 }
 

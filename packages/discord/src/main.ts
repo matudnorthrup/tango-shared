@@ -38,6 +38,7 @@ const execFileAsync = promisify(execFile);
 import { randomUUID } from "node:crypto";
 import { request as httpRequest, createServer as createHttpServer } from "node:http";
 import { openLedger as openSystemLedger, recordEvent as recordLedgerEvent, type Ledger as SystemLedger } from "@tango/system";
+import { memoryEvalRecoveryEvent } from "./memory-eval-event.js";
 import {
   AgentRegistry,
   AttachmentJobWorker,
@@ -2182,6 +2183,9 @@ registerDeterministicHandler("memory-eval-report", async (_ctx) => {
       );
     }
   }
+  const recovery = memoryEvalRecoveryEvent(benchmarkRun);
+  if (recovery) recordSystemEvent(recovery);
+
   const snapshotSamples = collectPromptSnapshotAuditSamples({
     storage,
     config: memoryEvalConfig,

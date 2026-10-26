@@ -27,4 +27,4 @@ export function sourceOf(item: object): string | null;
 export function accountOf(item: object): string | null;
 export function ageOf(item: object, ctx?: QueryContext): string | null;
 
-export function viewForFlags<T extends object>(view: T, flags?: { stageLabels?: boolean }, statusGroup?: string): T;
+export function normalizeRetiredView<T extends object>(view: T, statusGroup?: string): T;

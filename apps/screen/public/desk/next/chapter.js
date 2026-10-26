@@ -101,13 +101,15 @@ function TidyNotes({ line }) {
 
 /** The chapter supplies its answer/defer behavior; BriefCard owns the presentation. */
 export function ChapterBrief({ line, brief, store, spaceId }) {
+  const itemId = brief?.itemId || line.itemId;
+  const snooze = itemId ? html`<button class="btn sm ghost" onClick=${() => store.openSnooze(itemId, { spaceId, line })}>Snooze</button>` : null;
   const ask = !brief && (store.state.chapters?.[spaceId]?.data?.asks || []).find((a) => a.id === (line.askId || line.data?.askId) || a.lineId === line.id);
   if (ask) return html`<${AskCard} key=${ask.id} ask=${ask} itemId=${ask.itemId || line.itemId} line=${line} spaceId=${spaceId} store=${store} places=${html`<${LineFrom} line=${line} store=${store}/><${TidyNotes} line=${line}/>`}/>`;
   const sourceItem = store.state.byId?.[line.itemId];
   const request = !brief && !line.briefId && pendingOf(sourceItem);
-  if (request) return html`<${BriefCard} item=${sourceItem} pending=${request} store=${store}/>`;
+  if (request) return html`<${BriefCard} item=${sourceItem} pending=${request} store=${store} footer=${snooze}/>`;
   if (!brief && !line.briefId && line.itemId) return html`<${AskCard} ask=${{ text: line.title, legacy: true }} itemId=${line.itemId} line=${line} spaceId=${spaceId} store=${store}/>`;
-  if (!brief) return html`<div class="nx-chm k-needs"><${LineFrom} line=${line} store=${store}/><p>${line.title}</p><${TidyNotes} line=${line}/>${line.briefId ? html`<button class="btn sm" onClick=${() => store.openDecision(line.briefId)}>Full brief</button>` : null}</div>`;
+  if (!brief) return html`<div class="nx-chm k-needs"><${LineFrom} line=${line} store=${store}/><p>${line.title}</p><${TidyNotes} line=${line}/>${line.briefId ? html`<button class="btn sm" onClick=${() => store.openDecision(line.briefId)}>Full brief</button>` : null}${snooze}</div>`;
   const about = brief.about || (store.state.chapters?.[line.spaceId]?.data?.briefs || []).find((b) => b.id === line.briefId)?.about;
   const pending = briefPending(brief, brief.ask || line.title);
   const source = store.state.byId?.[brief.itemId || line.itemId];
@@ -118,7 +120,7 @@ export function ChapterBrief({ line, brief, store, spaceId }) {
     places=${html`<${BriefPlaces} about=${about} from=${title ? { itemId: brief.itemId || line.itemId, title } : null} open=${(id) => store.nextOpen(id)}/><${TidyNotes} line=${line}/>`}
     onOption=${(_option, index) => store.chapterAnswer(spaceId, line, brief, brief.options[index])}
     rule=${html`<${BriefRule} item=${item} store=${store} brief=${brief} pending=${pending}/>`}
-    footer=${brief.status && brief.status !== 'open' ? null : html`<button class="btn sm ghost" title="Seen, not decided: back when you pick" onClick=${() => store.chapterLine(spaceId, line, 'defer')}>Snooze</button>`}/>`;
+    footer=${brief.status && brief.status !== 'open' ? null : snooze || html`<button class="btn sm ghost" title="Seen, not decided: back when you pick" onClick=${() => store.chapterLine(spaceId, line, 'defer')}>Snooze</button>`}/>`;
 }
 
 /** A new rule (or one approved again) asks how its answer counts: these chips change it, as the brief's did. */

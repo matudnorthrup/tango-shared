@@ -22,6 +22,7 @@ const store = {
     draw();
   },
   async replyAsk(itemId, text) { window.askFixture.calls.push({ type: 'reply', itemId, text }); records.find((a) => a.itemId === itemId).status = 'answered'; draw(); },
+  openSnooze(itemId, chapter) { window.askFixture.calls.push({ type: 'snooze', itemId, ...chapter }); },
   async chapterLine(spaceId, line, how) { window.askFixture.calls.push({ type: how, spaceId, line }); },
   async deferAsk(ask, args) { window.askFixture.calls.push({ type: 'defer', askId: ask.id, ...args }); },
   nextOpen(itemId) { window.askFixture.calls.push({ type: 'open', itemId }); },

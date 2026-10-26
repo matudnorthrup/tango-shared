@@ -27,7 +27,8 @@ export type RuntimeEvent =
   | { type: "session.native"; nativeSessionId: string }
   /** Streaming text. Published live, never stored. */
   | { type: "message.delta"; runId: string; text: string }
-  | { type: "message.completed"; runId: string; text: string }
+  | { type: "message.completed"; runId: string; text: string; messageId?: string; phase?: "note" | "answer" }
+  | { type: "message.phase"; runId: string; messageIds: string[]; phase: "note" | "answer" }
   | {
       type: "tool.updated";
       runId: string;

@@ -61,7 +61,7 @@ export interface DeskSetupOptions {
   ownerIds: string[];
   rules: InboxRules | null;
   summarize: DeskSummarizer;
-  /** Guesses a new Loom thread's type and stage (desk/autotag.ts); none = no guessing. */
+  /** Guesses a new Loom thread's type (desk/autotag.ts); none = no guessing. */
   autoTag?: AutoTagger;
   postToBot: (body: Record<string, unknown>, options?: { timeoutMs?: number }) => Promise<string>;
   /** A new thread with an agent through the bot (Start work on an agent); absent: agents aren't offered there. */
@@ -238,7 +238,7 @@ export function createDesk(options: DeskSetupOptions) {
   const migrate = () => {
     const migrated = migrateInboxDecisions(core, { ready: answered.discord });
     if (!migrated.skipped && !migrated.waiting && store.setting('migrated_inbox_v1')) options.log('desk.migrated', migrated);
-    // Items from before stage and type moved to the desk: seeded once every source has answered a poll,
+    // Items from before type moved to the desk: seeded once every source has answered a poll,
     // so each seeds from its current name, never a stale one (Codex review on #498).
     if (!tagsSeeded && answered.discord) {
       tagsSeeded = true;
@@ -377,6 +377,8 @@ export function createDesk(options: DeskSetupOptions) {
     core.subscribe((event) => {
       if (event.type === 'activity') updates.onDeskEvent(event.event);
     });
+    // A project snoozed, parked or woken changes which chapters Catch me up shows (heldAway).
+    core.onProjectsChanged(() => updates.awayChanged());
     // Decided for you, Shipped and a lead's own Update post from the ledger's rows (feed-status.md).
     followLedger(updates, feed, (itemId) => core.item(itemId));
   }
@@ -385,6 +387,18 @@ export function createDesk(options: DeskSetupOptions) {
     trace.record({ source: 'desk', kind: 'feed.repeat', summary: `${post.agentName || post.itemId}: a Summary ${Math.round((post.at - before.at) / 60_000)} min after a ${before.kind} post${wouldDrop ? ' (the word filter drops one)' : ''}`, data: { itemId: post.itemId, seq: post.seq, before: before.seq, beforeKind: before.kind, overlap: Math.round(overlap * 100) / 100, wouldDrop } });
   const routes: Omit<DeskRoutesOptions, 'scenes'> = {
     core,
+    phoneAgentReply: async (agentId, threadId, text, commandId) => {
+      const agent = options.agents.find(agent => agent.id === agentId && !(options.mailBlockedAgents ?? []).includes(agent.id));
+      if (!agent?.homeChannelId) return { ok: false, notDelivered: true };
+      const body = { agentId, channelId: threadId ?? agent.homeChannelId, type: 'reply', commandId, data: { text } };
+      if (conversationMode === 'tango') {
+        const result = await tango.post(body);
+        // This validation refusal happens before any turn is accepted. Other failures stay uncertain.
+        return { ok: result.delivered, notDelivered: !result.delivered && result.reason === 'invalid conversation' };
+      }
+      const result = await options.postToBot(body);
+      return { ok: result === 'agent' };
+    },
     feed,
     ...(agentAvatars ? { agents: agentAvatars } : {}),
     trace,

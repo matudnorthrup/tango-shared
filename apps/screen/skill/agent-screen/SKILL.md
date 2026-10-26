@@ -151,8 +151,7 @@ tango-screen watch-pr https://github.com/o/r/pull/123         # any PR (another 
 ```
 
 - The desk polls GitHub every few minutes for as long as it takes. The thread
-  shows as **Watching, waiting on <reviewer>** instead of looking ready, and a
-  Discovery or Building thread moves to the Feedback stage.
+  shows as **Watching, waiting on <reviewer>** instead of looking ready.
 - **On approval it posts a `[Desk] PR #N was approved…` message into this
   thread.** That is your cue: re-verify CI on the current head and the open
   review threads, and merge if the project's rules allow it (for Acme,

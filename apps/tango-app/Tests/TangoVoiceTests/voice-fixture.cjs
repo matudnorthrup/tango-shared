@@ -5,10 +5,11 @@ const delayed = process.argv.includes('--delayed');
 const turn = process.argv.find(a => a.startsWith('--turn='))?.slice(7);
 let pauses = [];
 const pause = process.argv.includes('--pause');
-let starts = 0, audioFrames = 0, closed = 0;
+let starts = 0, audioFrames = 0, closed = 0, lookups = 0;
 const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  if (req.url === '/counts') return res.end(JSON.stringify({ starts, audioFrames, closed }));
+  if (req.url === '/counts') return res.end(JSON.stringify({ starts, audioFrames, closed, lookups }));
+  if (req.url.startsWith('/api/desk/')) lookups++;
   if (req.url === '/api/desk/presentation') return res.end(JSON.stringify({ view: 'conversation', itemId: 'fixture' }));
   if (req.url === '/api/desk/items/fixture') return res.end(JSON.stringify({ item: { id: 'fixture', replyable: true } }));
   res.statusCode = 503; res.end('{}');
@@ -21,7 +22,7 @@ wss.on('connection', (ws, req) => {
   let active = !warm;
   assert.equal(req.headers.origin, `http://127.0.0.1:${server.address().port}`);
   assert.equal(req.headers.authorization, undefined);
-  ws.send(JSON.stringify({ type: 'status', state: warm ? 'armed' : 'listening' }));
+  setTimeout(() => { if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'status', state: warm ? 'armed' : 'listening' })); }, process.argv.includes('--cold-delay') ? 300 : 0);
   const frames = [];
   ws.on('message', (data, binary) => {
     if (binary) {

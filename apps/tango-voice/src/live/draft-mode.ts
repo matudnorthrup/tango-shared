@@ -198,6 +198,89 @@ export interface DraftContext {
   handleOf?(itemId: string): string | null;
 }
 
+/** Explicit routing state, independent of a live operator session. */
+export interface DraftDestinationState {
+  agents: AgentDescriptor[];
+  startSpeech: string;
+  fragments: string[];
+  clarifications: Array<{ question: string; answer: string }>;
+  newLoom: boolean;
+  newThread: boolean;
+  targetItem: DraftItemRef | null;
+  target: AgentDescriptor | null;
+}
+
+/** Resolve only against offered destinations and the owner's words/place, without side effects. */
+export function resolveDraftDestination(
+  result: DraftCompileResult,
+  context: DraftContext,
+  state: DraftDestinationState,
+): { destination: DraftDestination | null; usedNamed?: boolean } {
+  // Early new-thread branches do not change the operator's previous named-item tracking.
+  let usedNamed: boolean | undefined;
+  const resolve = (): DraftDestination | null => {
+    const make = (destination: Omit<DraftDestination, 'label'>): DraftDestination => ({ ...destination, label: destinationLabel(destination) });
+    // A new Loom thread: only in a repo the desk offers (the model's spelling, any case).
+    const repos = context.input.loomRepos ?? [];
+    // Only a repo the owner said out loud: the model guesses one from the topic otherwise.
+    const said = ` ${[state.startSpeech, ...state.fragments, ...context.input.transcript, ...state.clarifications.map((entry) => entry.answer)].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ')} `;
+    const repo = result.newLoomRepo
+      ? repos.find((candidate) => candidate.toLowerCase() === result.newLoomRepo!.toLowerCase() && said.includes(` ${candidate.toLowerCase().replace(/[^a-z0-9]+/g, ' ')} `))
+      : // The compile left it empty, but the request that started the thread named one ("a new Loom thread in tango").
+        (state.newLoom || state.newThread) && (!result.agentId || result.agentId === 'loom') && !result.item && !result.threadId
+        ? namedRepo(state.startSpeech, repos)
+        : undefined;
+    // A new thread joins the screen's project, as the desk's + button files it.
+    const place = context.input.startPlace ?? null;
+    const project = place?.projectId ? { projectId: place.projectId, ...(place.projectName ? { projectName: place.projectName } : {}) } : {};
+    const title = result.newThreadTitle ? { title: result.newThreadTitle } : {};
+    if (repo) return make({ agentId: 'loom', name: 'Loom', kind: 'new_loom', repo, ...title, ...project });
+    // Nothing named: the screen's place settles it (an agent's page or thread, a project's repo), else null and the owner is asked.
+    const placed = (): DraftDestination | null => {
+      if (state.newThread && place?.agentId) {
+        const agent = state.agents.find((candidate) => persona(candidate.id) === persona(place.agentId!));
+        if (agent) return make({ agentId: agent.id, name: agent.name, kind: 'new_thread', ...title, ...project, inferred: true });
+      }
+      if (place?.repo) {
+        const offered = repos.find((candidate) => candidate.toLowerCase() === place.repo!.toLowerCase());
+        if (offered) return make({ agentId: 'loom', name: 'Loom', kind: 'new_loom', repo: offered, ...title, ...project, inferred: true });
+      }
+      return null;
+    };
+    // Still the new thread unless the compile picked another place (a redirect to an agent or a conversation).
+    if (state.newLoom && !result.agentId && !result.item && !result.threadId) return placed();
+    if (state.newThread && !result.item && !result.threadId) {
+      // An agent the owner named (now or in an answer): a new thread with that agent, never its main channel.
+      const named = result.agentId ? state.agents.find((candidate) => candidate.id === result.agentId) : undefined;
+      if (named) return make({ agentId: named.id, name: named.name, kind: 'new_thread', ...title, ...project });
+      return placed();
+    }
+    // The conversation the owner named stands unless the compile picked another place (a redirect does).
+    const named = state.targetItem;
+    const pickedElsewhere = !!(result.item || result.threadId || result.newThreadTitle) || (!!result.agentId && named !== null && persona(result.agentId) !== persona(named.agentId));
+    const ref = result.item ? context.resolveItem(result.item) : !pickedElsewhere ? named : null;
+    usedNamed = !!ref && !!named && ref.id === named.id;
+    {
+      if (ref) {
+        if (ref.isAgent && ref.threadId && /^\d+$/.test(ref.threadId)) return make({ agentId: ref.agentId, name: ref.agentName, kind: 'thread', threadId: ref.threadId, itemId: ref.id, ...(ref.place ? { title: ref.place } : {}) });
+        if (ref.isAgent) return make({ agentId: ref.agentId, name: ref.agentName, kind: 'home' });
+        return make({ agentId: ref.agentId, name: ref.agentName, kind: 'item', itemId: ref.id, ...(ref.place ? { title: ref.place } : {}) });
+      }
+    }
+    const agent = state.agents.find((candidate) => candidate.id === result.agentId) ?? (result.agentId ? undefined : (state.target ?? undefined));
+    if (!agent) return null;
+    if (result.newThreadTitle) return make({ agentId: agent.id, name: agent.name, kind: 'new_thread', title: result.newThreadTitle, ...project });
+    if (result.threadId) {
+      const thread = context.input.threads.find((candidate) => candidate.id === result.threadId);
+      const item = context.input.desk?.items.find((candidate) => candidate.threadId === result.threadId);
+      if (thread || item) return make({ agentId: agent.id, name: agent.name, kind: 'thread', threadId: result.threadId, title: thread?.title ?? item?.place ?? 'thread' });
+    }
+    return make({ agentId: agent.id, name: agent.name, kind: 'home' });
+  };
+  const destination = resolve();
+  return { destination, ...(usedNamed === undefined ? {} : { usedNamed }) };
+}
+
 /** What the current operator lends the draft session. */
 export interface DraftHost {
   agents: AgentDescriptor[];
@@ -2547,64 +2630,18 @@ export class DraftSession {
   }
 
   private resolveDestination(result: DraftCompileResult, context: DraftContext): DraftDestination | null {
-    const host = this.host!;
-    const make = (destination: Omit<DraftDestination, 'label'>): DraftDestination => ({ ...destination, label: destinationLabel(destination) });
-    // A new Loom thread: only in a repo the desk offers (the model's spelling, any case).
-    const repos = context.input.loomRepos ?? [];
-    // Only a repo the owner said out loud: the model guesses one from the topic otherwise.
-    const said = ` ${[this.startSpeech, ...this.fragments, ...context.input.transcript, ...this.clarifications.map((entry) => entry.answer)].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ')} `;
-    const repo = result.newLoomRepo
-      ? repos.find((candidate) => candidate.toLowerCase() === result.newLoomRepo!.toLowerCase() && said.includes(` ${candidate.toLowerCase().replace(/[^a-z0-9]+/g, ' ')} `))
-      : // The compile left it empty, but the request that started the thread named one ("a new Loom thread in tango").
-        (this.newLoom || this.newThread) && (!result.agentId || result.agentId === 'loom') && !result.item && !result.threadId
-        ? namedRepo(this.startSpeech, repos)
-        : undefined;
-    // A new thread joins the screen's project, as the desk's + button files it.
-    const place = context.input.startPlace ?? null;
-    const project = place?.projectId ? { projectId: place.projectId, ...(place.projectName ? { projectName: place.projectName } : {}) } : {};
-    const title = result.newThreadTitle ? { title: result.newThreadTitle } : {};
-    if (repo) return make({ agentId: 'loom', name: 'Loom', kind: 'new_loom', repo, ...title, ...project });
-    // Nothing named: the screen's place settles it (an agent's page or thread, a project's repo), else null and the owner is asked.
-    const placed = (): DraftDestination | null => {
-      if (this.newThread && place?.agentId) {
-        const agent = host.agents.find((candidate) => persona(candidate.id) === persona(place.agentId!));
-        if (agent) return make({ agentId: agent.id, name: agent.name, kind: 'new_thread', ...title, ...project, inferred: true });
-      }
-      if (place?.repo) {
-        const offered = repos.find((candidate) => candidate.toLowerCase() === place.repo!.toLowerCase());
-        if (offered) return make({ agentId: 'loom', name: 'Loom', kind: 'new_loom', repo: offered, ...title, ...project, inferred: true });
-      }
-      return null;
-    };
-    // Still the new thread unless the compile picked another place (a redirect to an agent or a conversation).
-    if (this.newLoom && !result.agentId && !result.item && !result.threadId) return placed();
-    if (this.newThread && !result.item && !result.threadId) {
-      // An agent the owner named (now or in an answer): a new thread with that agent, never its main channel.
-      const named = result.agentId ? host.agents.find((candidate) => candidate.id === result.agentId) : undefined;
-      if (named) return make({ agentId: named.id, name: named.name, kind: 'new_thread', ...title, ...project });
-      return placed();
-    }
-    // The conversation the owner named stands unless the compile picked another place (a redirect does).
-    const named = this.targetItem;
-    const pickedElsewhere = !!(result.item || result.threadId || result.newThreadTitle) || (!!result.agentId && named !== null && persona(result.agentId) !== persona(named.agentId));
-    const ref = result.item ? context.resolveItem(result.item) : !pickedElsewhere ? named : null;
-    this.usedNamed = !!ref && !!named && ref.id === named.id;
-    {
-      if (ref) {
-        if (ref.isAgent && ref.threadId && /^\d+$/.test(ref.threadId)) return make({ agentId: ref.agentId, name: ref.agentName, kind: 'thread', threadId: ref.threadId, itemId: ref.id, ...(ref.place ? { title: ref.place } : {}) });
-        if (ref.isAgent) return make({ agentId: ref.agentId, name: ref.agentName, kind: 'home' });
-        return make({ agentId: ref.agentId, name: ref.agentName, kind: 'item', itemId: ref.id, ...(ref.place ? { title: ref.place } : {}) });
-      }
-    }
-    const agent = host.agents.find((candidate) => candidate.id === result.agentId) ?? (result.agentId ? undefined : (this.target ?? undefined));
-    if (!agent) return null;
-    if (result.newThreadTitle) return make({ agentId: agent.id, name: agent.name, kind: 'new_thread', title: result.newThreadTitle, ...project });
-    if (result.threadId) {
-      const thread = context.input.threads.find((candidate) => candidate.id === result.threadId);
-      const item = context.input.desk?.items.find((candidate) => candidate.threadId === result.threadId);
-      if (thread || item) return make({ agentId: agent.id, name: agent.name, kind: 'thread', threadId: result.threadId, title: thread?.title ?? item?.place ?? 'thread' });
-    }
-    return make({ agentId: agent.id, name: agent.name, kind: 'home' });
+    const resolution = resolveDraftDestination(result, context, {
+      agents: this.host!.agents,
+      startSpeech: this.startSpeech,
+      fragments: this.fragments,
+      clarifications: this.clarifications,
+      newLoom: this.newLoom,
+      newThread: this.newThread,
+      targetItem: this.targetItem,
+      target: this.target,
+    });
+    if (resolution.usedNamed !== undefined) this.usedNamed = resolution.usedNamed;
+    return resolution.destination;
   }
 
   /** how: voice (a yes), screen (a Send tap), auto (the undo window ran out with no undo). */

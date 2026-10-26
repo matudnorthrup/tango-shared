@@ -5,14 +5,29 @@ import { makeHarness, NOW } from './desk-harness.js';
 
 describe('server search narrowing', () => {
   it('parses fields and dates, preserves unknown tokens and resolves quoted spaces and agents', () => {
-    const parsed = parseSearchFields('router is:needs kind:thread in:"Desk folder" agent:"Named Agent" type:bug stage:review repo:"main repo" before:7d after:2026-01-01 unknown:value is:nope before:2026-02-31', [{ id: 'project:folder', name: 'Desk folder' }], [{ id: 'named', name: 'Named Agent' }], NOW);
+    const parsed = parseSearchFields('router is:needs kind:thread in:"Desk folder" agent:"Named Agent" type:bug repo:"main repo" before:7d after:2026-01-01 unknown:value is:nope before:2026-02-31', [{ id: 'project:folder', name: 'Desk folder' }], [{ id: 'named', name: 'Named Agent' }], NOW);
     expect(parsed.text.replace(/\s+/g, ' ')).toBe('router unknown:value is:nope before:2026-02-31');
-    expect(parsed.tokens).toHaveLength(9);
+    expect(parsed.tokens).toHaveLength(8);
     expect(parsed.queries[2].scope).toMatchObject({ id: 'project:folder' });
     expect(parsed.queries[3].where).toEqual({ agent: { in: ['named'] } });
     expect(parsed.before).toBe(NOW - 7 * 86_400_000);
     expect(parsed.after).toBe(Date.parse('2026-01-01'));
     for (const value of ['ready', 'todo', 'working', 'watching', 'failed', 'unread', 'pinned']) expect(parseSearchFields(`is:${value}`).tokens).toHaveLength(1);
+  });
+  it('treats a retired search field as literal text', () => {
+    const parsed = parseSearchFields('router stage:building');
+    expect(parsed.text).toBe('router stage:building');
+    expect(parsed.tokens).toEqual([]);
+  });
+  it('omits retired archive metadata without rewriting the stored snapshot', () => {
+    const h = makeHarness();
+    try {
+      const search = new DeskSearch({ db: h.db });
+      const facts = JSON.stringify({ stage: 'building', type: 'bug' });
+      h.db.prepare("INSERT INTO search_docs (item_id, source, kind, agent_id, agent_name, title, facts) VALUES ('archived', 'loom', 'thread', 'loom', 'Loom', 'Router', ?)").run(facts);
+      expect(search.doc('archived')!.facts).toEqual({ type: 'bug' });
+      expect((h.db.prepare("SELECT facts FROM search_docs WHERE item_id = 'archived'").get() as { facts: string }).facts).toBe(facts);
+    } finally { h.close(); }
   });
   it('rejects invalid facets and scope instead of broadening a search', () => {
     for (const where of ['null', '[]', '{"nope":{}}', '{"agent":{"in":"x"}}', '{"type":{"unset":1}}']) expect(() => searchQuery(where)).toThrow();

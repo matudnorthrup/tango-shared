@@ -84,7 +84,7 @@ const read = (name: string) => JSON.parse(fs.readFileSync(path.join(SNAP, `${nam
 const settings = read('settings');
 const active: DeskItemSummary[] = read('active').items;
 const lists = { active: { items: active, loaded: true }, snoozed: { items: read('snoozed').items, loaded: true }, history: { items: read('history').items, loaded: true } };
-const listState = (route: any) => ({ now: Date.now(), projects: settings.projects, listViews: settings.listViews, listGroup: 'stage', listCollapsed: [], labelOrder: settings.labelOrder, nextRoute: route, listTab: route.view ?? 'ready', nextPageViews: {}, lists });
+const listState = (route: any) => ({ now: Date.now(), projects: settings.projects, listViews: settings.listViews, listGroup: 'live', listCollapsed: [], labelOrder: settings.labelOrder, nextRoute: route, listTab: route.view ?? 'ready', nextPageViews: {}, lists });
 
 // ── GPT-Live, silent: what it would be told is kept ─────────────────────
 class FakeClient extends EventEmitter {

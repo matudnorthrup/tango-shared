@@ -45,7 +45,7 @@ export const VOICE_COMMANDS = {
   project: fixed('Filed under the selected project'),
   stop: fixed('Stopped the turn that was running; the conversation stays open for the next message'),
   label: silent('Legacy labels have no voice command.'),
-  tag: silent('Desk stage and type tags have no voice command.'),
+  tag: silent('Desk type tags have no voice command.'),
   watch: silent('Desk watch configuration has no voice command.'),
   role: silent('Thread role configuration has no voice command.'),
   space: silent('Desk space configuration has no voice command.'),
@@ -80,3 +80,9 @@ export const COMPOSER_VOICE = {
   focus: { policy: 'silent', reason: 'Opt-in spoken replies; resets when the session ends.' },
   dictation: { policy: 'silent', reason: 'Uses only the existing reply or Start work submission.' },
 } as const satisfies Record<string, VoicePolicy>;
+
+/** App switching is local navigation to a validated catalog path, never an agent message. */
+export const APP_NAVIGATION_VOICE = { ...asked, receipt: { source: 'server' } } as const;
+
+/** Phone dictation speaks only the server receipt, after delivery or durable holding. */
+export const PHONE_NOTE_VOICE = { ...asked, receipt: { source: 'server' } } as const;

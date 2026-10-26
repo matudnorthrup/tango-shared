@@ -116,17 +116,19 @@ function fitFlyout(el) {
 /**
  * A dropdown under its button (desk) or a sheet from the bottom (phone); with `at` ({ x, y, key? }), a dropdown at
  * that point (a right-click; `key` when the menu key opened it). `onClose` when it's done.
+ * `focus` opts other triggers into initial keyboard focus ('first' or 'last').
  */
-export function Menu({ items, onClose, phone = false, title = '', at = null }) {
+export function Menu({ items, onClose, phone = false, title = '', at = null, focus = null }) {
   const [sub, setSub] = useState(null);
   const [nested, setNested] = useState(null);
   const [stack, setStack] = useState([]);
   const ref = useRef(null);
   // Opened from the keyboard (the menu key), it takes focus (arrows move, Enter picks) and gives it back to the row after.
   useLayoutEffect(() => {
-    if (!at?.key) return undefined;
+    if (!at?.key && !focus) return undefined;
     const from = document.activeElement;
-    ref.current?.querySelector('[role="menuitem"]:not(:disabled)')?.focus({ preventScroll: true });
+    const rows = ref.current?.querySelectorAll('[role="menuitem"]:not(:disabled)');
+    rows?.[focus === 'last' ? rows.length - 1 : 0]?.focus({ preventScroll: true });
     return () => {
       const lost = !document.activeElement || document.activeElement === document.body || ref.current?.contains(document.activeElement);
       if (lost && from?.isConnected) from.focus({ preventScroll: true });
@@ -205,7 +207,7 @@ export function Menu({ items, onClose, phone = false, title = '', at = null }) {
     }
 
     return html`<div class="nx-sheet-scrim" onClick=${onClose}>
-      <div class="nx-sheet" ref=${ref} role="menu" aria-label=${title || 'Actions'} onClick=${(e) => e.stopPropagation()}>
+      <div class="nx-sheet" ref=${ref} role="menu" aria-label=${title || 'Actions'} onKeyDown=${arrows} onClick=${(e) => e.stopPropagation()}>
         <div class="nx-grab"></div>
         ${level
           ? html`<button class="nx-mi nx-mback" onClick=${() => setStack(stack.slice(0, -1))}><span class="nx-mic">${BACK}</span><span class="nx-mil">${level.label}</span></button><div class="nx-msep"></div>`

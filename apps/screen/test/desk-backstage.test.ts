@@ -87,6 +87,7 @@ describe('Loom messages', () => {
     expect(loomMessageMeta({ role: 'user', text: 'Decision D-12: Ship it?\nI chose A: Yes.', run_id: 'r1' }, queuedRuns)).toEqual({ runId: 'r1', queued: false, answers: 'D-12' });
     expect(loomMessageMeta({ role: 'user', text: 'Decision D-12 looks wrong to me', run_id: 'r1' }, queuedRuns)).toEqual({ runId: 'r1', queued: false });
     expect(loomMessageMeta({ role: 'assistant', text: 'hi', run_id: 'r1' }, queuedRuns)).toEqual({ runId: 'r1' });
+    expect(loomMessageMeta({ role: 'assistant', text: 'hi', run_id: 'r1', phase: 'note' }, queuedRuns)).toEqual({ runId: 'r1', phase: 'note' });
     expect(loomMessageMeta({ role: 'user', text: 'Schema done', origin: JSON.stringify({ kind: 'peer', name: 'api-worker', from: 'uds:/tmp/a', mailId: 'n1', inline: true }) }, queuedRuns)).toEqual({ mail: { kind: 'in', peer: 'api-worker', peerId: 'uds:/tmp/a', mailId: 'n1', inline: true } });
     expect(loomMessageMeta({ role: 'user', text: 'thanks', origin: JSON.stringify({ kind: 'peer-out', name: 'api-worker', to: 'api-worker', mailId: 't1' }) }, queuedRuns)?.mail).toMatchObject({ kind: 'out', peer: 'api-worker' });
     // Desk mail steered in: its header names the sender and the mail.

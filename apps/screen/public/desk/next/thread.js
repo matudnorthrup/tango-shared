@@ -1,7 +1,7 @@
 import { BriefReceipts } from '../brief.js';
 import { OwnerReceipts } from '../owner-receipts.js';
 import { doneLabel } from '../query-identity.js';
-// The next layout's thread page (spec: "Page header", "Thread"): the title, [status][Stage ▾] and the
+// The next layout's thread page (spec: "Page header", "Thread"): the title, [status] and the
 // quiet metadata, the ⋯ menu and the panel toggle; then the call, the latest reply, and the composer.
 // The right panel (History · Reporting here · Links · Screens · Mail · Details) sits under the breadcrumb
 // bar beside the column, sliding over the page when the margin can't hold it. On a phone its tabs sit
@@ -16,7 +16,7 @@ import { Backstage, Composer, ContextBody, MailDrafts, MailPane, Needs, RuleProp
 import { DropHint, Lightbox } from '../attachments.js';
 import { moveTargets, runOnTargets, useCapacity } from './capacity.js';
 import { prsOf } from '../list.js';
-import { MENU_STAGES, MENU_TYPES, canActOnRow, projectOf, stageName, stageOf, typeName, typeOf } from '../list-model.js';
+import { MENU_TYPES, canActOnRow, projectOf, typeName, typeOf } from '../list-model.js';
 import { age, askedOf, isFresh, storageGet, storageSet } from '../util.js';
 import { KINDS, agentOf, agentNameOf, agentsOf, findItem, headerMeta, homeOf, kindOf, nestedProjectList, ownerChoices, ownerPlaces, ownerLabel, ownerName, spaceOf, scheduleLine, statusOf, threadTitle, tokensLabel, budgetToday, BUDGET_WARN } from './model.js';
 import { KindGlyph, ThreadRow, Tile } from './rows.js';
@@ -41,7 +41,6 @@ export function threadMenu(item, store, { onReply = null, newHere = null } = {})
   const away = item.disposition === 'snoozed' || item.disposition === 'parked';
   const project = projectOf(item, store.state.projects);
   const type = typeOf(item);
-  const stage = stageOf(item);
   const agents = agentsOf(store.state.lists, store.state.now);
   const projects = nestedProjectList(store.state.projects, agents);
   // A worker or job: who it reports to now, and who it could (its space's lead first).
@@ -118,12 +117,6 @@ export function threadMenu(item, store, { onReply = null, newHere = null } = {})
         { icon: MI.plus, label: 'New project…', onSelect: () => newProject(store, { forItem: item.id }) },
       ],
     },
-    store.state.flags?.stageLabels ? {
-      icon: MI.sections,
-      label: 'Stage',
-      hint: stage ? stageName(stage) : 'None',
-      sub: [...MENU_STAGES.map((key) => ({ label: stageName(key), on: stage === key, onSelect: () => store.setTags(item.id, { stage: key }) })), { label: 'No stage', on: !stage, onSelect: () => store.setTags(item.id, { stage: null }) }],
-    } : null,
 
     {
       // Who it works for (docs/specs/spaces.md). "Kind", because "Type" is already the work's tag (Feature, Bug…).
@@ -161,7 +154,6 @@ export function threadMenu(item, store, { onReply = null, newHere = null } = {})
   return items.filter((it, i, all) => it !== 'sep' || (i > 0 && i < all.length - 1 && all[i - 1] !== 'sep'));
 }
 
-/** Stage: the one inline control in a header. */
 /**
  * A thread Loom holds on account limits: one tap runs it on an account with room (D-42). The tap also lets the
  * thread use that account from now on; nothing moves without it.
@@ -177,17 +169,6 @@ function RunOn({ item, store }) {
   </div>`;
 }
 
-function StagePill({ item, store, phone }) {
-  const [open, setOpen] = useState(false);
-  const stage = stageOf(item);
-  const items = [...MENU_STAGES.map((key) => ({ label: stageName(key), on: stage === key, onSelect: () => store.setTags(item.id, { stage: key }) })), { label: 'No stage', on: !stage, onSelect: () => store.setTags(item.id, { stage: null }) }];
-  return html`<span class="nx-anchor">
-    <button class=${`nx-stage${stage ? '' : ' unset'}`} data-menu-button aria-haspopup="menu" aria-expanded=${open} aria-label=${`Stage: ${stage ? stageName(stage) : 'none'}`} onClick=${(e) => (e.stopPropagation(), setOpen(!open))}>
-      ${stage ? stageName(stage) : 'Stage'}${I.chev}
-    </button>
-    ${open ? html`<${Menu} items=${items} onClose=${() => setOpen(false)} phone=${phone} title="Stage" />` : null}
-  </span>`;
-}
 
 /** The panel's tabs for this thread; empty ones are left out. */
 /** The conversations that report to this one (its workers, or a default's jobs). */
@@ -484,7 +465,6 @@ export function ThreadPage({ store, phone, fits }) {
         ${(item.facts?.discussing || []).map(brief => html`<button class="nx-mlink" onClick=${() => store.openDecision(brief.id)}>Open ${brief.id}</button>`)}
         ${kind !== 'thread' ? html`<span class="nx-kchip"><${KindGlyph} kind=${kind} />${KINDS[kind]}</span>` : null}
         <${PrChip} item=${item} store=${store} onAll=${() => phone ? setPhoneTab('prs') : panel.set({ open: true, tab: 'prs' })} />
-        ${(kind === 'thread' || kind === 'worker') && state.flags?.stageLabels ? html`<${StagePill} item=${item} store=${store} phone=${phone} />` : null}
       </span>
       <span class="nx-tgrey">
         ${meta.map((m) => (m.kind === 'project' || m.kind === 'agent' ? html`<button class="nx-mlink" onClick=${() => go(m)}>${m.text}</button>` : html`<span>${m.text}</span>`))}
@@ -499,7 +479,7 @@ export function ThreadPage({ store, phone, fits }) {
   // While it works: once its reply answers your latest words, they sit above it (the classic layout's order).
   const answering = inFlight(item) && answersLatest(item, replyOf(d));
   const body = html`
-    ${item.replyable === false ? html`<p class="nx-retired">This conversation ran in ${item.source === 't3' ? 'T3' : item.source}, which is retired. It's read-only. ${item.continuation ? html`<button class="nx-mlink" onClick=${() => store.nextOpen(item.continuation.id)}>Continue in ${item.continuation.place.split(' · ').at(-1)}</button>` : null}</p>` : null}
+    ${item.replyable === false && !item.facts?.phoneNote ? html`<p class="nx-retired">This conversation ran in ${item.source === 't3' ? 'T3' : item.source}, which is retired. It's read-only. ${item.continuation ? html`<button class="nx-mlink" onClick=${() => store.nextOpen(item.continuation.id)}>Continue in ${item.continuation.place.split(' · ').at(-1)}</button>` : null}</p>` : null}
     ${kind === 'worker' ? html`<${WorkerLine} item=${item} store=${store} />` : null}
     ${kind === 'job' ? html`<${JobCard} key=${item.id} item=${item} store=${store} />` : null}
     ${item.source === 'system' ? html`<${IncidentCard} key=${item.id} item=${item} store=${store} />` : null}

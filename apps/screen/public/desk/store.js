@@ -37,7 +37,7 @@ const ORDER_HOLD_MS = 300_000;
 const MOVES_ATTENTION = new Set(['done', 'snooze', 'park', 'pickup', 'reopen', 'sweep', 'reply', 'answer', 'respond', 'approve', 'dismiss']);
 /**
  * Whether this command moves the item's attention time, so its old guard is stale: the ones above always; read
- * and unread only on an active item; a stage or pin only when it moves the item to another list (Codex review on #671).
+ * and unread only on an active item; a pin only when it moves the item to another list (Codex review on #671).
  */
 function movesAttention(type, item, predicted, args = {}) {
   if (MOVES_ATTENTION.has(type)) return true;
@@ -45,7 +45,6 @@ function movesAttention(type, item, predicted, args = {}) {
   // where the row ends up showing (Codex review on #671).
   const activeUnderneath = (item.disposition ?? 'active') === 'active' || !!item.heldBy;
   if (type === 'seen' || type === 'unseen') return activeUnderneath;
-  if (type === 'tag') return args.stage === 'feedback' && item.facts?.stage !== 'feedback' && activeUnderneath; // an owner park
   if (type === 'pin') return !!args.pinned && !activeUnderneath; // a pickup
   return !!predicted && (predicted.disposition ?? 'active') !== (item.disposition ?? 'active');
 }
@@ -72,7 +71,7 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
     group: 'step',
     // The List view (list.js): its own choices on this device.
     listTab: storageGet('listTab', 'active'),
-    listGroup: storageGet('listGroup', 'stage'),
+    listGroup: storageGet('listGroup', 'live'),
     listCollapsed: (() => {
       try {
         return JSON.parse(storageGet('listCollapsed', '[]'));
@@ -109,7 +108,6 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
     mailOff: [], // conversations and projects (project:<id>) closed to agent mail (desk/mail.ts)
     feed: { posts: [], loaded: false }, // a Screen window's news feed (feed.js; desk/feed.ts), newest first
     feedSettings: { chatter: 'hidden', needsYou: false, summaries: false, usage: true }, // what the feed shows (server setting, every screen)
-    flags: { stageLabels: false }, // the owner's feature flags (desk/flags.ts; server setting, every screen)
     listProject: storageGet('listProject', '') || null, // the project open in the List on this device, or null
     projectEditor: null, // the project dialog: { editing: project id | 'new', forItem: item id | null }
     labelOrder: null, // the owner's order for the List view's label sections (server setting; null: the default)
@@ -476,7 +474,6 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
    */
   function reconcileSettings() {
     feedSettingsSeq += 1;
-    flagsSeq += 1;
     filterSeq += 1;
     viewsSeq += 1;
     spaceViewsSeq += 1;
@@ -490,7 +487,7 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
     if (!client.settings) return;
     // A setting saved or streamed while this read was out is newer than its answer: each one checks its own
     // sequence from when the read began (Codex review on #595, #671).
-    const at = { spaceViews: spaceViewsSeq, feed: feedSettingsSeq, flags: flagsSeq, filters: filterSeq, views: viewsSeq, sections: sectionsSeq, snooze: snoozeTimesSeq, agentIcons: iconSeqs.agentIcons, repoIcons: iconSeqs.repoIcons, labels: labelSaveSeq, labelStream: labelOrderSeq };
+    const at = { spaceViews: spaceViewsSeq, feed: feedSettingsSeq, filters: filterSeq, views: viewsSeq, sections: sectionsSeq, snooze: snoozeTimesSeq, agentIcons: iconSeqs.agentIcons, repoIcons: iconSeqs.repoIcons, labels: labelSaveSeq, labelStream: labelOrderSeq };
     const spacesAt = JSON.stringify(spaceSeqs);
     const spacesSame = () => JSON.stringify(spaceSeqs) === spacesAt;
     const from = projectTick();
@@ -511,7 +508,6 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
         mailOff: confirmMail(json.mailOff || []),
         ...(at.sections === sectionsSeq ? { projectSectionsHidden: json.projectSectionsHidden || ['done'] } : {}),
         ...(json.feed && at.feed === feedSettingsSeq ? { feedSettings: json.feed } : {}),
-        ...(json.flags && at.flags === flagsSeq ? { flags: json.flags } : {}),
       });
     } catch {
       /* an older server without filters: none apply */
@@ -559,22 +555,6 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
       return null;
     } catch (err) {
       if (seq === feedSettingsSeq) set({ feedSettings: before });
-      if (!err.body) void reconcileSettings(); // it may have been saved after all: the desk's copy settles it
-      return err.body?.error || err.message || 'network error';
-    }
-  }
-  // Like the feed settings: only the newest save's answer (or failure) lands.
-  let flagsSeq = 0;
-  async function saveFlags(patch) {
-    const seq = ++flagsSeq;
-    const before = state.flags;
-    set({ flags: { ...before, ...patch } });
-    try {
-      const json = await settingsInOrder({ flags: patch });
-      if (seq === flagsSeq && json.flags) set({ flags: json.flags });
-      return null;
-    } catch (err) {
-      if (seq === flagsSeq) set({ flags: before });
       if (!err.body) void reconcileSettings(); // it may have been saved after all: the desk's copy settles it
       return err.body?.error || err.message || 'network error';
     }
@@ -802,10 +782,11 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
    * One line handled from its card: Got it (read), Snooze, or Fine by me on a decision. A collapsed
    * moment or group carries `ids`, every line it stands for (a PR's folded decisions, a batch of rule changes).
    */
-  async function chapterLine(spaceId, line, how, commandId = uuid(), backAt) {
+  async function chapterLine(spaceId, line, how, commandId = uuid(), backAt, threadSnoozed = false) {
+    if (threadSnoozed?.undone) return;
     if (how === 'defer' && backAt === undefined) {
       const name = state.projects.find((p) => `project:${p.id}` === spaceId)?.name || agentsOf(state.lists, state.now).find((a) => `agent:${a.id}` === spaceId)?.name || 'this space';
-      set({ snoozeFor: `line:${spaceId}:${line.id}`, catchupSnooze: { name, pick: (until) => chapterLine(spaceId, line, how, commandId, until) } });
+      set({ snoozeFor: `line:${spaceId}:${line.id}`, catchupSnooze: { name, pick: (until) => chapterLine(spaceId, line, how, commandId, until, threadSnoozed) } });
       return;
     }
     const ids = line.ids?.length ? line.ids : [line.id];
@@ -817,14 +798,19 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
     set({ lineLocal: { ...state.lineLocal, ...Object.fromEntries(ids.map((id) => [id, true])) } });
     try {
       if (how === 'fine') await client.decidedConfirm({ decisionId: line.decisionId, commandId });
-      else await client.updatesSeen({ ids, via: how === 'defer' ? 'deferred' : 'read', outcome: how === 'defer' ? 'later' : 'got-it', ...(backAt !== undefined ? { backAt } : {}) });
+      else {
+        const write = client.updatesSeen({ ids, via: how === 'defer' ? 'deferred' : 'read', outcome: how === 'defer' ? 'later' : 'got-it', ...(backAt !== undefined ? { backAt } : {}) });
+        if (threadSnoozed) threadSnoozed.pending = write;
+        const receipt = await write;
+        if (threadSnoozed) threadSnoozed.marks = receipt?.updates || [];
+      }
     } catch (err) {
       drop();
       const same = !err.body || err.body.unknown;
-      toast(`That didn’t go through: ${err.body?.error || err.message || 'network error'}`, { sticky: true, action: { label: 'Retry', fn: () => chapterLine(spaceId, line, how, same ? commandId : uuid(), how === 'defer' && backAt <= Date.now() ? undefined : backAt) } });
+      toast(`That didn’t go through: ${err.body?.error || err.message || 'network error'}`, { sticky: true, action: { label: 'Retry', fn: () => chapterLine(spaceId, line, how, same ? commandId : uuid(), how === 'defer' && backAt <= Date.now() ? undefined : backAt, threadSnoozed) } });
       return;
     }
-    if (how === 'defer') toast(`Snoozed until ${snoozeWhen(backAt)}. It stays in Needs you.`);
+    if (how === 'defer' && !threadSnoozed) toast(`Snoozed until ${snoozeWhen(backAt)}. It stays in Needs you.`);
     await loadChapter(spaceId);
     drop();
   }
@@ -1601,12 +1587,9 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
     return command('label', itemId, { label: label || null });
   }
   /** Pins or unpins: a Loom thread in Loom's sidebar, anything else on the desk. The List view shows pins first. */
-  /** The owner's stage and/or type, kept on the desk: `{ stage }`, `{ type }` (null clears). */
+  /** The owner's type, kept on the desk (null clears). */
   async function setTags(itemId, tags) {
-    const result = await command('tag', itemId, tags);
-    // Moving it to Feedback parks it until the agent posts; Undo keeps it Active (still Feedback).
-    if (result?.status === 'sent' && result.outcome?.parked) offerUndo(result, 'Feedback · parked until the agent posts');
-    return result;
+    return command('tag', itemId, tags);
   }
   /** A conversation's kind (docs/specs/spaces.md): thread, job (ops), worker or its space's default. */
   async function setRole(itemId, role, parentItemId) {
@@ -1655,7 +1638,7 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
   /** The desk watches (or stops watching) a PR's review; on approval the agent is woken in its conversation. */
   async function watchPr(itemId, url, on) {
     const result = await command('watch', itemId, { url, off: !on });
-    if (result?.status === 'sent') toast(on ? 'Watching the review (moved to Feedback): the agent picks it back up when it’s approved' : 'Stopped watching the review');
+    if (result?.status === 'sent') toast(on ? 'Watching the review: the agent picks it back up when it’s approved' : 'Stopped watching the review');
     return result;
   }
   /** Renames a conversation: a Loom thread in Loom, anything else on the desk (an empty name goes back to its own). */
@@ -2301,7 +2284,7 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
   }
 
   function verb(type) {
-    return { reply: 'Reply', answer: 'Answer', respond: 'Answer', approve: 'Approval', dismiss: 'Dismiss', done: 'Done', snooze: 'Snooze', park: 'Park', pickup: 'Pick up', retry: 'Retry', seen: 'Mark read', unseen: 'Mark unread', undo: 'Undo', sweep: 'Sweep', reopen: 'Reopen', viewed: 'Viewed', label: 'Label', tag: 'Stage/type', rename: 'Rename', pin: 'Pin', project: 'Move', watch: 'Watching the review', role: 'Kind', space: 'Move', run: 'Run', pause: 'Pause' }[type] || type;
+    return { reply: 'Reply', answer: 'Answer', respond: 'Answer', approve: 'Approval', dismiss: 'Dismiss', done: 'Done', snooze: 'Snooze', park: 'Park', pickup: 'Pick up', retry: 'Retry', seen: 'Mark read', unseen: 'Mark unread', undo: 'Undo', sweep: 'Sweep', reopen: 'Reopen', viewed: 'Viewed', label: 'Label', tag: 'Type', rename: 'Rename', pin: 'Pin', project: 'Move', watch: 'Watching the review', role: 'Kind', space: 'Move', run: 'Run', pause: 'Pause' }[type] || type;
   }
 
   /**
@@ -2718,9 +2701,9 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
     return result;
   }
 
-  function openSnooze(itemId) {
+  function openSnooze(itemId, chapter = null) {
     // Captured now: the picker can sit open while the lists refresh underneath it.
-    set({ snoozeFor: itemId, snoozeGuard: asSeen(itemId), focusId: itemId });
+    set({ snoozeFor: itemId, snoozeGuard: asSeen(itemId), snoozeChapter: chapter, focusId: itemId });
   }
   async function chooseSnooze(choice) {
     const itemId = state.snoozeFor;
@@ -2732,13 +2715,48 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
       return catchup.pick(until);
     }
     const guard = state.snoozeGuard || {};
-    set({ snoozeFor: null, snoozeGuard: null });
+    const chapter = state.snoozeChapter;
+    set({ snoozeFor: null, snoozeGuard: null, snoozeChapter: null });
     if (!itemId) return;
     if (itemId.startsWith('project:')) return snoozeProject(itemId.slice(8), choice);
     // Back to the board at the tap; a failure still toasts (command() says why).
     if (state.presentation.itemId === itemId && state.presentation.view !== 'active') goBoard();
     const result = choice.type === 'park' ? await command('park', itemId, guard) : await command('snooze', itemId, { ...choice.args, ...guard });
-    if (result.status === 'sent') offerUndo(result, choice.type === 'park' ? 'Parked' : choice.key === 'custom' ? `Snoozed ${choice.label}` : `Snoozed · ${choice.label.toLowerCase()}`);
+    const label = choice.type === 'park' ? 'Parked' : choice.key === 'custom' ? `Snoozed ${choice.label}` : `Snoozed · ${choice.label.toLowerCase()}`;
+    if (result.status === 'sent' && chapter) {
+      const until = new Date(choice.args?.until).getTime();
+      const operation = { backAt: Number.isFinite(until) ? until : null, marks: [], undone: false, pending: null };
+      if (result.outcome?.seq) toast(label, { action: { label: 'Undo', fn: () => undoChapterSnooze(result.outcome.seq, chapter, operation) } });
+      else toast(label);
+      await chapterLine(chapter.spaceId, chapter.line, Number.isFinite(until) ? 'defer' : 'read', uuid(), Number.isFinite(until) ? until : undefined, operation);
+      void loadCatchup();
+    } else if (result.status === 'sent') offerUndo(result, label);
+  }
+
+  async function restoreChapterSnooze(chapter, operation) {
+    try {
+      const ids = chapter.line.ids?.length ? chapter.line.ids : [chapter.line.id];
+      for (const id of ids) {
+        const mark = operation.marks.find(m => m.id === id);
+        // A lost line-write response still has the exact timed deferral to match.
+        if (operation.backAt === null && !mark) continue;
+        await client.updatesRestoreSnooze({ ids: [id], backAt: operation.backAt, seenAt: mark?.seenAt ?? null });
+      }
+      await Promise.all([loadChapter(chapter.spaceId), loadCatchup()]);
+    } catch (err) {
+      toast(`Thread restored; the catch-up card couldn’t be restored: ${err.message || 'network error'}`, { sticky: true, action: { label: 'Retry', fn: () => restoreChapterSnooze(chapter, operation) } });
+    }
+  }
+  async function undoChapterSnooze(seq, chapter, operation, retry = {}) {
+    const result = await command('undo', null, { seq }, { quiet: true, ...retry });
+    if (result.status !== 'sent') {
+      failToast('undo', null, result, () => undoChapterSnooze(seq, chapter, operation, again(result)));
+      return;
+    }
+    operation.undone = true; // A saved line-write Retry must not re-hide the restored card.
+    await operation.pending?.catch(() => {});
+    await restoreChapterSnooze(chapter, operation);
+    if (state.activity.open) loadActivity();
   }
 
   // One tap: off the board until the agent posts again. The toast offers Undo and a quick re-time,
@@ -3261,10 +3279,6 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
         set({ feedSettings: settings.feed });
         feedChanged({ settle: true });
       }
-      if (settings.flags && JSON.stringify(settings.flags) !== JSON.stringify(state.flags)) {
-        flagsSeq += 1; // the server's newest: a save still in flight mustn't overwrite it
-        set({ flags: settings.flags });
-      }
       if (settings.labelOrder) {
         confirmedLabelOrder = settings.labelOrder;
         // The echo of this screen's own save: confirmed, but a newer reorder still on its way keeps showing. Another
@@ -3403,7 +3417,6 @@ export function createStore(client, { role = 'full', listCache = null } = {}) {
     setWindowRole,
     setWindowFeedScope,
     saveFeedSettings,
-    saveFlags,
     loadCapacity,
     loadSystem,
     loadChapter,

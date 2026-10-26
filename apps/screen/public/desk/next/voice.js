@@ -1,3 +1,4 @@
+import { Caption } from '../caption.js';
 // The top bar's voice control. Keep arrival and confirm history across page changes.
 import { html, useEffect, useRef, useState } from '../../vendor/preact-htm.js';
 import { NavigatorButton } from '../navigator.js';
@@ -9,9 +10,7 @@ import { agentsOf } from './model.js';
 import { confirmToOpen, freshCaption, voiceLine } from './voice-model.js';
 
 const sessions = new WeakMap();
-function Caption({ line }) {
-  return html`<span>${line.speaker === 'owner' ? '' : html`<span class="nx-vwho">${line.name || 'Agent'}: </span>`}“${line.text}”</span>`;
-}
+
 
 export function Voice({ store, phone }) {
   const { state } = store;

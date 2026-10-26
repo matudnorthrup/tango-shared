@@ -30,7 +30,7 @@ describe('window feed scope integration', () => {
     hub.close();
   });
 
-  it('reads stage visibility from stored flags without rewriting saved feed tabs', async () => {
+  it('ignores retired filters without rewriting saved feed tabs', async () => {
     h = makeHarness();
     const feed = new DeskFeed(h.db, () => h!.clock.now);
     h.discord.push('5000', msg(-1, 'agent', 'Ready for an answer'));
@@ -44,9 +44,9 @@ describe('window feed scope integration', () => {
     const app = createApp({ store: scenes, hub, publicDir: h.dir, desk: { routes: { core: h.core, feed }, compat: { core: h.core, hub, rules: null, pollSources: () => h!.source.poll() } } });
     try {
       const read = async () => ((await (await app.request('/api/desk/feed?scope=tab:top')).json()) as any).posts;
-      expect(await read()).toHaveLength(1); // Missing flag defaults off.
+      expect(await read()).toHaveLength(1);
       h.core.store.setSetting('flags', JSON.stringify({ stageLabels: true }));
-      expect(await read()).toEqual([]);
+      expect(await read()).toHaveLength(1);
       h.core.store.setSetting('flags', JSON.stringify({ stageLabels: false }));
       expect(await read()).toHaveLength(1);
       expect(h.core.store.setting('list_views')).toBe(saved);

@@ -29,7 +29,7 @@ async function fixture(): Promise<Page> {
   return page;
 }
 describe('search in the fixture desk', () => {
-  it('separates Project and Repo and keeps the selected space in search and its breadcrumb', async (ctx) => {
+  it('switcher searches globally and the Search page can still narrow to its space', async (ctx) => {
     if (!browser) return ctx.skip();
     const page = await fixture();
     const errors: string[] = [];
@@ -55,6 +55,10 @@ describe('search in the fixture desk', () => {
       const repoValues = await repoPicker.locator('option').evaluateAll((options) => options.map((o) => (o as HTMLOptionElement).value));
       expect(repoValues.length).toBeGreaterThan(1);
       const scope = page.getByRole('checkbox', { name: 'In this space', exact: true });
+      // D-794: All results keeps the switcher's global search; narrowing remains opt-in.
+      expect(await scope.isChecked()).toBe(false);
+      expect(await page.evaluate(() => (window as any).__desk.store.state.search.scope)).toBe('global');
+      await scope.check();
       expect(await scope.isChecked()).toBe(true);
       expect(await page.evaluate(() => (window as any).__desk.store.state.search.scope)).toBe(`space:project:${project.id}`);
       expect(await page.getByRole('navigation', { name: 'Breadcrumb' }).textContent()).toContain(project.name);

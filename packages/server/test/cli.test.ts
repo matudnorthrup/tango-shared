@@ -64,16 +64,16 @@ it('calls action endpoints and reports rejected actions and invalid usage', asyn
     expect((await cli('restart')).code).toBe(2);
     expect((await cli('status', 'food-ui', '-v')).stdout).toContain('food-ui');
 });
-it('delegates all UI and bot scripts without touching tmux', async () => {
+// Each script is an independent integration case; do not charge all sixteen
+// real shell/Node launches against one test's deadline on a contended runner.
+it.each(['food-ui', 'usage-ui', 'workout-ui', 'discord'].flatMap(id =>
+    ['start', 'stop', 'restart', 'status'].map(action => ({ id, action })),
+))('delegates $id $action without touching tmux', async ({ id, action }) => {
     stub('tmux', 'echo touched >> "$TANGO_SERVER_HOME/tmux.calls"; exit 1');
     stub('npm', 'exit 0'); // bot restart retains its build before delegation
-    for (const id of ['food-ui', 'usage-ui', 'workout-ui', 'discord']) {
-        for (const action of ['start', 'stop', 'restart', 'status']) {
-            const name = id === 'discord' ? action : `${id}-${action}`;
-            expect((await run('bash', [path.join(repo, `scripts/tmux/${name}.sh`)])).code).toBe(0);
-            if (action !== 'status') expect(calls).toContain(`POST /services/${id}/${action}`);
-        }
-    }
+    const name = id === 'discord' ? action : `${id}-${action}`;
+    expect((await run('bash', [path.join(repo, `scripts/tmux/${name}.sh`)])).code).toBe(0);
+    if (action !== 'status') expect(calls).toContain(`POST /services/${id}/${action}`);
     expect(fs.existsSync(path.join(dir, 'tmux.calls'))).toBe(false);
 });
 it('retains tmux stop/status for observe and unknown services', async () => {

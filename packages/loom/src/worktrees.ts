@@ -4,7 +4,7 @@ import { promisify } from "node:util";
 import * as fs from "node:fs/promises";
 import { ReclaimIO, ReclaimTimeout, checkReclaim, deadline, reclaimBound, reclaimCall, reclaimScope, reclaimWait, reclaimRemove, reclaimMutation, reclaimRecovery } from "./reclaim-io.js";
 import { existsSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { defaultBranch as rawDefaultBranch, git as rawGit, parkWorktree, seedDependencies, pooledWorktrees } from "./git.js";
 import { isLiveHost, readHostLedgers } from "./host-ledger.js";
@@ -12,6 +12,7 @@ import { killGroup } from "./proc.js";
 import type { LoomStore, ThreadRow } from "./store.js";
 
 const chmod = reclaimBound(fs.chmod), rename = reclaimBound(fs.rename);
+const copyFile = reclaimBound(fs.copyFile), stat = reclaimBound(((...args: Parameters<typeof fs.stat>) => fs.stat(...args)) as typeof fs.stat), utimes = reclaimBound(fs.utimes);
 const mkdir = reclaimBound(fs.mkdir), writeFile = reclaimBound(fs.writeFile), lstat = reclaimBound((...args: Parameters<typeof fs.lstat>) => fs.lstat(...args)) as typeof fs.lstat;
 const mkdtemp = reclaimBound(fs.mkdtemp), readdir = reclaimBound(((...args: Parameters<typeof fs.readdir>) => fs.readdir(...args)) as typeof fs.readdir);
 const readlink = reclaimBound(fs.readlink), realpath = reclaimBound(fs.realpath), rm = reclaimRemove, statfs = reclaimBound(fs.statfs);
@@ -90,7 +91,7 @@ export class Worktrees {
    */
   private scheduleReclaim<T>(priority: boolean, work: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      const task = { priority, run: AsyncLocalStorage.bind(async () => { try { checkReclaim(); resolve(await reclaimWait(work, this.options.passTimeoutMs ?? 300_000)); } catch (error) { reject(error); } }) };
+      const task = { priority, run: AsyncLocalStorage.bind(async () => { try { checkReclaim(); resolve(await reclaimWait(work, null)); } catch (error) { reject(error); } }) };
       this.reclaimTasks.push(task);
       if (!this.drainingReclaim) {
         this.drainingReclaim = true;
@@ -110,6 +111,7 @@ export class Worktrees {
   private pressureHeartbeatAt: number | null = null;
   constructor(private store: LoomStore, private home: string, private options: {
     ioTimeoutMs?: number;
+    /** No-progress budget for passes/rows; absolute budget for each inspection. */
     passTimeoutMs?: number;
     heartbeatMs?: number;
     live: (id: string) => boolean;
@@ -136,7 +138,7 @@ export class Worktrees {
       void this.appendReclaimLog({ at: new Date().toISOString(), reason, dryRun, heartbeat: "pass running", progress: { ...progress } }).catch(error => console.warn("Reclaim heartbeat failed", error));
     }, this.options.heartbeatMs ?? 60_000);
     heartbeat.unref?.();
-    try { return await reclaimScope(this.io, this.options.ioTimeoutMs ?? 30_000, this.options.passTimeoutMs ?? 300_000, () => this.progress.run(progress, work)); }
+    try { return await reclaimScope(this.io, this.options.ioTimeoutMs ?? 30_000, this.options.passTimeoutMs ?? 300_000, () => this.progress.run(progress, work), true); }
     catch (error) {
       if (error instanceof ReclaimTimeout) {
         // A broken log filesystem must not hold the scheduler guard forever either.
@@ -446,6 +448,12 @@ export class Worktrees {
                 }
                 if (!parked) {
                   beforeRemove();
+                  // A partial drain must not leave a surviving install looking complete.
+                  await invalidateInstallStamp(current.cwd);
+                  this.store.tx(() => this.store.updateThread(current.id, { worktree_shrunk_at: this.store.now() }));
+                  // Drain large regenerable trees with observable per-entry progress
+                  // before Git removes the checkout and its registration.
+                  for (const target of plan.targets) { beforeRemove(); await rm(target, { recursive: true, force: true }); }
                   await reclaimMutation(() => rawGit(["worktree", "remove", "--force", current.cwd], { cwd: current.repo!, timeoutMs: 600_000 }));
                 }
                 await git(["worktree", "prune"], { cwd: current.repo! });
@@ -459,7 +467,7 @@ export class Worktrees {
               }
             } catch (e) { if (e instanceof ReclaimTimeout) throw e; plan.action = "keep"; plan.reason = `failed: ${String(e)}`; }
             return plan;
-          }))); } catch (error) { if (error instanceof ReclaimTimeout) return this.timedOut(row); throw error; } finally { rowTimings.push({ thread: row.id, durationMs: Math.round(performance.now() - rowStartedAt) }); }
+          }), null), true); } catch (error) { if (error instanceof ReclaimTimeout) return this.timedOut(row); throw error; } finally { rowTimings.push({ thread: row.id, durationMs: Math.round(performance.now() - rowStartedAt) }); }
         }));
         progress.done++;
       }
@@ -580,7 +588,7 @@ export class Worktrees {
               }
             } catch (error) { if (error instanceof ReclaimTimeout) throw error; plan.reason = `failed: ${String(error)}`; }
             finally { plan.targets = removed; }
-          }))); } catch (error) {
+          }), null), true); } catch (error) {
             plans.push({ path: row.cwd, thread: row.id, status: row.status, merged: null, lastActive: null, size: null, action: "keep", reason: error instanceof ReclaimTimeout ? "inspect timed out" : `failed: ${String(error)}`, targets: [] });
           }
         }
@@ -642,10 +650,14 @@ export class Worktrees {
     if (!this.owns(thread)) return null;
     if (thread.worktree_removed_at == null && thread.repo && !existsSync(thread.cwd)) {
       // Removed outside Loom (a manual `git worktree remove`): the thread's branch is enough to bring it back.
-      const branch = `loom/${thread.id.replace(/-/g, "").slice(0, 8)}`;
-      if (await git(["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], { cwd: thread.repo }).then(() => true, () => false)) {
+      // A pooled checkout keeps the name it was made under, so its directory names the branch, not the thread id.
+      const named = /^loom-([0-9a-f]{8})$/.exec(basename(thread.cwd))?.[1];
+      const candidates = [...new Set([thread.worktree_branch, named && `loom/${named}`, `loom/${thread.id.replace(/-/g, "").slice(0, 8)}`].filter((b): b is string => !!b))];
+      for (const branch of candidates) {
+        if (!(await git(["show-ref", "--verify", "--quiet", `refs/heads/${branch}`], { cwd: thread.repo }).then(() => true, () => false))) continue;
         await git(["worktree", "prune"], { cwd: thread.repo });
         thread = { ...thread, worktree_removed_at: this.store.now(), worktree_branch: branch, worktree_head: null, worktree_archive: null };
+        break;
       }
     }
     if (thread.worktree_removed_at != null) {
@@ -722,7 +734,7 @@ export async function checkpoint(t: ThreadRow, previousTree?: string) {
   const dir = await mkdtemp(join(tmpdir(), "loom-checkpoint-"));
   const opts = { cwd: t.cwd, env: { GIT_INDEX_FILE: join(dir, "index"), GIT_AUTHOR_NAME: "Loom", GIT_AUTHOR_EMAIL: "loom@localhost", GIT_COMMITTER_NAME: "Loom", GIT_COMMITTER_EMAIL: "loom@localhost" } };
   try {
-    await git(["read-tree", "HEAD"], opts);
+    await seedIndex(t.cwd, opts);
     await git(["add", "-A"], opts);
     const tree = (await git(["write-tree"], opts)).stdout.trim();
     if (tree === previousTree) return null;
@@ -731,6 +743,26 @@ export async function checkpoint(t: ThreadRow, previousTree?: string) {
     await git(["update-ref", `refs/loom/checkpoints/${t.id}`, commit], opts);
     return { tree, commit };
   } finally { await rm(dir, { recursive: true, force: true }); }
+}
+
+/** Load HEAD into the temp index, reusing the worktree's stat cache so `add -A` only hashes what changed.
+ * `read-tree -m HEAD` over a copy of the real index gives the same entries as a bare `read-tree HEAD`, keeping
+ * stat data where the blob matches; the copy keeps the real index's mtime so git's racy-clean check is unchanged. */
+async function seedIndex(cwd: string, opts: { cwd: string; env: NodeJS.ProcessEnv }) {
+  try {
+    const real = resolve(cwd, (await git(["rev-parse", "--git-path", "index"], { cwd })).stdout.trim());
+    const info = await stat(real);
+    await copyFile(real, opts.env.GIT_INDEX_FILE!);
+    await utimes(opts.env.GIT_INDEX_FILE!, info.atime, info.mtime);
+    await git(["read-tree", "-m", "HEAD"], opts);
+    // The copy keeps assume-unchanged (lowercase tag) and skip-worktree (S) flags, which would make `add -A` skip those paths.
+    if ((await git(["ls-files", "-v"], opts)).stdout.split("\n").some((line) => /^([a-z]|S) /.test(line))) throw new Error("flagged index entries");
+  } catch (error) {
+    if (error instanceof ReclaimTimeout) throw error;
+    // No index yet, an unmerged one, flagged entries, or a failed copy: start cold as before.
+    await rm(opts.env.GIT_INDEX_FILE!, { force: true });
+    await git(["read-tree", "HEAD"], opts);
+  }
 }
 
 async function install(cwd: string): Promise<string | null> {
@@ -753,8 +785,17 @@ async function invalidateInstallStamp(cwd: string): Promise<void> {
     throw error;
   });
   if (info?.isSymbolicLink()) throw new Error("symlinked dependency directory; stamp invalidation refused");
+  const yarn = join(cwd, ".yarn");
+  const yarnInfo = await lstat(yarn).catch((error: NodeJS.ErrnoException) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
+  if (yarnInfo?.isSymbolicLink()) throw new Error("symlinked yarn directory; stamp invalidation refused");
+  const yarnState = join(yarn, "install-state.gz");
+  if ((await git(["ls-files", "-z", "--", ".yarn/install-state.gz"], { cwd })).stdout) throw new Error("tracked yarn install state; stamp invalidation refused");
   // Remove fallback freshness records too: partial installs must never seed another tree.
   for (const marker of [".loom-lock", ".package-lock.json", ".modules.yaml", ".yarn-state.yml", ".yarn-integrity"]) {
     await rm(join(modules, marker), { force: true });
   }
+  await rm(yarnState, { force: true });
 }

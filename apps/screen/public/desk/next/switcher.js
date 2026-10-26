@@ -93,7 +93,7 @@ export function Switcher({ store, phone }) {
   const all = () => {
     store.set({ nextSwitcher: false });
     store.setSearchOption({ tab: 'all', project: '', repo: '', agent: '' });
-    store.nextGo({ page: 'search', query: s.query });
+    store.nextGo({ page: 'search', query: s.query, scope: 'global' });
   };
   const onKey = (e) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey || e.shiftKey) && s.query.trim()) return (e.preventDefault(), all());

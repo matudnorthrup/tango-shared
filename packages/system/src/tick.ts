@@ -16,6 +16,7 @@ import { expandLogPath, LOG_ROTATE_BYTES, LOG_WARN_BYTES, rotateLog } from "./lo
 import { notifyCritical } from "./notify.js";
 import { machineHealth, probeService } from "./probes.js";
 import { checkRecovery } from "./recovery.js";
+import { checkOwnerWaits } from "./owner-wait.js";
 import { recordRun } from "./runs.js";
 import { HEALTH_CURSOR } from "./summary.js";
 
@@ -37,7 +38,7 @@ export interface TickOptions {
   scheduleSource?: () => ScheduleSource;
   startupInfo?: (ctx: SystemContext) => Promise<StartupInfo | null>;
   runners?: Runner[];
-  skipSteps?: Array<"ingest" | "probe" | "late" | "unmanaged" | "disk" | "recovery" | "logs" | "notify" | "prune">;
+  skipSteps?: Array<"ingest" | "probe" | "late" | "unmanaged" | "disk" | "recovery" | "turns" | "logs" | "notify" | "prune">;
 }
 
 export interface TickReport {
@@ -56,6 +57,8 @@ export interface TickReport {
   notify: { sent: number; pending: number };
   /** The recovery mini's disk and Loom's recovery hold, e.g. "mini 100.0.0.1: 35.6 GB free, -2.1 GB/day; 0 held". */
   recovery?: string;
+  /** Owner messages Loom has left waiting past OWNER_WAIT_MS with nothing of theirs running (null: unreadable). */
+  ownerWaits?: number | null;
   pruned: { events: number; incidents: number; runs: number; jobs: number };
   /** Milliseconds per step, to find what a slow tick spent its time on. */
   steps: Record<string, number>;
@@ -461,6 +464,11 @@ export async function runTick(l: Ledger, opts: TickOptions = {}): Promise<TickRe
       report.recovery = `mini ${r.host ?? "?"}: ${r.freeGb ?? "?"} GB free${r.line ? `, ${r.line}` : ""}; ${r.held ?? "?"} held`;
       const snapshot = getJsonCursor<HealthSnapshot>(l, HEALTH_CURSOR);
       if (snapshot) setJsonCursor(l, HEALTH_CURSOR, { ...snapshot, recovery: { host: r.host, freeGb: r.freeGb, trendGbPerDay: r.trendGbPerDay, daysToPause: r.daysToPause, held: r.held, at: nowIso } });
+    });
+
+    // The owner's own messages that Loom isn't starting: loud (Discord) and deduped, naming what holds them.
+    if (!skip.has("turns")) await step("turns", () => {
+      report.ownerWaits = checkOwnerWaits(l, ctx)?.waiting.length ?? null;
     });
 
     // 6. Logs.

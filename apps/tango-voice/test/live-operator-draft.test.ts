@@ -37,7 +37,7 @@ import { LivePlaybackClock, SpeechActivity } from '../src/live/live-audio.js';
 import { buildOperatorInstructions, LiveOperator, type LiveOperatorOptions } from '../src/live/live-operator.js';
 import { buildExtractorPrompt, buildScreenPickPrompt, parseExtractorOutput, parseScreenPick, type ExtractorInput, type OperatorAction, type ScreenPicker, type TaskExtractor } from '../src/live/task-extractor.js';
 import { deskItem, FakeClient, FakeDesk, FakeDeskScreen, scene } from './desk-fakes.js';
-import { destinationQuestion, matchDestinationAnswer } from '../src/live/destination-ask.js';
+import { DestinationAsk, destinationQuestion, matchDestinationAnswer } from '../src/live/destination-ask.js';
 
 // Draft mode (draft-mode.ts): the owner thinks out loud with long pauses; nothing is sent until
 // the compiled message and its destination are confirmed. Plus the "Is that everything?" safety net.
@@ -1452,6 +1452,29 @@ describe('where does it go? (destination-ask)', () => {
     expect(rig.backend.sends).toHaveLength(1);
     expect(rig.backend.sends[0].request).toMatchObject({ agentId: 'sierra', channelId: DOCK });
     expect(rig.routed).toHaveLength(1);
+  });
+
+  it.each([false, true])('a retired connection cannot leave a destination question for its replacement (unfinished=%s)', async (unfinished) => {
+    const destination = new DestinationAsk({ now: Date.now });
+    const rows = await threads.list();
+    let release!: (value: typeof rows) => void;
+    const lookup = new Promise<typeof rows>((resolve) => { release = resolve; });
+    const list = vi.fn().mockResolvedValueOnce(rows).mockReturnValue(lookup);
+    const actions: OperatorAction[] = [...unplaced([DOCK]), ...(unfinished ? [{ type: 'draft', op: 'unfinished' } as const] : [])];
+    const first = setup({ actions: [actions], extra: { threads: { ...threads, list }, destination } });
+    await say(first, 'd1', `ask Sierra to find the boat registration number${unfinished ? ' and' : ''}`);
+    if (unfinished) await say(first, 'confirm', 'yes');
+    expect(list).toHaveBeenCalledTimes(2);
+    first.operator.stop();
+    const second = setup({ extra: { threads, destination } });
+    release(rows);
+    await vi.advanceTimersByTimeAsync(600);
+    expect(destination.held).toBeNull();
+    expect(traced(first, 'destination.ask')).toHaveLength(0);
+    await say(second, 'd2', 'main chat');
+    expect(first.backend.sends).toHaveLength(0);
+    expect(second.backend.sends).toHaveLength(0);
+    second.operator.stop();
   });
 
   it('"main chat" sends it to the main channel', async () => {

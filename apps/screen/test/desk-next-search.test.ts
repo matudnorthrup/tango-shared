@@ -6,7 +6,13 @@ import { routeKey, crumbsOf } from '../public/desk/next/model.js';
 // @ts-expect-error plain browser module
 import { SearchPage } from '../public/desk/next/search.js';
 // @ts-expect-error plain browser module
-import { blankSearch, searchScope } from '../public/desk/search-model.js';
+import { blankSearch, searchOptions, searchScope } from '../public/desk/search-model.js';
+
+vi.mock('../public/vendor/preact-htm.js', async original => ({
+  ...await original<any>(), useState: (v: any) => [v, () => {}], useRef: (v: any) => ({ current: v }), useEffect: () => {},
+}));
+// @ts-expect-error plain browser module
+import { Switcher } from '../public/desk/next/switcher.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -109,7 +115,7 @@ describe('next search', () => {
     store.nextBack();
     store.nextGo({ page: 'agents' });
     expect(store.nextForward()).toBe(false);
-    // So does the thread changing under it (another window, a stage move).
+    // So does the thread changing under it (another window, a project move).
     store.nextOpen('dd');
     store.nextBack();
     store.state.presentation = { view: 'conversation', itemId: 'w' };
@@ -201,8 +207,38 @@ describe('next search', () => {
     checkbox.props.onChange({ target: { checked: false } });
     expect(store.state.search.scope).toBe('global');
     store.nextGo({ page: 'agent', id: 'sierra' });
-    store.nextSwitch();
+    store.nextGo({ page: 'search', query: 'router' });
     expect(store.state.search.scope).toBe('space:agent:sierra');
+  });
+
+  it.each(['project', 'agent', 'search', 'inbox'])('opens the switcher everywhere from %s, clearing hidden picks', (page) => {
+    const store = makeStore();
+    store.nextGo({ page, id: 'sample' });
+    store.setSearchOption({ scope: 'space:project:other', space: { id: 'project:other', name: 'Other' }, tab: 'working', project: 'other', repo: 'repo', agent: 'agent', wide: true });
+    store.nextSwitch();
+    expect(store.state.nextSwitcher).toBe(true);
+    expect(store.state.search).toMatchObject({ scope: 'global', space: null, tab: 'all', project: '', repo: '', agent: '', wide: true });
+    expect(searchOptions(store.state)).toMatchObject({ scope: 'global', audience: 'all', where: {}, include: 'all' });
+    store.setSearchOption({ wide: false });
+    store.nextSwitch(false);
+    expect(store.state.nextSwitcher).toBe(false);
+    expect(store.state.search.wide).toBe(false);
+  });
+
+  it.each(['project', 'agent', 'search'])('All results from %s keeps the switcher query and global scope', (page) => {
+    const store = makeStore();
+    store.nextGo({ page, id: 'sample' });
+    store.nextSwitch();
+    store.setSearchQuery('ios');
+    const before = searchOptions(store.state);
+    const tree = nodes(Switcher({ store }));
+    tree.find((n) => n.type === 'button' && n.props.children === 'All 0 results').props.onClick();
+    expect(store.state.nextSwitcher).toBe(false);
+    expect(store.state.nextRoute).toMatchObject({ page: 'search', query: 'ios', scope: 'global' });
+    expect(searchOptions(store.state)).toEqual(before);
+    // A reload must retain the same scope, too.
+    createNextNav(store);
+    expect(searchOptions(store.state)).toEqual(before);
   });
 
   it('renders server totals and grammar chips without narrowing returned rows locally', () => {

@@ -600,7 +600,11 @@ Each successful host open records its thread, reason (`new`, `resume`, `warm`,
 `GET /machine` includes `at`, `memory.totalBytes`, `memory.agents`,
 `disk.totalBytes`, `disk.freeBytes`, and `worktrees.count` for the Desk's capacity
 view, plus available memory percentage, ledger-PID RSS totals, warm/cooled
-counts, `retiredJobs` (the last cleanup pass’s retired job count), limits, the last 50 opens and their median duration. RSS includes each
+counts, `retiredJobs` (the last cleanup pass’s retired job count), limits, the last 50 opens and their median duration,
+and `stall`: the last minute's event-loop delay (p50/p99/max), slowest subprocess
+start (git, `memory_pressure`) and active resources by kind. A degraded minute
+(loop p99 ≥ 250 ms, any stall ≥ 2 s, or a spawn ≥ 2 s) also logs one timestamped
+`[loom] stall …` line. RSS includes each
 live host and its recorded harness group leaders; it is a process reading,
 not a sum of every descendant's memory.
 
@@ -615,6 +619,13 @@ While enabled, running turns finish and open questions and steering still reach
 the turn in progress. Submits remain accepted, and triggers keep evaluating and
 queueing wakes, but dispatch starts no queued runs. Prewarming cannot open a new
 host. Reattaching a surviving host or reopening for an active turn is allowed.
+The owner's own message is held only for `MAINTENANCE_OWNER_GRACE_MS` (two
+minutes); after that it starts ahead of the automatic runs maintenance still
+holds. A drain waits for every running turn, and on 10/24 one held owner messages
+for up to 12 minutes behind another thread's long turn; hosts outlive a
+coordinator restart, so starting the owner's turn costs the drain nothing.
+The system tick posts a critical `loom:turns` incident when an owner message has
+waited 150 s with nothing of its own conversation running, naming what holds it.
 Disabling maintenance kicks waiting threads through the usual admission path.
 Snapshots and thread payloads expose `maintenance: true` while enabled; changes
 also publish updated thread payloads to subscribers.

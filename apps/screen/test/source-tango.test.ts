@@ -221,3 +221,16 @@ it('starts and replies without a Discord adapter; mirror metadata never changes 
   api.posts[1]!.discord_message_ids = '["123456"]'; await source.push(key, 2);
   expect(h.core.store.messages(item.id).map(p => p.messageId)).toEqual(['tango:1', 'tango:2']);
 });
+it("a Loom brief on a Tango-mode row is answered through Loom, not the conversation source that owns the row", async () => {
+  const { h, api, source } = setup('tango'); api.posts = [post()]; await source.poll();
+  const { DeskCore } = await import('../server/desk/core.js');
+  const sent: string[] = [];
+  const loom = { owns: (item: { source: string }) => item.source === 'loom', resolvePending: async (item: { id: string }) => { sent.push(item.id); return { ok: true as const }; } };
+  const core = new DeskCore({ store: h.core.store, adapters: [source, loom] as never });
+  try {
+    const pending = { kind: 'question', requestId: 'decision:D-1', at: NOW, questions: [{ id: 'decision', header: 'Your options', question: 'Buy?', options: [{ label: 'A · Buy' }], multiSelect: false }] };
+    core.setFacts('discord:thread:6000', { pending, openBrief: pending, loomThreadId: 'thread-1' } as never);
+    expect(await core.command({ commandId: 'c1', type: 'respond', itemId: 'discord:thread:6000', args: { requestId: 'decision:D-1', answers: { decision: 'A · Buy' } } })).toMatchObject({ status: 'applied' });
+    expect(sent).toEqual(['loom:thread-1']);
+  } finally { core.close(); }
+});

@@ -10,7 +10,7 @@ import TangoDeskKit
         WindowGroup {
             Group {
                 if let url = model.currentURL, let address = model.address {
-                    DeskWebView(url: url, address: address, navigationID: model.navigationID, openSettings: { settings = true })
+                    DeskWebView(url: url, address: address, navigationID: model.navigationID, firstLoad: { Task { await model.refreshAppPaths() } }, openSettings: { settings = true })
                         .accessibilityAction(named: "Open settings") { settings = true }
                 } else { SettingsView(firstRun: true) }
             }
@@ -20,7 +20,7 @@ import TangoDeskKit
                 else if url.scheme == "tango", url.host == "decision" { model.pendingDecision = String(url.path.dropFirst()) }
             }
             .task { await model.permissions(); await model.registerToken(); await model.retry() }
-            .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await model.retry() } } }
+            .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await model.refreshAppPaths(); await model.retry() } } }
         }
     }
 }
@@ -51,7 +51,7 @@ struct SettingsView: View {
                                 Button("Open decision") { model.open(entry.decisionId); dismiss() }
                             }
                         }
-                        Button("Retry waiting answers") { Task { await model.retry() } }
+                        Button("Retry waiting answers") { Task { await model.refreshAppPaths(); await model.retry() } }
                     }
                 }
             }.navigationTitle(firstRun ? "Welcome to Tango" : "Settings")

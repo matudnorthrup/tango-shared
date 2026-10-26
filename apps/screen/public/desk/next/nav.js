@@ -33,7 +33,7 @@ function savedOpen() {
 }
 function savedFilter() {
   try {
-    return JSON.parse(storageGet('nextFilter', '{}')) || {};
+    return Object.fromEntries(Object.entries(JSON.parse(storageGet('nextFilter', '{}')) || {}).filter(([key]) => key !== 'stage'));
   } catch {
     return {};
   }
@@ -238,18 +238,13 @@ export function createNextNav(store) {
 
   /** The quick switcher (switcher.js). Search everywhere opens it in the next layout: ⌘K, "/", the nav's search. */
   function nextSwitch(open = true) {
-    if (open && ['project', 'agent'].includes(store.state.nextRoute?.page)) {
-      const r = store.state.nextRoute;
-      const space = { id: `${r.page}:${r.id}`, name: (r.page === 'project' ? store.state.projects : agentsOf(store.state.lists, store.state.now))?.find((p) => p.id === r.id)?.name || r.id };
-      store.setSearchOption({ space, scope: `space:${space.id}` });
-    }
-    if (open && !['project', 'agent', 'search'].includes(store.state.nextRoute?.page)) store.setSearchOption({ space: null, scope: 'global' });
+    if (open) store.setSearchOption({ space: null, scope: 'global', tab: 'all', project: '', repo: '', agent: '' });
     store.set({ nextSwitcher: !!open, ...(open ? { nextContext: null } : {}) });
   }
 
-  /** The Inbox's own filter on this device: { type: [...], stage: [...], project, agent, repo }. */
+  /** The Inbox's own filter on this device: { type: [...], project, agent, repo }. */
   function nextSetFilter(filter) {
-    const clean = Object.fromEntries(Object.entries(filter || {}).filter(([, v]) => v?.length));
+    const clean = Object.fromEntries(Object.entries(filter || {}).filter(([key, v]) => key !== 'stage' && v?.length));
     storageSet('nextFilter', Object.keys(clean).length ? JSON.stringify(clean) : '');
     store.set({ nextFilter: clean });
   }

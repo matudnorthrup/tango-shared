@@ -64,6 +64,66 @@ import TangoDeskKit
         XCTAssertEqual(finishes, 1)
         XCTAssertEqual(session.transcript, "fixture transcript")
     }
+    func testColdCaptureKeepsOpeningBeforeLookupAndModelReady() async throws {
+        let script = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("voice-fixture.cjs")
+        let process = Process(); process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["node", script.path, "--cold-delay"]
+        let stdout = Pipe(); process.standardOutput = stdout
+        try process.run(); defer { if process.isRunning { process.terminate() }; process.waitUntilExit() }
+        let port = try XCTUnwrap(Int(String(decoding: stdout.fileHandleForReading.availableData, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)))
+        let address = try DeskAddress("http://127.0.0.1:\(port)")
+        let transport = VoiceTransport(); defer { transport.close() }
+        let session = VoiceSession(); defer { session.cancel() }
+        let id = try XCTUnwrap(session.press())
+        var sent = 0; var failure = ""; var transcript = ""
+        transport.audioSent = { sent += 1 }; transport.failed = { failure = $0 }
+        let target = try await transport.prepareCapture(address) {
+            // The microphone begins here, before any network lookup or socket exists.
+            let counts = try JSONSerialization.jsonObject(with: await transport.get(address.endpoint("counts"))) as! [String: Int]
+            XCTAssertEqual(counts["lookups"], 0)
+            session.bufferStartupAudio(Data(repeating: 7, count: 9600))
+            return true
+        }
+        transport.event = { type, value in
+            if type == "status", value == "listening" {
+                XCTAssertTrue(session.ready(target, generation: id))
+                transport.beginBuffering()
+                for frame in session.takeStartupAudio() { transport.audio(frame) }
+            }
+            if type == "transcript" { transcript += value }
+        }
+        transport.open(address)
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(session.state, .preparing); XCTAssertEqual(sent, 0)
+        for _ in 0..<100 { if session.state == .listening { break }; try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertEqual(session.state, .listening)
+        transport.audio(Data(repeating: 8, count: 4800))
+        try await transport.finish()
+        for _ in 0..<100 { if !transcript.isEmpty { break }; try await Task.sleep(for: .milliseconds(10)) }
+        // The fixture checks both exact frame lengths and opening bytes before finish.
+        XCTAssertEqual(sent, 2); XCTAssertEqual(failure, ""); XCTAssertEqual(transcript, "fixture transcript")
+    }
+    func testStartupAudioIsBoundedAndDiscardedOnCancelOrFailure() throws {
+        let session = VoiceSession()
+        for cancel in [true, false] {
+            _ = session.press()
+            session.bufferStartupAudio(Data(repeating: 9, count: 9600))
+            if cancel { session.cancel() } else { session.fail("Preparation failed") }
+            let next = try XCTUnwrap(session.press())
+            XCTAssertTrue(session.ready(nil, generation: next))
+            XCTAssertTrue(session.takeStartupAudio().isEmpty)
+            session.cancel()
+        }
+        _ = session.press()
+        for _ in 0..<75 { session.bufferStartupAudio(Data(repeating: 7, count: 9600)) }
+        XCTAssertEqual(session.state, .preparing)
+        session.bufferStartupAudio(Data(repeating: 7, count: 2))
+        XCTAssertEqual(session.state, .failed)
+        let next = try XCTUnwrap(session.press())
+        XCTAssertTrue(session.ready(nil, generation: next))
+        XCTAssertTrue(session.takeStartupAudio().isEmpty)
+        session.cancel()
+    }
     func testPostPressAudioWaitsForModelAndFinishPreservesFrameOrder() async throws {
         let script = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("voice-fixture.cjs")
         let process = Process(); process.executableURL = URL(fileURLWithPath: "/usr/bin/env"); process.arguments = ["node", script.path, "--delayed"]
@@ -118,7 +178,7 @@ import TangoDeskKit
             transport.beginBuffering(); transport.audio(Data(repeating: 7, count: 9600))
             do {
                 let lookupAddress = lookupFails ? try DeskAddress("http://127.0.0.1:\(port)/unavailable") : address
-                _ = try await transport.prepareCapture(lookupAddress, permission: { false })
+                _ = try await transport.prepareCapture(lookupAddress, permission: { lookupFails })
                 try await transport.activate()
                 XCTFail("Failed preparation must not activate")
             } catch { }

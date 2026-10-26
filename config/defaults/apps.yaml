@@ -1,0 +1,7 @@
+apps:
+  - { id: desk, name: Tango Desk, path: /tango-screen/, icon: desk, accent: '#a3e635', description: 'Conversations, decisions & work' }
+  - { id: lift, name: Tango Lift, path: /tango-workout/, icon: lift, accent: 'oklch(0.768 0.233 130.85)', agent: malibu, description: 'Workout logging, progress & PRs' }
+  - { id: food, name: Tango Food, path: /tango-food/, icon: food, accent: '#4F46E5', agent: malibu, description: 'Ingredients, recipes, meal plans & prices' }
+  - { id: kilo, name: Kilo Ledger, path: /kilo/, icon: kilo, accent: '#0f766e', agent: kilo, description: 'Budget buckets & transactions' }
+  - { id: usage, name: Tango Usage, path: /tango-usage/, icon: usage, accent: '#50dec9', description: 'AI account capacity & reset times' }
+  - { id: state, name: Tango State, path: /tango-state/, icon: state, accent: '#6ee7c7', description: 'Canonical entities, history & staleness' }

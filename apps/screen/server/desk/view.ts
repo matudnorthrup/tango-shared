@@ -328,6 +328,7 @@ export function compactLine(line: MailLine): CompactMailLine {
 
 /** The agent's latest reply in full: the message ids it is made of and their text. */
 export interface LatestReply {
+  notes?: LatestReply[];
   at: number;
   messageIds: string[];
   text: string;
@@ -437,6 +438,19 @@ export function latestReply(messages: DeskMessages): LatestReply | null {
   // A short message is a progress note only when a long message follows it in the run (the
   // answer it was working toward); a reply made only of short messages is kept whole.
   const all = messages.slice(start, end + 1);
+  if (all.some(message => message.meta?.phase)) {
+    // Pending/unlabelled text and images must stay visible, including interrupted turns.
+    const answers = all.filter(message => message.meta?.phase !== 'note' || message.attachments?.length);
+    if (!answers.length) answers.push(all.at(-1)!);
+    const notes = all.filter(message => !answers.includes(message)).map(message => ({
+      at: message.at, messageIds: [message.messageId], text: message.text,
+      ...(message.attachments?.length ? { attachments: message.attachments } : {}),
+    }));
+    const attachments = answers.flatMap(message => message.attachments ?? []);
+    return { at: answers.at(-1)?.at ?? all.at(-1)!.at, messageIds: answers.map(message => message.messageId),
+      text: answers.map(message => message.text).filter(text => text.trim()).join('\n\n'), notes,
+      ...(attachments.length ? { attachments } : {}) };
+  }
   // A message with an image is never a progress note: the picture is part of the answer.
   const candidates = all.filter((message, index) => message.text.length >= PROGRESS_NOTE || message.attachments?.length || !all.slice(index + 1).some((later) => later.text.length >= LONG_MESSAGE));
   // Cap after filtering, preserving the opening answer and the final report.
@@ -455,7 +469,7 @@ export function latestReply(messages: DeskMessages): LatestReply | null {
 
 export interface SinceOwner {
   owner: { messageId: string; at: number; text: string };
-  first: LatestReply | null;
+  first: (LatestReply & { headline: string }) | null;
   updates: Array<LatestReply & { headline: string }>;
   latest: LatestReply | null;
   acks: LatestReply[];
@@ -479,7 +493,7 @@ export function sinceOwner(turns: Turn[]): SinceOwner | null {
     ? reports.splice(lastSubstantive + 1) : [];
   const last = reports.pop() ?? null;
   return {
-    owner: { messageId: owner.messageId, at: owner.at, text: owner.text }, first,
+    owner: { messageId: owner.messageId, at: owner.at, text: owner.text }, first: first ? { ...first, headline: headline(first.text) } : null,
     updates: reports.map(report => ({ ...report, headline: headline(report.text) })),
     latest: last, acks,
   };

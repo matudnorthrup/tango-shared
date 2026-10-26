@@ -13,11 +13,22 @@ import TangoDeskKit
     var queue: AnswerQueue?
     var pendingDecision: String?
     private var token: String? { UserDefaults.standard.string(forKey: "deviceToken") }
-    var address: DeskAddress? { try? DeskAddress(baseText) }
+    private let appCatalog = DeskAppPaths()
+    private var appPaths: Set<String> = []
+    private var catalogRevision = 0
+    var address: DeskAddress? { try? DeskAddress(baseText, appPaths: appPaths) }
+    func refreshAppPaths() async {
+        guard let address else { return }
+        catalogRevision += 1
+        let revision = catalogRevision
+        let paths = await appCatalog.refresh(using: DeskClient(address: address))
+        guard revision == catalogRevision, self.address?.base == address.base else { return }
+        appPaths = paths
+    }
     static var refreshID: String { (Bundle.main.bundleIdentifier ?? "org.example.TangoDesk") + ".refresh" }
     private init() {
         baseText = UserDefaults.standard.string(forKey: "deskURL") ?? (Bundle.main.object(forInfoDictionaryKey: "DeskDefaultURL") as? String ?? "")
-        if let address { currentURL = address.base }
+        if let address { appPaths = appCatalog.cached(for: address); currentURL = address.base }
         do {
             let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             queue = try AnswerQueue(file: support.appendingPathComponent("answers.json"))
@@ -26,11 +37,13 @@ import TangoDeskKit
     func setAddress(_ value: String) {
         do {
             let next = try DeskAddress(value)
+            catalogRevision += 1
+            appPaths = appCatalog.cached(for: next)
             baseText = next.base.absoluteString
             UserDefaults.standard.set(baseText, forKey: "deskURL")
             currentURL = pendingDecision.flatMap(next.decision) ?? next.base
             error = nil
-            Task { await registerToken(); await retry() }
+            Task { await refreshAppPaths(); await registerToken(); await retry() }
         } catch { self.error = error.localizedDescription }
     }
     func open(_ decision: String) {

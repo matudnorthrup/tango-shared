@@ -1,5 +1,5 @@
 // One membership contract for saved tabs, local narrowing and server views. Presentation stays with the caller.
-import { busyOf, inReview, liveState, projectOf, stageOf, typeOf } from './list-model.js';
+import { busyOf, inReview, liveState, projectOf, typeOf } from './list-model.js';
 import { isFresh } from './util.js';
 import { agentId, itemRepo, kindOf, personaId, reachesOwner } from './query-identity.js';
 export { agentId, itemRepo, kindOf, personaId, reachesOwner } from './query-identity.js';
@@ -95,7 +95,6 @@ export const facets = {
   busy: (item) => busyOf(item),
   unread: (item) => String(isFresh(item)),
   kind: kindOf,
-  stage: stageOf,
   type: typeOf,
   project: (item, ctx = {}) => projectOf(item, ctx.projects || [])?.id || null,
   workspace: itemRepo,
@@ -168,9 +167,8 @@ export function facetCounts(items, query, facet, ctx = {}) {
   return counts;
 }
 
-/** Runtime view only: keep saved stage settings intact so enabling labels restores them. */
-export function viewForFlags(view, flags, statusGroup = 'live') {
-  if (flags?.stageLabels) return view;
+/** Discard retired view fields without modifying the stored definition. */
+export function normalizeRetiredView(view, statusGroup = 'live') {
   const { stage, ...shown } = view;
   if (view.where) {
     shown.where = { ...view.where };
@@ -184,16 +182,16 @@ export function viewForFlags(view, flags, statusGroup = 'live') {
 export function viewToQuery(view, { audience = 'all', ignoreProjects = false } = {}) {
   const where = {};
   const legacy = { active: ['active'], open: ['active', 'snoozed', 'parked'], snoozed: ['snoozed'], parked: ['parked'], history: ['done'] };
-  for (const [key, facet] of [['status', 'disposition'], ['live', 'live'], ['stage', 'stage'], ['type', 'type'], ['workspace', 'workspace'], ['agent', 'agent'], ['busy', 'busy'], ['unread', 'unread'], ['kind', 'kind'], ['pinned', 'pinned']]) {
+  for (const [key, facet] of [['status', 'disposition'], ['live', 'live'], ['type', 'type'], ['workspace', 'workspace'], ['agent', 'agent'], ['busy', 'busy'], ['unread', 'unread'], ['kind', 'kind'], ['pinned', 'pinned']]) {
     const picks = view[key] || (key === 'workspace' ? view.project : key === 'status' ? legacy[view.show] : null) || [];
-    if (picks.length) where[facet] = { in: picks.filter((v) => !(['stage', 'type', 'busy'].includes(facet) && v === 'none')), ...(['stage', 'type', 'busy'].includes(facet) && picks.includes('none') ? { unset: true } : {}) };
+    if (picks.length) where[facet] = { in: picks.filter((v) => !(['type', 'busy'].includes(facet) && v === 'none')), ...(['type', 'busy'].includes(facet) && picks.includes('none') ? { unset: true } : {}) };
   }
   if (!ignoreProjects) {
     if (view.inProject === 'none') where.project = view.projects?.length ? { in: [...view.projects], not: [...view.projects] } : { unset: true };
     else if (view.projects?.length) where.project = { in: [...view.projects] };
     else if (view.inProject === 'some') where.project = { unset: false };
   }
-  Object.assign(where, view.where || {});
+  Object.assign(where, normalizeRetiredView(view).where || {});
   if (ignoreProjects) delete where.project;
   return { scope: { kind: 'global' }, audience, where };
 }
@@ -201,7 +199,7 @@ export function viewToQuery(view, { audience = 'all', ignoreProjects = false } =
 /** Local picks use an impossible id as their None option. */
 export function picksToQuery(picks = {}, none = '\u0000none') {
   const where = {};
-  for (const [facet, values] of Object.entries(picks)) if (values?.length) where[facet] = { in: values.filter((v) => v !== none), ...(values.includes(none) ? { unset: true } : {}) };
+  for (const [facet, values] of Object.entries(picks)) if (facet !== 'stage' && values?.length) where[facet] = { in: values.filter((v) => v !== none), ...(values.includes(none) ? { unset: true } : {}) };
   return { scope: { kind: 'global' }, audience: 'all', where };
 }
 
@@ -280,7 +278,7 @@ export function intersectPicks(query, picks, ctx = {}) {
     if (included.length || unset) where[facet] = { in: included, unset };
     else {
       // A contradiction must stay empty after JSON round trips, never become an absent filter.
-      const value = pick.in[0] || base.in?.[0] || ({ busy: 'working', stage: 'none', type: 'none' }[facet] || 'unmatched');
+      const value = pick.in[0] || base.in?.[0] || ({ busy: 'working', type: 'none' }[facet] || 'unmatched');
       where[facet] = { in: [value], not: [value], unset: false };
     }
   }

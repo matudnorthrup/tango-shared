@@ -294,7 +294,7 @@ class CodexSession implements RuntimeSession {
     if (method === "item/agentMessage/delta") this.emit({ type: "message.delta", runId, text: p.delta ?? "" });
     if ((method === "item/started" || method === "item/completed") && p.item) {
       const item = p.item;
-      if (item.type === "agentMessage" && method === "item/completed") this.emit({ type: "message.completed", runId, text: item.text ?? "" });
+      if (item.type === "agentMessage" && method === "item/completed") this.emit({ type: "message.completed", runId, text: item.text ?? "", ...(item.phase === "commentary" ? { phase: "note" as const } : item.phase === "final_answer" || item.phase === "partial_answer" ? { phase: "answer" as const } : {}) });
       else if (["commandExecution", "fileChange", "mcpToolCall", "webSearch"].includes(item.type)) {
         this.emit({ type: "tool.updated", runId, itemId: item.id, name: item.type === "mcpToolCall" ? `${item.server}.${item.tool}` : item.type,
           input: item.command ?? item.query ?? JSON.stringify(item.arguments ?? item.changes),

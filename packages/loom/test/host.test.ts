@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { LoomCommandError, LoomHost, MAX_CONTINUE_CHAIN, OVERLOAD_RETRY_NOTE, RESTART_NOTE } from "../src/host.js";
 import { LoomStore } from "../src/store.js";
 import { FakeRuntime } from "./fake-runtime.js";
@@ -123,28 +123,35 @@ describe("LoomHost", () => {
   });
 
   it("retries a turn the model turned away as overloaded, on the same session, after a visible pause", async () => {
-    const store = new LoomStore(":memory:");
-    const runtime = new FakeRuntime(store);
-    const host = new LoomHost(store, { fake: runtime }, { overloadRetryMs: [30] });
-    const a = await host.execute({ type: "submit", commandId: "c1", text: "one", cwd: "/repo", provider: "fake" });
-    const overloaded = { kind: "overloaded" as const, message: "Selected model is at capacity. Please try a different model." };
-    runtime.last.emit({ type: "turn.failed", runId: a.runId!, failure: overloaded });
-    await flush();
-    expect(store.run(a.runId!)!.status).toBe("queued");
-    expect(store.thread(a.threadId!)).toMatchObject({ status: "idle", admission: "provider_busy" });
-    expect(store.thread(a.threadId!)!.admission_until).toBeGreaterThan(Date.now() - 5);
-    // Another kick during the pause (here, the owner's next message) doesn't start it early.
-    await host.execute({ type: "submit", commandId: "c2", threadId: a.threadId, text: "two" });
-    await flush();
-    expect(runtime.last.turns).toHaveLength(1);
-    await new Promise((r) => setTimeout(r, 60));
-    expect(runtime.sessions).toHaveLength(1);
-    expect(runtime.last.turns[1]).toEqual({ runId: a.runId, text: `${OVERLOAD_RETRY_NOTE}\n\none` });
-    expect(store.thread(a.threadId!)).toMatchObject({ status: "running", admission: null });
-    runtime.last.complete();
-    await flush();
-    expect(store.run(a.runId!)!.status).toBe("completed");
-    expect(runtime.last.turns.map((t) => t.text).at(-1)).toBe("two");
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    try {
+      const store = new LoomStore(":memory:");
+      const runtime = new FakeRuntime(store);
+      const host = new LoomHost(store, { fake: runtime }, { overloadRetryMs: [30] });
+      const a = await host.execute({ type: "submit", commandId: "c1", text: "one", cwd: "/repo", provider: "fake" });
+      const overloaded = { kind: "overloaded" as const, message: "Selected model is at capacity. Please try a different model." };
+      runtime.last.emit({ type: "turn.failed", runId: a.runId!, failure: overloaded });
+      await host.kick(a.threadId!);
+      expect(store.run(a.runId!)!.status).toBe("queued");
+      expect(store.thread(a.threadId!)).toMatchObject({ status: "idle", admission: "provider_busy" });
+      expect(store.thread(a.threadId!)!.admission_until).toBe(Date.now() + 30);
+      // Another kick during the pause (here, the owner's next message) doesn't start it early.
+      await host.execute({ type: "submit", commandId: "c2", threadId: a.threadId, text: "two" });
+      await host.kick(a.threadId!);
+      expect(runtime.last.turns).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(29);
+      expect(runtime.last.turns).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(runtime.sessions).toHaveLength(1);
+      expect(runtime.last.turns[1]).toEqual({ runId: a.runId, text: `${OVERLOAD_RETRY_NOTE}\n\none` });
+      expect(store.thread(a.threadId!)).toMatchObject({ status: "running", admission: null });
+      runtime.last.complete();
+      await host.kick(a.threadId!);
+      expect(store.run(a.runId!)!.status).toBe("completed");
+      expect(runtime.last.turns.map((t) => t.text).at(-1)).toBe("two");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("fails an overloaded turn once its retries are spent, and the queue moves on", async () => {

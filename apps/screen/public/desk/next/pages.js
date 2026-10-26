@@ -138,8 +138,6 @@ function FilterButton({ store, items, filter, kept, view }) {
     ...ORDERS.map(([key, label]) => ({ label, on: order === key, keep: true, onSelect: () => store.nextSetOrder(key) })),
     'sep',
     ...(tree.length ? [{ label: 'Where', hint: hint('where'), sub: where }] : []),
-    // Stage leaves the menu while its flag is off, unless a stage is still picked (so it can be unpicked).
-    ...(store.state.flags?.stageLabels || filter.stage?.length ? [list('stage', 'Stage')] : []),
     { heading: 'Show only' },
     ...SHOW_ONLY.map(([facet, value, label]) => ({ label, on: (filter[facet] || []).includes(value), keep: true, onSelect: () => toggle(facet, value) })),
     list('wait', 'Waiting on'),

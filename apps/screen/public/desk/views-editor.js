@@ -6,13 +6,13 @@
 import { FILTER_FACETS, SHOW_ONLY, facetLabel, filterOptions, spaceViewDefs, whereChoices } from './next/model.js';
 import { agentId, viewToQuery } from './query.js';
 import { html, useState } from '../vendor/preact-htm.js';
-import { STAGES, TYPES, rowWhere } from './list-model.js';
+import { TYPES, rowWhere } from './list-model.js';
 import { DEFAULT_VIEWS, LIVE, MAX_VIEWS, SORTS, STATUSES, VIEW_GROUPS, describeView, newViewId, viewsOf } from './list-views.js';
 import { ReorderList } from './reorder.js';
 
 // Workspace stays on a tab grouped by it, until that's changed: projects and the sidebar replaced it.
-const INBOX_GROUPS = ['live', 'project', 'stage', 'workspace', 'none'];
-const NAMES = Object.fromEntries([...STAGES.map(([k, l]) => [k, l.toLowerCase()]), ...TYPES.map(([k, l]) => [k, l.toLowerCase()])]);
+const INBOX_GROUPS = ['live', 'project', 'workspace', 'none'];
+const NAMES = Object.fromEntries([...TYPES.map(([k, l]) => [k, l.toLowerCase()])]);
 const namesWith = (projects) => ({ ...NAMES, ...Object.fromEntries((projects || []).map((p) => [`project:${p.id}`, p.name])) });
 /** Names for a tab's one-line summary: places by their path (Tango › Desk), Waiting on and Last active in words. */
 function tabNames(state, items, views) {
@@ -79,7 +79,7 @@ export function TabsPage({ store, head, space = undefined }) {
   const names = tabNames(state, ['active', 'snoozed', 'history'].flatMap((key) => state.lists[key]?.items || []), views);
   const custom = isSpace ? state.spaceViews : Array.isArray(state.listViews) && state.listViews.length;
   const add = async () => {
-    const view = isSpace ? { id: newViewId(views, 'new view'), name: 'New view', where: {}, group: 'status', sort: 'recent' } : { id: newViewId(views, 'new tab'), name: 'New tab', status: ['active'], group: state.flags?.stageLabels ? 'stage' : 'live', sort: 'recent', fold: true, showProjects: ['active'] };
+    const view = isSpace ? { id: newViewId(views, 'new view'), name: 'New view', where: {}, group: 'status', sort: 'recent' } : { id: newViewId(views, 'new tab'), name: 'New tab', status: ['active'], group: 'live', sort: 'recent', fold: true, showProjects: ['active'] };
     if (await save([...views, view])) {
       if (!isSpace) store.setListTab(view.id);
       open(view.id, true);
@@ -97,7 +97,7 @@ export function TabsPage({ store, head, space = undefined }) {
         onMove=${(ids) => save(ids.map((id) => byId[id]))}
         row=${(id) => html`<button class="ro-open" onClick=${() => open(id)}>
           <span class="ro-name">${byId[id].name}</span>
-          <span class="ro-desc">${isSpace ? (byId[id].done ? 'Done conversations' : 'Open conversations') : describeView(byId[id], names, state.flags)}</span>
+          <span class="ro-desc">${isSpace ? (byId[id].done ? 'Done conversations' : 'Open conversations') : describeView(byId[id], names)}</span>
           <span class="ro-chev" aria-hidden="true">›</span>
         </button>`}
       />
@@ -115,8 +115,6 @@ export function TabsPage({ store, head, space = undefined }) {
 
 export function TabEditor({ store, id, fresh, head, space = undefined }) {
   const { state } = store;
-  // Stage choices go while the stage labels flag is off; one the view already uses stays, so it can be cleared.
-  const stages = !!state.flags?.stageLabels;
   const [save, error] = useSave(store, space);
   const [name, setName] = useState(null); // the name while it's being typed
   const [deleting, setDeleting] = useState(false);
@@ -143,7 +141,7 @@ export function TabEditor({ store, id, fresh, head, space = undefined }) {
   return html`
     ${head(view.name)}
     ${error ? html`<p class="warn" role="alert">${error}</p>` : null}
-    <p class="stg-summary">${isSpace ? 'Shown on every project and agent page' : describeView(view, tabNames(state, items, [view]), state.flags)}</p>
+    <p class="stg-summary">${isSpace ? 'Shown on every project and agent page' : describeView(view, tabNames(state, items, [view]))}</p>
     <label class="stg-f"><span class="stg-l">Name</span>
       <input type="text" class="stg-input" maxlength="40" value=${name ?? view.name}
         ref=${(n) => fresh && n && !n.dataset.f && ((n.dataset.f = '1'), requestAnimationFrame(() => (n.focus(), n.select())))}
@@ -153,12 +151,12 @@ export function TabEditor({ store, id, fresh, head, space = undefined }) {
     </label>
     <div class="stg-card">
       <h3>Which conversations</h3>
-      ${isSpace ? html`<${SpaceFacets} view=${view} commit=${commit} workspaces=${workspaces} agents=${agents} showAgent=${true} extraOptions=${extraOptions} stages=${stages} />` : html`<${Chips} label="Status" options=${STATUSES} values=${view.status} onChange=${(status) => { const where = { ...view.where }; delete where.disposition; commit({ status, ...(view.where ? { where } : {}) }); }} />
-      <${InboxFacets} view=${view} commit=${commit} state=${state} items=${items} stages=${stages} />`}
+      ${isSpace ? html`<${SpaceFacets} view=${view} commit=${commit} workspaces=${workspaces} agents=${agents} showAgent=${true} extraOptions=${extraOptions} />` : html`<${Chips} label="Status" options=${STATUSES} values=${view.status} onChange=${(status) => { const where = { ...view.where }; delete where.disposition; commit({ status, ...(view.where ? { where } : {}) }); }} />
+      <${InboxFacets} view=${view} commit=${commit} state=${state} items=${items} />`}
     </div>
     <div class="stg-card">
       <h3>How it’s laid out</h3>
-      <div class="stg-f stg-inline"><span class="stg-l">Group by</span><${Seg} label="Group by" options=${(isSpace ? [['status', 'Status'], ['stage', 'Stage'], ['health', 'Health'], ['none', 'None']] : INBOX_GROUPS.map((key) => VIEW_GROUPS.find(([k]) => k === key))).filter(([key]) => (key !== 'stage' || stages || view.group === 'stage') && (key !== 'workspace' || view.group === 'workspace'))} value=${view.group || (isSpace ? 'status' : 'stage')} onChange=${put('group')} /></div>
+      <div class="stg-f stg-inline"><span class="stg-l">Group by</span><${Seg} label="Group by" options=${(isSpace ? [['status', 'Status'], ['health', 'Health'], ['none', 'None']] : INBOX_GROUPS.map((key) => VIEW_GROUPS.find(([k]) => k === key))).filter(([key]) => (key !== 'workspace' || view.group === 'workspace'))} value=${view.group || (isSpace ? 'status' : 'live')} onChange=${put('group')} /></div>
       ${view.group === 'workspace'
         ? html`<label class="stg-f stg-inline stg-check"><input type="checkbox" checked=${!!view.agentsTogether} onChange=${(e) => commit({ agentsTogether: e.currentTarget.checked || undefined })} /> Group Tango agents together</label>`
         : null}
@@ -182,24 +180,23 @@ export function putSpaceFacet(view, facet, operation, values) {
   if (!Object.keys(where[facet]).length) delete where[facet];
   return { where };
 }
-function SpaceFacets({ view, commit, workspaces, agents, showAgent, inboxOptions = null, extraOptions = [], stages = true }) {
+function SpaceFacets({ view, commit, workspaces, agents, showAgent, inboxOptions = null, extraOptions = [] }) {
   const options = (inboxOptions || [
     ['kind', 'Kind', [['thread', 'Thread'], ['default', 'Default'], ['job', 'Job'], ['worker', 'Worker']]],
     ['live', 'Live state', LIVE],
     ['busy', 'Busy', [['working', 'Working'], ['background', 'Background']]],
     ['unread', 'Unread', [['true', 'Unread'], ['false', 'Read']]],
-    ['stage', 'Stage', STAGES],
     ['workspace', 'Workspace / repo', workspaces.map((k) => [k, k])],
     ...(showAgent ? [['agent', 'Agent', agents]] : []),
     ['pinned', 'Pinned', [['true', 'Pinned'], ['false', 'Unpinned']]],
     ...extraOptions,
-  ]).filter(([facet]) => facet !== 'stage' || stages || view.where?.stage).map(([facet, label, choices, advanced]) => [facet, label, [...choices], advanced]);
+  ]).map(([facet, label, choices, advanced]) => [facet, label, [...choices], advanced]);
   // Saved inventory values stay removable after the last conversation disappears.
   for (const [facet, , choices] of options) for (const value of [...(view.where?.[facet]?.in || []), ...(view.where?.[facet]?.not || [])]) if (!choices.some(([key]) => key === value)) choices.push([value, value]);
   const renderFacet = ([facet, label, choices]) => html`<div>
       <${Chips} checkboxes=${true} label=${label} options=${choices} values=${view.where?.[facet]?.in} onChange=${(v) => commit(putSpaceFacet(view, facet, 'in', v))} />
       <${Chips} checkboxes=${true} label=${`Exclude ${label.toLowerCase()}`} options=${choices} values=${view.where?.[facet]?.not} onChange=${(v) => commit(putSpaceFacet(view, facet, 'not', v))} />
-      ${['stage', 'type', 'busy', 'workspace', 'repo', 'agent', 'project', 'space', 'wait', 'age', 'health', 'source', 'account'].includes(facet) ? html`<div class="stg-f"><span class="stg-l">Unset ${label.toLowerCase()}</span><${Seg} label=${`Unset ${label}`} options=${[['any', 'Either'], ['include', 'Include unset'], ['exclude', 'Exclude unset']]} value=${view.where?.[facet]?.unset === true ? 'include' : view.where?.[facet]?.unset === false ? 'exclude' : 'any'} onChange=${(v) => { const patch = putSpaceFacet(view, facet, 'unset', v === 'include' ? true : false); if (v === 'any') { delete patch.where[facet].unset; if (!Object.keys(patch.where[facet]).length) delete patch.where[facet]; } commit(patch); }} /></div>` : null}
+      ${['type', 'busy', 'workspace', 'repo', 'agent', 'project', 'space', 'wait', 'age', 'health', 'source', 'account'].includes(facet) ? html`<div class="stg-f"><span class="stg-l">Unset ${label.toLowerCase()}</span><${Seg} label=${`Unset ${label}`} options=${[['any', 'Either'], ['include', 'Include unset'], ['exclude', 'Exclude unset']]} value=${view.where?.[facet]?.unset === true ? 'include' : view.where?.[facet]?.unset === false ? 'exclude' : 'any'} onChange=${(v) => { const patch = putSpaceFacet(view, facet, 'unset', v === 'include' ? true : false); if (v === 'any') { delete patch.where[facet].unset; if (!Object.keys(patch.where[facet]).length) delete patch.where[facet]; } commit(patch); }} /></div>` : null}
     </div>`;
   return html`
     ${inboxOptions ? null : html`<div class="stg-f"><label class="stg-facet-check"><input type="checkbox" checked=${!!view.done} onChange=${(e) => commit({ done: e.currentTarget.checked })} />Done conversations instead of open ones</label></div>`}
@@ -208,9 +205,9 @@ function SpaceFacets({ view, commit, workspaces, agents, showAgent, inboxOptions
   `;
 }
 
-/** The Filter menu's no-value option: a facet's "unset" (No wait, No stage) as one more choice. */
+/** The Filter menu's no-value option: a facet's "unset" (No wait, No type) as one more choice. */
 const NONE = '\u0000none';
-const UNSET_LABELS = { wait: 'No wait', stage: 'No stage', age: 'No activity', busy: 'Idle', project: 'Not in a project', agent: 'No agent', repo: 'No repo', workspace: 'No repo', space: 'No space', type: 'No type', source: 'No source', account: 'No account' };
+const UNSET_LABELS = { wait: 'No wait', age: 'No activity', busy: 'Idle', project: 'Not in a project', agent: 'No agent', repo: 'No repo', workspace: 'No repo', space: 'No space', type: 'No type', source: 'No source', account: 'No account' };
 
 /** A facet's saved filter as the tab editor shows it: picked values, and whether they're excluded rather than wanted. */
 export function facetPicks(filter = {}) {
@@ -246,8 +243,7 @@ function FacetPicker({ label, choices, filter, onChange, onRemove = null, named 
 }
 
 /** The Inbox tab's filters in the Filter menu's words: Live state, Where, Show only, Waiting on, Last active; Kind, Source, Account under Advanced. */
-function InboxFacets({ view, commit, state, items, stages }) {
-  // Editing must retain hidden stage settings when another facet is saved.
+function InboxFacets({ view, commit, state, items }) {
   const where = { ...viewToQuery(view).where };
   delete where.disposition;
   const projects = state.projects || [];
@@ -266,7 +262,6 @@ function InboxFacets({ view, commit, state, items, stages }) {
     ['where', 'Where', Object.entries(whereNames)],
     ['wait', 'Waiting on', choicesOf('wait')],
     ['age', 'Last active', choicesOf('age').filter(([v]) => v !== NONE)],
-    ...(stages || where.stage ? [['stage', 'Stage', [...STAGES, [NONE, 'No stage']]]] : []),
   ];
   const advanced = [
     ['kind', 'Kind', [['thread', 'Thread'], ['default', 'Default']]],
@@ -283,7 +278,7 @@ function InboxFacets({ view, commit, state, items, stages }) {
     const next = { ...where };
     if (filter) next[facet] = filter;
     else delete next[facet];
-    commit({ ...Object.fromEntries(['live', 'busy', 'unread', 'kind', 'pinned', 'stage', 'type', 'workspace', 'agent', 'projects', 'inProject'].map((key) => [key, undefined])), where: { ...(view.where?.disposition ? { disposition: view.where.disposition } : {}), ...next } });
+    commit({ ...Object.fromEntries(['live', 'busy', 'unread', 'kind', 'pinned', 'type', 'workspace', 'agent', 'projects', 'inProject'].map((key) => [key, undefined])), where: { ...(view.where?.disposition ? { disposition: view.where.disposition } : {}), ...next } });
   };
   const picker = ([facet, label, choices], extra = {}) => html`<${FacetPicker} key=${facet} label=${label} choices=${choices} filter=${where[facet]} onChange=${(f) => update(facet, f)} named=${facet === 'where' ? (v) => whereNames[v] || named('where')(v) : named(facet)} ...${extra} />`;
   const label = (facet) => FILTER_FACETS.find(([f]) => f === facet)?.[1] || { live: 'Live state', workspace: 'Repo', type: 'Type' }[facet] || facet;

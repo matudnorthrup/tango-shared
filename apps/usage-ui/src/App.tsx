@@ -211,15 +211,16 @@ export function App() {
   return (
     <div className={`shell ${compact ? 'compact-view' : 'full-view'}`}>
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Back to Tango home">
+        <tango-switcher className="brand" current="usage">
           <span className="brand-glyph" aria-hidden="true">T</span>
           <span>Tango</span>
-        </a>
+        </tango-switcher>
         <div className="topbar-right">
           <span className={`connection ${connected ? 'online' : ''}`}>
             <i /> {connected ? 'Live updates' : 'Connecting'}
           </span>
           <span className="route">/tango-usage</span>
+          <tango-voice app="usage" />
         </div>
       </header>
 

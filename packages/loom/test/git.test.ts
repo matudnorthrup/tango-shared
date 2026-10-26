@@ -109,6 +109,34 @@ describe("createWorktree", { timeout: 30_000 }, () => {
     expect(readFileSync(join(wt.path, ".yarn", "install-state.gz"), "utf8")).toBe("s");
   });
 
+  it.each([false, true])("suppresses checkout hooks during parking and rollback (rollback=%s)", async rollback => {
+    const { root, clone } = repos();
+    const first = await createWorktree(clone, { id: "abac0000-0000", worktreesDir: join(root, "wts") });
+    const head = run(first.path, "rev-parse", "HEAD");
+    const branch = run(first.path, "branch", "--show-current");
+    const hooks = join(root, "hooks"); mkdirSync(hooks);
+    const marker = join(root, "hook-fired");
+    writeFileSync(join(hooks, "post-checkout"), `#!/bin/sh\necho fired >> "${marker}"\necho generated > next-env.d.ts\n`);
+    chmodSync(join(hooks, "post-checkout"), 0o755);
+    run(clone, "config", "core.hooksPath", hooks);
+    // Fail immediately after the forward checkout, forcing a real rollback checkout.
+    const check = () => {
+      const slot = pooledWorktrees(join(root, "wts", "repo"))[0];
+      if (rollback && slot && run(slot, "branch", "--show-current") === "") throw new Error("cancel after checkout");
+    };
+    const parked = parkWorktree(clone, first.path, join(root, "wts", "repo"), "origin/main", check);
+    if (rollback) {
+      await expect(parked).rejects.toThrow("cancel after checkout");
+      expect(run(first.path, "rev-parse", "HEAD")).toBe(head);
+      expect(run(first.path, "branch", "--show-current")).toBe(branch);
+      expect(run(first.path, "status", "--porcelain")).toBe("");
+    } else await expect(parked).resolves.toBe(true);
+    expect(existsSync(marker)).toBe(false);
+    // Normal checkouts outside reclaim retain their configured hooks.
+    await git(["checkout", "--detach", "HEAD"], { cwd: rollback ? first.path : pooledWorktrees(join(root, "wts", "repo"))[0]! });
+    expect(existsSync(marker)).toBe(true);
+  });
+
   it("clears a parked worktree's node_modules when the project has no lockfile", async () => {
     const { root, clone } = repos();
     const dir = join(root, "wts", "repo");

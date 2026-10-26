@@ -15,6 +15,7 @@ import { registerDeskRoutes } from '../server/desk/routes.js';
 import { DeskMail } from '../server/desk/mail.js';
 import { needsOwner } from '../server/desk/status.js';
 import { Hono } from 'hono';
+import { itemDetail } from '../server/desk/view.js';
 import { AGENT, cid, makeHarness, msg, type Harness } from './desk-harness.js';
 
 // The desk against the real Loom HTTP server, in process, with a fake harness behind it.
@@ -133,6 +134,23 @@ async function newThread(text = 'Build the overview map'): Promise<string> {
 const tick = () => (h.clock.now += 1_000);
 
 describe('Loom source', () => {
+  it('refreshes phase metadata on messages already ingested, without duplicating their text', async () => {
+    const id = await newThread();
+    const runId = runtime.last.run;
+    tick();
+    runtime.last.emit({ type: 'message.completed', runId, messageId: 'phase-note', text: 'Working on it.' });
+    await until(() => expect(h.core.store.messages(`loom:${id}`).some(m => m.messageId === 'loom:phase-note')).toBe(true));
+    tick();
+    runtime.last.emit({ type: 'message.phase', runId, messageIds: ['phase-note'], phase: 'note' });
+    runtime.last.emit({ type: 'message.completed', runId, text: 'Finished.', phase: 'answer' });
+    await until(() => {
+      const detail = itemDetail(h.core, `loom:${id}`, []);
+      expect(detail?.sinceOwner?.first?.text).toBe('Finished.');
+      expect(detail?.sinceOwner?.first?.notes).toMatchObject([{ text: 'Working on it.' }]);
+      expect(h.core.store.messages(`loom:${id}`).filter(m => m.messageId === 'loom:phase-note')).toHaveLength(1);
+    });
+  });
+
   it.each(['tango-agent', 'tango-job', 'probe'])('does not list %s Loom threads twice', async (kind) => {
     // Exercise ingestion directly so this remains independent of Loom part A.
     (source as unknown as { ingest(detail: unknown): void }).ingest({
@@ -2348,15 +2366,18 @@ it('first ingestion fetches an old ask report beyond the latest twenty messages 
   const m = loom.store.addMessage(t.id, r.id, 'assistant', 'The full export report is ready for review.');
   loom.store.updateRun(r.id, { status: 'completed', ended_at: h.clock.now });
   loom.store.updateThread(t.id, { ask: JSON.stringify({ text: 'Watch the finished export cut', at: h.clock.now, messageId: m.id, runId: r.id }) });
-  for (let i = 0; i < 140; i++) {
-    tick();
-    const w = loom.store.createRun(t.id, 'wake', 'Loom: Your closing "Next — you" ("review") is still open from before. Say "still open" instead of repeating it. (Delegation board: ask once.)');
-    loom.store.db.prepare('UPDATE runs SET wake_cause = NULL WHERE id = ?').run(w.id);
-    loom.store.addMessage(t.id, w.id, 'assistant', 'Still open.');
-    loom.store.updateRun(w.id, { status: 'completed', ended_at: h.clock.now });
-  }
+  // This is historical fixture data, ingested only after all 140 runs exist.
+  // Commit it together rather than fsyncing every fixture mutation separately.
+  loom.store.tx(() => {
+    for (let i = 0; i < 140; i++) {
+      tick();
+      const w = loom.store.createRun(t.id, 'wake', 'Loom: Your closing "Next — you" ("review") is still open from before. Say "still open" instead of repeating it. (Delegation board: ask once.)');
+      loom.store.db.prepare('UPDATE runs SET wake_cause = NULL WHERE id = ?').run(w.id);
+      loom.store.addMessage(t.id, w.id, 'assistant', 'Still open.');
+      loom.store.updateRun(w.id, { status: 'completed', ended_at: h.clock.now });
+    }
+  });
   (source as unknown as { ingest(detail: unknown): void }).ingest(loom.host.detail(t.id));
-  const { itemDetail } = await import('../server/desk/view.js');
   const detail = itemDetail(h.core, `loom:${t.id}`, [])!;
   expect(detail.reply!.text).toBe('The full export report is ready for review.');
   expect(detail.laterNotes!.count).toBe(140);

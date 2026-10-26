@@ -1,7 +1,7 @@
 import { ITEM_TYPES, type ItemType } from './types.js';
 
 // A new T3 thread's type, guessed from the owner's opening message by the summarizer's small model,
-// with the owner's own recently labeled threads as examples. Stages stay owner-set (owner, 10/20). A guess
+// with the owner's own recently labeled threads as examples. A guess
 // the model isn't sure of is left off, and the owner's labels always win (the desk never re-guesses).
 // Measured 10/14 on 128 threads the owner had labeled: 71% right overall, 76% at confidence ≥ 0.7.
 

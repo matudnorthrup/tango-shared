@@ -65,6 +65,10 @@
     "./turn/turn-policy": {
       "types": "./dist/turn/turn-policy.d.ts",
       "default": "./dist/turn/turn-policy.js"
+    },
+    "./live/draft-mode": {
+      "types": "./dist/live/draft-mode.d.ts",
+      "default": "./dist/live/draft-mode.js"
     }
   }
 }

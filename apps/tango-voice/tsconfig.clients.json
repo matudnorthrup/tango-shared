@@ -5,6 +5,7 @@
     "src/live/live-audio.ts",
     "src/live/operator-profile.ts",
     "src/live/responses-caller.ts",
-    "src/turn/turn-policy.ts"
+    "src/turn/turn-policy.ts",
+    "src/live/draft-mode.ts"
   ]
 }

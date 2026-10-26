@@ -1,3 +1,9 @@
+import { writeFileSync } from "node:fs";
+import { LoomHost } from "../../loom/src/host.js";
+import { LoomStore } from "../../loom/src/store.js";
+import { FakeRuntime } from "../../loom/test/fake-runtime.js";
+import { createLoomServer } from "../../loom/src/http.js";
+import { LoomRuntimeAdapter } from "@tango/core";
 import type { AgentConfig } from "@tango/core";
 import { buildDefaultAccessPolicy } from "../src/access-control.js";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -12,7 +18,7 @@ const record: LoomDelivery = { runId: "run", loomThreadId: "loom-thread", agentI
   channelId: "channel", threadId: "thread", messageId: "message", createdAt: new Date().toISOString(),
   context: { sessionId: "session", prompt: "hello", occurredAt: new Date().toISOString() } };
 beforeEach(() => { dir = mkdtempSync(path.join(os.tmpdir(), "loom-delivery-")); store = new TangoStorage(path.join(dir, "db")); store.insertLoomDelivery(record); });
-afterEach(() => { store.close(); rmSync(dir, { recursive: true, force: true }); liveLoomDeliveries.clear(); vi.unstubAllEnvs(); });
+afterEach(() => { store.close(); rmSync(dir, { recursive: true, force: true }); liveLoomDeliveries.clear(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 function harness(status = "completed") {
   const detail: LoomThreadDetail = { runs: [{ id: "run", status }], messages: [
     { run_id: "old", role: "assistant", text: "old" }, { run_id: "run", role: "assistant", text: "answer" }], items: [] };
@@ -160,19 +166,23 @@ it("suppresses continue and exact retries only in the pending conversation", () 
 });
 
 it.each([[false, false], [true, false], [false, true]])("recovers a late outcome across real Loom HTTP (slow open=%s, stop=%s)", async (slowOpen, stop) => {
-  const { writeFileSync } = await import("node:fs");
-  const { LoomHost } = await import("../../loom/src/host.js");
-  const { LoomStore } = await import("../../loom/src/store.js");
-  const { FakeRuntime } = await import("../../loom/test/fake-runtime.js");
-  const { createLoomServer } = await import("../../loom/src/http.js");
-  const { LoomRuntimeAdapter } = await import("@tango/core");
   const loom = new LoomStore(":memory:");
   const runtime = new FakeRuntime(loom);
   let releaseOpen = () => {};
   const opening = new Promise<void>(resolve => { releaseOpen = resolve; });
+  const admissionTimeout = new AbortController();
+  const timeoutSignal = slowOpen
+    ? vi.spyOn(AbortSignal, "timeout").mockImplementationOnce(() => admissionTimeout.signal)
+    : null;
   if (slowOpen) {
     const open = runtime.open.bind(runtime);
-    vi.spyOn(runtime, "open").mockImplementation(async (...args) => { await opening; return open(...args); });
+    vi.spyOn(runtime, "open").mockImplementation(async (...args) => {
+      // The receipt is committed at this point; expire only the first real HTTP
+      // request, while keeping the host blocked until recovery owns the run.
+      admissionTimeout.abort(new DOMException("Test observer deadline", "TimeoutError"));
+      await opening;
+      return open(...args);
+    });
   }
   const health = path.join(dir, "health.json");
   writeFileSync(health, JSON.stringify({ at: Date.now() / 1000, ok: false, alerts: ["destination_low_space"] }));
@@ -183,9 +193,13 @@ it.each([[false, false], [true, false], [false, true]])("recovers a late outcome
   const adapter = new LoomRuntimeAdapter({ conversationKey: "http-chat", store, tokenFile,
     port: (server.address() as import("node:net").AddressInfo).port, pollMs: 5 });
   store.finishLoomDelivery(record.runId, "abandoned");
+  // Advance observer time only after HTTP admission and durable registration.
+  // A 150ms wall-clock deadline raced cold imports, SQLite and runner load.
+  let observerNow = Date.now();
+  const clock = vi.spyOn(Date, "now").mockImplementation(() => observerNow);
   try {
     await adapter.initialize({ agentId: "test", systemPrompt: "test", runtimePreferences: {}, mcpServers: [] });
-    await expect(adapter.send("question", { timeout: 150, discordDelivery: {
+    await expect(adapter.send("question", { timeout: 30_000, onLoomSubmitted: () => { observerNow += 30_001; }, discordDelivery: {
       channelId: "channel", threadId: "thread", messageId: "http-message", context: {
         sessionId: "session", prompt: "question", retryText: "question", occurredAt: new Date().toISOString(),
       },
@@ -215,7 +229,7 @@ it.each([[false, false], [true, false], [false, true]])("recovers a late outcome
     releaseOpen();
     server.closeAllConnections();
     await new Promise<void>(resolve => server.close(() => resolve()));
-    await host.closeAll(); loom.close();
+    await host.closeAll(); loom.close(); clock.mockRestore(); timeoutSignal?.mockRestore();
   }
 });
 

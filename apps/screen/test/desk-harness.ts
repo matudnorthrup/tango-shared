@@ -89,9 +89,9 @@ export interface Harness {
   close(): void;
 }
 
-export function makeHarness(options: Partial<DeskCoreOptions> = {}, sourceOptions: Partial<DeskDiscordOptions> = {}): Harness {
+export function makeHarness(options: Partial<DeskCoreOptions> = {}, sourceOptions: Partial<DeskDiscordOptions> = {}, storage: 'disk' | 'memory' = 'disk'): Harness {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'desk-'));
-  const db = new DatabaseSync(path.join(dir, 'screen.db'));
+  const db = new DatabaseSync(storage === 'memory' ? ':memory:' : path.join(dir, 'screen.db'));
   const clock = { now: NOW };
   const summarizer = { impl: (async (input) => fallbackSummary(input)) as DeskSummarizer };
   const posted: Array<Record<string, unknown>> = [];

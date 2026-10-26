@@ -58,6 +58,24 @@ public struct VoiceTarget: Equatable, Sendable {
         historySaved = saveHistory(DictationEntry(id: historyID, capturedAt: capturedAt, text: text,
             destination: historyDestination ?? target?.title, outcome: outcome, isCommand: historyCommand))
     }
+    private var startupAudio: [Data] = []
+    private var startupBytes = 0
+    /// Cold-client audio stays local until destination lookup and model startup succeed.
+    public func bufferStartupAudio(_ data: Data) {
+        guard state == .preparing, !data.isEmpty else { return }
+        guard startupBytes + data.count <= 720_000 else {
+            fail("Voice connection took too long. Nothing was sent.", code: .capture)
+            return
+        }
+        startupAudio.append(data); startupBytes += data.count
+    }
+    public func takeStartupAudio() -> [Data] {
+        guard state == .listening else { return [] }
+        let frames = startupAudio
+        clearStartupAudio()
+        return frames
+    }
+    private func clearStartupAudio() { startupAudio = []; startupBytes = 0 }
     private var fallbackOutcome: VoiceOutcome?
     public private(set) var holding = false
     public var captureLimit: Duration { holding ? .seconds(600) : listeningLimit }
@@ -101,6 +119,7 @@ public struct VoiceTarget: Equatable, Sendable {
         timer?.cancel(); listeningTimer?.cancel(); latched = false; generation = UUID(); pressedAt = now; transcript = ""; target = nil
         pause = SpeechPause(); holding = false; finalTranscript = nil; lastDelta = nil; nextPauseMs = 1500; clearPauseRequest(); fallbackOutcome = nil; diagnostics.begin(generation)
         historyID = generation; capturedAt = now; historySaved = false; historyCommand = false; historyDestination = nil; historyFinished = false
+        clearStartupAudio()
         needsRecordingSocket = true
         state = .preparing; message = "Connecting…"; return generation
     }
@@ -308,12 +327,14 @@ public struct VoiceTarget: Equatable, Sendable {
     }
     public func cancel(reason: CaptureEnd = .cancel) {
         guard state != .posting else { return }
+        clearStartupAudio()
         diagnostics.stop(reason); complete(fallbackOutcome ?? .undone)
         clearPauseRequest()
         timer?.cancel(); timer = nil; listeningTimer?.cancel(); listeningTimer = nil; latched = false; pressedAt = nil; generation = UUID(); try? stopCapture(); releaseRecordingSocket()
         state = .idle; message = ""; transcript = ""
     }
     public func fail(_ reason: String, code: VoiceErrorCode = .unknown) {
+        clearStartupAudio()
         diagnostics.stop(.error); complete(.error, error: code)
         let sendingFailed = state == .undo || state == .posting
         clearPauseRequest()

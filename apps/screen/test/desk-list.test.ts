@@ -7,7 +7,7 @@ import { fallbackSummary, parseModelSummary } from '../server/desk/summarize.js'
 import { Hub } from '../server/hub.js';
 import { SceneStore } from '../server/store.js';
 // @ts-expect-error plain browser module, no types
-import { STALL_MS, canActOnRow, knownGrouping, knownTab, liveState, watchingLabel, labelOrderOf, moveSection, releaseRow, rowTitle, sectionsOf, sortRows, stageOf, tabItems, tileFor, typeOf } from '../public/desk/list-model.js';
+import { STALL_MS, canActOnRow, knownGrouping, knownTab, liveState, watchingLabel, labelOrderOf, moveSection, releaseRow, rowTitle, sectionsOf, sortRows, tabItems, tileFor, typeOf } from '../public/desk/list-model.js';
 // @ts-expect-error plain browser module, no types
 import { lastLifeAt, stuckMinutes } from '../public/desk/util.js';
 // @ts-expect-error plain browser module, no types
@@ -54,12 +54,9 @@ const chat = (id: string, patch: Record<string, unknown> = {}) => evaluated({
 });
 
 describe('the list model', () => {
-  it('stage and type are the desk’s own fields; a title prefix is not read', () => {
-    expect(stageOf(loom('a', 'epic: Checkout', { facts: { stage: 'building', type: 'project' } }))).toBe('building');
-    expect(typeOf(loom('a', 'epic: Checkout', { facts: { stage: 'building', type: 'project' } }))).toBe('project');
-    expect(stageOf(loom('b', 'disc: Not seeded here'))).toBeNull();
-    expect(stageOf(chat('c', { facts: { stage: 'nonsense' } }))).toBeNull();
-    expect(knownGrouping('label')).toBe('stage');
+  it('type is the desk’s own fields; a title prefix is not read', () => {
+    expect(typeOf(loom('a', 'epic: Checkout', { facts: { type: 'project' } }))).toBe('project');
+    expect(knownGrouping('label')).toBe('live');
   });
 
   it('names a row by what stays put: the thread title without an old prefix, or what a chat is about', () => {
@@ -111,27 +108,26 @@ describe('the list model', () => {
     expect(liveState(chat('summary', { nextStep: 'your_move', nextStepBasis: 'summary' }))).toBe('idle');
   });
 
-  it('groups Active by pill while retaining stage as a neutral tag', () => {
+  it('groups Active by pill', () => {
     const items = [
       loom('none', 'Loose end'),
       chat('chat'),
-      loom('disc', 'Research', { facts: { stage: 'discovery', type: 'feat' } }),
-      loom('pin', 'Pinned one', { facts: { pinned: true, stage: 'discovery' } }),
-      loom('build', 'Big thing', { facts: { stage: 'building', type: 'project' } }),
-      chat('staged', { facts: { stage: 'feedback', type: 'bug' } }),
+      loom('disc', 'Research', { facts: { type: 'feat' } }),
+      loom('pin', 'Pinned one', { facts: { pinned: true } }),
+      loom('build', 'Big thing', { facts: { type: 'project' } }),
+      chat('staged', { facts: { type: 'bug' } }),
     ];
     const sections = sectionsOf(items, 'stage', 'active');
     expect(sections.map((s: { label: string; items: Array<{ id: string }> }) => [s.label, s.items.map((i) => i.id)])).toEqual([
       ['Idle', ['loom:none', 'loom:disc', 'loom:pin', 'loom:build', 'discord:chat', 'discord:staged']],
     ]);
-    expect(items.map(stageOf)).toEqual([null, null, 'discovery', 'discovery', 'building', 'feedback']);
     expect(sectionsOf([], 'none', 'active')).toEqual([]);
   });
 
   it('a saved stage order cannot change the status precedence', () => {
-    const items = [loom('idle', 'I'), loom('run', 'R', { facts: { running: { since: NOW }, stage: 'building' } }), loom('ask', 'A', { facts: { pending: { kind: 'question' }, stage: 'discovery' } })];
+    const items = [loom('idle', 'I'), loom('run', 'R', { facts: { running: { since: NOW } } }), loom('ask', 'A', { facts: { pending: { kind: 'question' } } })];
     expect(sectionsOf(items, 'stage', 'active', ['building', 'discovery']).map((s: { label: string }) => s.label)).toEqual(['Needs you', 'Working', 'Idle']);
-    expect(labelOrderOf(['epic', 'hold', 'feedback'])).toEqual(['feedback', 'discovery', 'building', 'chat', 'none']);
+    expect(labelOrderOf(['epic', 'hold', 'feedback'])).toEqual(['chat', 'none']);
     expect(moveSection(['a', 'b', 'c'], 2, 0)).toEqual(['c', 'a', 'b']);
     expect(moveSection(['a', 'b', 'c'], 0, 5)).toEqual(['a', 'b', 'c']);
   });
@@ -276,28 +272,51 @@ describe('a Discord label stays on the desk', () => {
   it('seeds from an old desk label or thread-name prefix, and the tag command keeps it on the desk', async () => {
     h.core.ensureItem({ id: 'discord:thread:1', source: 'discord', kind: 'thread', conversationKey: 'k1', agentId: 'sierra', agentName: 'Sierra', place: 'chore: Tidy the shed', area: null, createdAt: NOW }, 'agent');
     expect(h.core.item('discord:thread:1')!.facts.type).toBe('chore');
-    const r = await h.core.command({ commandId: cid(), type: 'tag', itemId: 'discord:thread:1', args: { stage: 'discovery' } });
-    expect(r).toMatchObject({ status: 'applied', outcome: { stage: 'discovery', type: 'chore' } });
+    const r = await h.core.command({ commandId: cid(), type: 'tag', itemId: 'discord:thread:1', args: { type: 'bug' } });
+    expect(r).toMatchObject({ status: 'applied', outcome: { type: 'bug' } });
   });
   it('at start, items from before are seeded once, open hold items parked, and type filters mapped', () => {
     const make = (id: string, place: string) => h.core.ensureItem({ id, source: 'discord', kind: 'thread', conversationKey: id, agentId: 'sierra', agentName: 'Sierra', place, area: null, createdAt: NOW }, 'agent');
     make('discord:thread:old-epic', 'epic: Big plan');
     make('discord:thread:old-hold', 'hold: Someday');
-    // As if they were filed before the desk owned stage and type.
+    // As if they were filed before the desk owned type.
     for (const id of ['discord:thread:old-epic', 'discord:thread:old-hold']) {
       const item = h.core.store.item(id)!;
-      h.core.store.patchItem(id, { facts: { ...item.facts, tagsSeeded: false, stage: null, type: null } }, { bump: false });
+      h.core.store.patchItem(id, { facts: { ...item.facts, tagsSeeded: false, type: null } }, { bump: false });
     }
     h.core.store.setSetting('filters', JSON.stringify({ hideAgents: [], hideRepos: [], hideTypes: ['hold', 'epic', 'bug', 'disc'] }));
     h.core.store.setSetting('label_order', JSON.stringify(['disc', 'epic', 'chat', 'feat', 'hold', 'watch', 'none']));
     h.core.start(); // the filter and section-order migrations
     expect(h.core.item('discord:thread:old-epic')!.facts.tagsSeeded).toBe(false); // seeding waits for the first poll
     expect(h.core.seedAll()).toBe(2);
-    expect(h.core.item('discord:thread:old-epic')!.facts).toMatchObject({ stage: 'building', type: 'project', tagsSeeded: true });
+    expect(h.core.item('discord:thread:old-epic')!.facts).toMatchObject({ type: 'project', tagsSeeded: true });
     expect(h.core.store.attention('discord:thread:old-hold')?.disposition).toBe('parked');
     expect(JSON.parse(h.core.store.setting('filters')!).hideTypes).toEqual(['project', 'bug']);
-    // The old section order, translated onto the stages in the same order.
-    expect(JSON.parse(h.core.store.setting('label_order')!)).toEqual(['discovery', 'building', 'chat', 'feedback', 'none']);
+    // The old section order keeps only supported sections.
+    expect(labelOrderOf(JSON.parse(h.core.store.setting('label_order')!))).toEqual(['chat', 'none']);
+  });
+
+  it.each(['building', null])('ignores retired stored metadata %j while preserving its raw value on unrelated updates', async (legacy) => {
+    const id = 'discord:thread:legacy';
+    h.core.ensureItem({ id, source: 'discord', kind: 'thread', conversationKey: id, agentId: 'sierra', agentName: 'Sierra', place: 'Legacy', area: null, createdAt: NOW }, 'agent');
+    h.db.prepare('UPDATE desk_items SET facts = ? WHERE id = ?').run(JSON.stringify({ stage: legacy, type: 'bug', tagsSeeded: true }), id);
+    expect(h.core.item(id)!.facts).not.toHaveProperty('stage');
+    await h.core.command({ commandId: cid(), type: 'tag', itemId: id, args: { type: 'chore' } });
+    expect(h.core.item(id)!.facts).toMatchObject({ type: 'chore' });
+    expect(h.core.item(id)!.facts).not.toHaveProperty('stage');
+    const raw = h.db.prepare('SELECT facts FROM desk_items WHERE id = ?').get(id) as { facts: string };
+    expect(JSON.parse(raw.facts)).toMatchObject({ stage: legacy, type: 'chore' });
+    h.core.store.patchItem(id, { facts: { ...h.core.item(id)!.facts, stage: 'feedback' } });
+    expect(JSON.parse((h.db.prepare('SELECT facts FROM desk_items WHERE id = ?').get(id) as { facts: string }).facts).stage).toBe(legacy);
+    expect(h.core.item(id)!.facts).not.toHaveProperty('stage');
+  });
+
+  it('does not persist incoming retired metadata on a new item', () => {
+    const id = 'discord:thread:new';
+    h.core.ensureItem({ id, source: 'discord', kind: 'thread', conversationKey: id, agentId: 'sierra', agentName: 'Sierra', place: 'New', area: null, createdAt: NOW, facts: { stage: 'building' } }, 'agent');
+    expect(h.core.item(id)!.facts).not.toHaveProperty('stage');
+    const raw = h.db.prepare('SELECT facts FROM desk_items WHERE id = ?').get(id) as { facts: string };
+    expect(JSON.parse(raw.facts)).not.toHaveProperty('stage');
   });
 
   it('renames on the desk (Discord keeps its own name); empty goes back to it', async () => {
@@ -378,11 +397,11 @@ describe('HTTP: icons and agent icons', () => {
     expect((await (await app.request('/api/desk/settings')).json()).repoIcons).toEqual({ 'side-studio': { icon: 'palette', color: null } });
   });
 
-  it('stage order: saved for every screen, completed with what it leaves out; an unknown or repeated section is refused', async () => {
+  it('section order: saved for every screen, completed with what it leaves out; an unknown or repeated section is refused', async () => {
     const initial = (await (await app.request('/api/desk/settings')).json()).labelOrder;
-    expect(initial).toEqual(['discovery', 'building', 'feedback', 'chat', 'none']);
-    const saved = (await (await post({ labelOrder: ['chat', 'feedback'] })).json()).labelOrder;
-    expect(saved).toEqual(['chat', 'feedback', 'discovery', 'building', 'none']);
+    expect(initial).toEqual(['chat', 'none']);
+    const saved = (await (await post({ labelOrder: ['chat'] })).json()).labelOrder;
+    expect(saved).toEqual(['chat', 'none']);
     expect((await (await app.request('/api/desk/settings')).json()).labelOrder).toEqual(saved);
     expect((await post({ labelOrder: ['pinned'] })).status).toBe(400);
     expect((await post({ labelOrder: ['epic'] })).status).toBe(400);
@@ -413,7 +432,7 @@ describe('auto-tag rules', () => {
   });
 });
 
-describe('stage and type tags on a Loom thread', () => {
+describe('type tags on a Loom thread', () => {
   let h: Harness;
   let source: DeskLoomSource;
   const at = (minute: number) => NOW + minute * 60_000;
@@ -435,28 +454,16 @@ describe('stage and type tags on a Loom thread', () => {
   });
   afterEach(() => h.close());
 
-  it('the tag command sets stage and type on the desk only', async () => {
+  it('the tag command sets type on the desk only', async () => {
     ingest('a', 'Speed');
-    const r = await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:a', args: { stage: 'feedback', type: 'project' } });
-    expect(r).toMatchObject({ status: 'applied', outcome: { stage: 'feedback', type: 'project' } });
+    const r = await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:a', args: { type: 'project' } });
+    expect(r).toMatchObject({ status: 'applied', outcome: { type: 'project' } });
     await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:a', args: { type: null } });
-    expect(h.core.item('loom:a')!.facts).toMatchObject({ stage: 'feedback', type: null });
-    expect((await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:a', args: { stage: 'urgent' } })).status).toBe('failed');
+    expect(h.core.item('loom:a')!.facts).toMatchObject({ type: null });
+    expect((await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:a', args: { type: 'urgent' } })).status).toBe('failed');
     expect((await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:a', args: {} })).status).toBe('failed');
   });
 
-  it('stage is owner-only and never changes placement', async () => {
-    ingest('a', 'Speed');
-    ingest('b', 'Other');
-    await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:b', args: { stage: 'building' } });
-    const r = await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:a', args: { stage: 'feedback' } });
-    expect(r).toMatchObject({ status: 'applied', outcome: { stage: 'feedback' } });
-    expect(h.core.store.attention('loom:a')?.disposition).toBe('active');
-    const denied = await h.core.command({ commandId: cid(), type: 'tag', itemId: 'loom:b', args: { stage: 'feedback' }, actor: 'agent' });
-    expect(denied).toMatchObject({ status: 'failed', error: 'stage is owner-only' });
-    expect(h.core.item('loom:b')!.facts.stage).toBe('building');
-    expect(h.core.store.attention('loom:b')?.disposition).toBe('active');
-  });
 });
 
 describe('a Loom thread in the list and the Conversation', () => {

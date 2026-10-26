@@ -6,7 +6,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 export class ReclaimTimeout extends Error {
   constructor(message = "inspect timed out") { super(message); }
 }
-interface Scope { abort: (reason: Error) => void; signal: AbortSignal; timeoutMs: number; io: ReclaimIO; settle?: boolean }
+interface Scope { abort: (reason: Error) => void; signal: AbortSignal; timeoutMs: number; io: ReclaimIO; settle?: boolean; progress?: () => void }
 const scopes = new AsyncLocalStorage<Scope>();
 
 /** Limits actual outstanding calls, including calls whose caller already timed out.
@@ -23,6 +23,8 @@ export class ReclaimIO {
   }
 }
 
+export function inReclaimScope(): boolean { return scopes.getStore() !== undefined; }
+
 export function checkReclaim(): void { scopes.getStore()?.signal.throwIfAborted(); }
 
 export async function reclaimCall<T>(work: () => Promise<T>): Promise<T> {
@@ -30,8 +32,12 @@ export async function reclaimCall<T>(work: () => Promise<T>): Promise<T> {
   if (!scope) return work();
   checkReclaim();
   try {
-    if (scope.settle) { const result = await scope.io.call(work); checkReclaim(); return result; }
-    return await deadline(() => scope.io.call(work), scope.timeoutMs, scope.signal);
+    const result = scope.settle
+      ? await scope.io.call(work)
+      : await deadline(() => scope.io.call(work), scope.timeoutMs, scope.signal);
+    checkReclaim();
+    scope.progress?.();
+    return result;
   }
   catch (error) { if (error instanceof ReclaimTimeout) scope.abort(error); throw error; }
 }
@@ -41,13 +47,13 @@ export function reclaimBound<F extends (...args: any[]) => Promise<any>>(fn: F):
   return ((...args: Parameters<F>) => reclaimCall(() => fn(...args))) as F;
 }
 
-export async function deadline<T>(work: () => Promise<T>, ms: number, signal?: AbortSignal): Promise<T> {
+export async function deadline<T>(work: () => Promise<T>, ms: number | null, signal?: AbortSignal): Promise<T> {
   signal?.throwIfAborted();
   let timer: ReturnType<typeof setTimeout> | undefined;
   let abort: (() => void) | undefined;
   try {
     return await Promise.race([Promise.resolve().then(() => { signal?.throwIfAborted(); return work(); }), new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new ReclaimTimeout()), ms);
+      if (ms !== null) timer = setTimeout(() => reject(new ReclaimTimeout()), ms);
       abort = () => reject(signal!.reason);
       signal?.addEventListener("abort", abort, { once: true });
     })]);
@@ -57,27 +63,42 @@ export async function deadline<T>(work: () => Promise<T>, ms: number, signal?: A
   }
 }
 
-/** Abandoned work keeps its aborted context, so late completions cannot start new IO. */
-export async function reclaimScope<T>(io: ReclaimIO, timeoutMs: number, passMs: number, work: () => Promise<T>): Promise<T> {
+/** Idle scopes renew only on completed native IO (including nested inspections).
+ * Heartbeats and merely starting an operation are not progress. Fixed inspection
+ * scopes retain their absolute deadline. Abandoned work keeps its aborted context,
+ * so late completions cannot start new IO. */
+export async function reclaimScope<T>(io: ReclaimIO, timeoutMs: number, passMs: number, work: () => Promise<T>, idle = false): Promise<T> {
   const parent = scopes.getStore();
   const controller = new AbortController();
   const abort = () => controller.abort(parent!.signal.reason);
   parent?.signal.addEventListener("abort", abort, { once: true });
   if (parent?.signal.aborted) abort();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const progress = () => {
+    if (controller.signal.aborted) return;
+    parent?.progress?.();
+    if (idle) {
+      if (timer) timer.refresh();
+      else timer = setTimeout(() => controller.abort(new ReclaimTimeout()), passMs);
+    }
+  };
+  if (idle) progress();
   try {
-    return await scopes.run({ io, timeoutMs, abort: reason => controller.abort(reason), signal: controller.signal }, () => deadline(work, passMs, controller.signal));
+    return await scopes.run({ io, timeoutMs, progress, abort: reason => controller.abort(reason), signal: controller.signal }, () => deadline(work, idle ? null : passMs, controller.signal));
   } finally {
+    clearTimeout(timer);
     controller.abort(new ReclaimTimeout());
     parent?.signal.removeEventListener("abort", abort);
   }
 }
 
-/** Waits such as mailboxes need deadlines but must not consume filesystem slots. */
-export async function reclaimWait<T>(work: () => Promise<T>, timeoutMs?: number): Promise<T> {
+/** Waits such as mailboxes need deadlines but must not consume filesystem slots.
+ * null delegates the deadline to the enclosing pass (scheduler composites only). */
+export async function reclaimWait<T>(work: () => Promise<T>, timeoutMs?: number | null): Promise<T> {
   const scope = scopes.getStore();
   if (!scope) return work();
   checkReclaim();
-  return deadline(work, timeoutMs ?? scope.timeoutMs, scope.signal);
+  return deadline(work, timeoutMs === null ? null : timeoutMs ?? scope.timeoutMs, scope.signal);
 }
 
 /** An issued mutation cannot be cancelled safely. Keep its caller (and mailbox)
@@ -88,6 +109,7 @@ export async function reclaimMutation<T>(work: () => Promise<T>): Promise<T> {
   checkReclaim();
   const result = await (scope ? scope.io.call(work) : work());
   checkReclaim();
+  scope?.progress?.();
   return result;
 }
 

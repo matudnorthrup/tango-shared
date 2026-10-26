@@ -6,13 +6,14 @@ import TangoDeskKit
 struct DeskWebView: View {
     let url: URL; let address: DeskAddress
     let navigationID: UUID
+    let firstLoad: () -> Void
     let openSettings: () -> Void
     @State private var failure: String?
     @State private var retry = 0
     @State private var microphoneDenied = false
     var body: some View {
         ZStack {
-            WebContainer(url: url, address: address, retry: retry, failure: $failure, microphoneDenied: $microphoneDenied, navigationID: navigationID, openSettings: openSettings)
+            WebContainer(url: url, address: address, retry: retry, failure: $failure, microphoneDenied: $microphoneDenied, navigationID: navigationID, firstLoad: firstLoad, openSettings: openSettings)
             if let failure {
                 ContentUnavailableView {
                     Label("Desk unreachable", systemImage: "wifi.exclamationmark")
@@ -37,6 +38,7 @@ private struct WebContainer: UIViewRepresentable {
     @Binding var failure: String?
     @Binding var microphoneDenied: Bool
     let navigationID: UUID
+    let firstLoad: () -> Void
     let openSettings: () -> Void
     func makeCoordinator() -> Coordinator { Coordinator(self) }
     func makeUIView(context: Context) -> WKWebView {
@@ -61,13 +63,16 @@ private struct WebContainer: UIViewRepresentable {
     func updateUIView(_ view: WKWebView, context: Context) {
         context.coordinator.parent = self
         if context.coordinator.loaded != url || context.coordinator.retry != retry || context.coordinator.navigationID != navigationID {
+            let target = context.coordinator.loaded == url && context.coordinator.navigationID == navigationID && context.coordinator.retry != retry ? (context.coordinator.attemptedURL ?? view.url ?? url) : url
             context.coordinator.loaded = url; context.coordinator.retry = retry; context.coordinator.navigationID = navigationID
-            view.load(URLRequest(url: url))
+            view.load(URLRequest(url: target))
         }
     }
     @MainActor final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         var parent: WebContainer; weak var view: WKWebView?; var loaded: URL?; var retry = -1; var navigationID: UUID?
+        var attemptedURL: URL?
         var httpFailed = false
+        var didLoad = false
         init(_ parent: WebContainer) { self.parent = parent }
         @objc func showSettings(_ gesture: UILongPressGestureRecognizer) {
             if gesture.state == .began { parent.openSettings() }
@@ -90,7 +95,7 @@ private struct WebContainer: UIViewRepresentable {
             Task { @MainActor in
                 let granted = await AVAudioApplication.requestRecordPermission()
                 // The configured desk may have changed while the system prompt was open.
-                guard parent.address == requestedAddress, let currentURL = webView.url,
+                guard parent.address.base == requestedAddress.base, let currentURL = webView.url,
                       requestedAddress.contains(currentURL) else {
                     decisionHandler(.deny)
                     return
@@ -102,6 +107,14 @@ private struct WebContainer: UIViewRepresentable {
         @objc func refresh() { view?.reload() }
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) { httpFailed = false }
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // The page loaded, so a later Retry reloads the current URL (which may have changed via replaceState).
+            attemptedURL = nil
+            if !didLoad { didLoad = true; parent.firstLoad() }
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-ui-test-web-url") {
+                webView.accessibilityValue = webView.url?.absoluteString
+            }
+            #endif
             if !httpFailed { parent.failure = nil }
             webView.scrollView.refreshControl?.endRefreshing()
         }
@@ -121,7 +134,10 @@ private struct WebContainer: UIViewRepresentable {
         }
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction) async -> WKNavigationActionPolicy {
             guard let url = action.request.url else { return .cancel }
-            if parent.address.contains(url) { return .allow }
+            if parent.address.contains(url) {
+                if action.targetFrame?.isMainFrame == true { attemptedURL = url }
+                return .allow
+            }
             if action.targetFrame?.isMainFrame != false, ["https", "http", "mailto", "tel"].contains(url.scheme ?? "") { await UIApplication.shared.open(url) }
             return .cancel
         }

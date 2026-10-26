@@ -6,7 +6,7 @@ import { Component, html, useState } from '../../vendor/preact-htm.js';
 import { useRowSwipe } from '../list.js';
 import { Menu, contextMenuProps } from './menu.js';
 import { threadMenu } from './thread.js';
-import { projectTile, stageName, ICON_COLORS, AGENT_ICON_DEFAULTS, canActOnRow, repoIconOf } from '../list-model.js';
+import { projectTile, ICON_COLORS, AGENT_ICON_DEFAULTS, canActOnRow, repoIconOf } from '../list-model.js';
 import { agentColor, inFlightOf } from '../util.js';
 import { rowOf, shownRows, statusWords, KINDS } from './model.js';
 import { linked } from '../decision-links.js';
@@ -130,7 +130,7 @@ function ThreadRowBody({ item, store, context = null, compact = false, kids = nu
         onFocus=${() => store.set({ focusId: item.id })}
         ...${contextMenuProps(store, { kind: 'thread', id: item.id })}
         title=${html`${item.seen !== 'seen' ? html`<span class="nx-unread" aria-label="Unread">●</span>` : null}${r.pinned ? html`<span class="nx-pin" aria-label="Pinned">•</span>` : null}${asking ? r.next : r.title}`}
-        stage=${store.state.flags?.stageLabels && item.facts?.stage ? stageName(item.facts.stage) : null} time=${r.time} busy=${r.busy} tile=${r.tile} detail=${statusWords(item).ask} why=${statusWords(item).why} preview=${r.preview} pill=${r.status} kind=${r.kind} trail=${r.trail}
+        time=${r.time} busy=${r.busy} tile=${r.tile} detail=${statusWords(item).ask} why=${statusWords(item).why} preview=${r.preview} pill=${r.status} kind=${r.kind} trail=${r.trail}
         where=${asking || (r.home && !r.trail?.length) ? [asking ? r.title : null, r.trail?.length ? null : r.home?.name].filter(Boolean).join(' · ') : null} facts=${r.facts} prItem=${item} kids=${picking ? null : kids} />
       ${swipe ? html`<button class="sr-only" aria-label=${`Actions for ${r.title}`} onClick=${(e) => (e.stopPropagation(), setMore(true))}>Actions</button>` : null}
     </div>
@@ -147,7 +147,7 @@ function ThreadRowBody({ item, store, context = null, compact = false, kids = nu
  *   check: true or false while its list is a picker (a checkbox then, not a link); null otherwise.
  *   kids: { n, working, open, onToggle } when workers report to it: a chip beside the pill that folds them, tapped on its own.
  */
-export function RowCard({ store, title, time, busy = null, stage = null, tile, detail = null, why = null, preview = null, pill = null, dot = null, where = null, facts = [], kind = null, trail = null, asking = false, compact = false, cls = '', label, onOpen = null, onEnter = null, onFocus = null, onContextMenu = null, onMouseDown = null, check = null, kids = null, prItem = null }) {
+export function RowCard({ store, title, time, busy = null, tile, detail = null, why = null, preview = null, pill = null, dot = null, where = null, facts = [], kind = null, trail = null, asking = false, compact = false, cls = '', label, onOpen = null, onEnter = null, onFocus = null, onContextMenu = null, onMouseDown = null, check = null, kids = null, prItem = null }) {
   const link = !!onOpen;
   const picking = check !== null;
   return html`<div class=${`nx-row${compact ? ' compact' : ''}${asking ? ' asking' : ''}${cls ? ` ${cls}` : ''}${link ? '' : ' static'}${picking ? ' picking' : ''}${check ? ' picked' : ''}`} role=${picking ? 'checkbox' : link ? 'link' : null} aria-checked=${picking ? !!check : null} tabindex=${link ? 0 : null} aria-label=${link ? label : null}
@@ -173,7 +173,6 @@ export function RowCard({ store, title, time, busy = null, stage = null, tile, d
       ${kind && kind !== 'thread' ? html`<span class="nx-kind">${KINDS[kind]}</span>` : null}
       ${where ? html`<span class="nx-where">${where}</span>` : null}
       ${trail?.length ? html`<span class="nx-trail" title=${`Reports to ${trail[trail.length - 1]}`}><i aria-hidden="true">↳</i>${trail.map((t, i) => html`${i ? html`<i aria-hidden="true">›</i>` : null}<span>${t}</span>`)}</span>` : null}
-      ${stage ? html`<span class="nx-stage">${stage}</span>` : null}
       ${inFlightOf(prItem).filter(e => e.url).map(e => html`<a class="nx-fact" href=${e.url} target="_blank" rel="noopener" onClick=${event => event.stopPropagation()} onKeyDown=${event => event.stopPropagation()}>${e.text}</a>`)}
       ${facts.map((f) => html`<span class=${f.startsWith('overdue ') ? 'nx-fact nx-overdue' : 'nx-fact'}>${f}</span>`)}
     </span>

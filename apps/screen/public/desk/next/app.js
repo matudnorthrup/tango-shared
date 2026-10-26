@@ -1,6 +1,7 @@
 // The next layout's shell (docs/specs/agent-desk-next.md): the sidebar, the breadcrumb bar, the page,
 // and the floating +. The center column is centered in the window and never moves for either side.
 
+import { AppSwitcher, phoneBackCrumb } from './app-switcher.js';
 import { SpaceSettingsPage } from './space-settings.js';
 import { html, useEffect, useRef, useState } from '../../vendor/preact-htm.js';
 import { KEY_HELP, keyHelp, onListKey, watchKeyboardMode } from './keyboard.js';
@@ -193,7 +194,7 @@ function Sidebar({ store, overlay }) {
   const gutterIn = (list) => list.some((p) => p.children.length);
   return html`<nav class=${`nx-side${overlay ? ' overlay' : ''}`} aria-label="Places" onScroll=${hide}>
     <div class="nx-side-top">
-      <span class="nx-brand">Tango Desk</span>
+      <${AppSwitcher} />
       ${html`<button class="nx-ib" aria-label="Hide sidebar" title="Hide sidebar (⌘\\)" onClick=${() => store.nextToggleSidebar(false)}>${I.side}</button>`}
     </div>
     <button class="nx-search" onClick=${() => (focusSwitcher(), store.nextSwitch(true))} aria-label="Search or jump to">${SEARCH_ICON}<span>Search or jump to…</span><kbd>⌘K</kbd></button>
@@ -253,16 +254,16 @@ function SystemRow({ store, on, onGo }) {
   </button>`;
 }
 
-function Breadcrumb({ store, crumbs, sidebarShown, phone, tabBar = false }) {
+export function Breadcrumb({ store, crumbs, sidebarShown, phone, tabBar = false }) {
   // The conversation a worker or job reports to opens that conversation.
   const go = (c) => (c.owner ? store.nextOpen(c.owner) : c.route && store.nextGo(c.route));
   if (phone) {
-    const parent = crumbs.length > 1 ? crumbs[crumbs.length - 2] : null;
+    const parent = phoneBackCrumb(crumbs);
     const here = crumbs[crumbs.length - 1];
     return html`<header class="nx-bar phone">
       ${parent
         ? html`<button class="nx-backc" onClick=${() => (store.threadOpen() ? store.nextBack() : go(parent))} aria-label=${`Back to ${parent.label}`}>${I.back}<span>${parent.label}</span></button>`
-        : html`<span class="nx-ib"></span>`}
+        : html`<${AppSwitcher} phone=${true} />`}
       <span class="nx-bt">${parent ? ((store.state.nextRoute.page === 'search' && !store.threadOpen()) || here?.stage ? here?.label : '') : here?.label}</span>
       <${Voice} store=${store} phone=${true} />
     </header>`;

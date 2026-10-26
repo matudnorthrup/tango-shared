@@ -435,7 +435,12 @@ export async function runWaitKeeper(l: Ledger | null, deps: KeeperDeps, opts: { 
   const desk: KeeperInput["desk"] = list ? { rows: list.items, pending: new Set(list.items.filter((r) => r.facts?.pending).map((r) => r.id)) } : null;
   if (!desk) notes.push("desk not read");
 
-  const mail = readRows<MailRow>(deps.screenDbPath, "SELECT to_item, to_title, from_title, state, created_at, sent_at FROM desk_mail WHERE kind != 'report' AND (state = 'queued' OR (state IN ('sent', 'unanswered') AND expect = 'reply'))");
+  const mail = readRows<MailRow>(deps.screenDbPath, `SELECT to_item, to_title, from_title, state, created_at, sent_at FROM desk_mail AS mail
+    WHERE kind != 'report' AND (state = 'queued' OR (state IN ('sent', 'unanswered') AND expect = 'reply'
+      AND NOT EXISTS (SELECT 1 FROM desk_mail AS back
+        WHERE back.from_item = mail.to_item AND back.to_item = mail.from_item
+          AND back.created_at > COALESCE(mail.sent_at, mail.created_at)
+          AND back.state NOT IN ('draft', 'dropped', 'failed') AND back.kind != 'report')))`);
   if (!mail) notes.push("desk mail not read");
 
   const presence = readRows<ActiveInterval>(deps.loomDbPath, "SELECT start, last FROM presence");

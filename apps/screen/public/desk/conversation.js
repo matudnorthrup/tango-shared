@@ -1,3 +1,4 @@
+import { PhoneNote } from './phone-note.js';
 import { OwnerReceipts, mergeOwnerReceipts } from './owner-receipts.js';
 import { VoiceButton, cancelVoiceEdit } from './voice.js';
 // A thread's pieces, which the next layout's thread page (next/thread.js) lays out: what the agent
@@ -269,6 +270,7 @@ function RuleProposals({ item, store }) {
 
 /** What the item needs from the owner, or where it stands: an informational callout above the reply. */
 function Needs({ item, store, asked = true }) {
+  if (item.facts?.phoneNote) return html`<${PhoneNote} key=${item.facts.phoneNote.noteId} item=${item} />`;
   const status = item.status;
   const labels = { needs: 'Needs you', failed: 'Failed', stuck: 'Stuck', finished: 'Finished', working: 'Working', waiting: 'Waiting', idle: 'Idle', unknown: 'Unknown' };
   const key = status?.pill || 'unknown';
@@ -303,26 +305,31 @@ function CarriedBriefs({ item, store, shown = null }) {
 }
 
 /** The owner's question, its answer, and the reports that followed it. */
-function ConversationStack({ window, item, d, store }) {
+export function ConversationStack({ window, item, d, store }) {
   const receipt = mergeOwnerReceipts(item.id, d, store.state.ownerReceipts).some(r => r.messageId === window.owner.messageId);
   const body = reply => html`<${Markdown} text=${reply.text} store=${store} /><${Thumbs} images=${reply.attachments} store=${store} />`;
   const when = at => html`<time datetime=${new Date(at).toISOString()}>${age(at, store.state.now)} ago</time>`;
-  const folded = (replies, label) => replies.length ? html`<details class="rd-report-updates">
+  const folded = (replies, label) => replies?.length ? html`<details class="rd-report-updates">
     <summary>${label}</summary>
-    ${replies.map(reply => html`<details key=${reply.messageIds.join(':')} class="rd-report-update">
-      <summary>${when(reply.at)} · ${reply.headline || reply.text.split('\n')[0]}</summary>
-      ${body(reply)}
-    </details>`)}
+    ${replies.map(reply => html`<article key=${reply.messageIds.join(':')} class="rd-report-update">
+      <div class="note">${when(reply.at)}</div>${body(reply)}
+      ${folded(reply.notes, `${reply.notes?.length} notes while working`)}
+    </article>`)}
   </details>` : null;
+  const report = (reply, update = false) => reply ? html`<article class="rd-report rd-report-latest ${update ? 'rd-report-followup' : ''}">
+    ${reply.text || reply.attachments?.length ? html`<div class="note rd-report-label"><span class="rd-report-agent">${agentName(item)}</span> · ${update ? 'update · ' : ''}${when(reply.at)}</div>${body(reply)}` : null}
+    ${folded(reply.notes, `${reply.notes?.length} notes while working`)}
+  </article>` : null;
   return html`<div class="rd-conversation-stack">
-    ${receipt ? html`<${OwnerReceipts} item=${item} d=${d} store=${store} onlyMessageId=${window.owner.messageId} />` : html`<article class="rd-owner-receipt"><b>You</b> · ${when(window.owner.at)}<p style="white-space:pre-wrap;overflow-wrap:anywhere">${window.owner.text}</p></article>`}
-    ${window.first ? html`<article class=${`rd-report${!window.latest ? ' rd-report-latest' : ''}`}>
-      <div class="note rd-report-label">${window.latest ? 'First answer' : 'Answer'} · ${when(window.first.at)}</div>${body(window.first)}
-    </article>` : null}
-    ${folded(window.updates, `${window.updates.length} updates while the work ran`)}
-    ${window.latest ? html`<article class="rd-report rd-report-latest"><div class="note rd-report-label">Latest report · ${when(window.latest.at)}</div>${body(window.latest)}</article>` : null}
-    ${folded(window.acks, `${window.acks.length} short ${window.acks.length === 1 ? 'acknowledgement' : 'acknowledgements'}`)}
-    ${!window.first && !window.latest ? html`<p class="note">No reply yet.</p>` : null}
+    ${receipt ? html`<${OwnerReceipts} item=${item} d=${d} store=${store} onlyMessageId=${window.owner.messageId} />` : html`<article class="rd-owner-receipt"><div class="note">You · ${when(window.owner.at)}</div><p style="white-space:pre-wrap;overflow-wrap:anywhere">${window.owner.text}</p></article>`}
+    ${window.first && window.latest ? html`<details class="rd-report-updates rd-report-update">
+      <summary>First answer · ${when(window.first.at)} · ${window.first.headline || window.first.text.split('\n')[0]}</summary>
+      ${report(window.first)}
+    </details>` : report(window.first)}
+    ${window.updates.map(reply => report(reply, true))}
+    ${report(window.latest, true)}
+    ${folded(window.acks, html`${window.acks.length} short check-in${window.acks.length === 1 ? '' : 's'} since · ${window.acks.length ? when(window.acks.at(-1).at) : ''}`)}
+    ${!window.first?.text && !window.first?.attachments?.length && !window.latest?.text && !window.latest?.attachments?.length ? html`<p class="note">No reply yet.</p>` : null}
   </div>`;
 }
 
@@ -332,6 +339,13 @@ function Reply({ item, d, store, onLinks }) {
   const reply = replyOf(d);
   const n = linkCount(item, d);
   const now = store.state.now;
+  const workingNotes = notes => notes?.length ? html`<details class="rd-report-updates">
+      <summary>${notes.length} notes while working</summary>
+      ${notes.map(note => html`<article key=${note.messageIds.join(':')} class="rd-report-update">
+        <div class="note"><time datetime=${new Date(note.at).toISOString()}>${age(note.at, now)} ago</time></div>
+        <${Markdown} text=${note.text} store=${store} /><${Thumbs} images=${note.attachments} store=${store} />
+      </article>`)}
+    </details>` : null;
   const started = d?.timeline?.[0]?.at ?? d?.messages?.[0]?.at;
   const meta = [
     reply ? html`<span>${agentName(item)} replied ${age(reply.at, now)} ago</span>` : null,
@@ -344,9 +358,10 @@ function Reply({ item, d, store, onLinks }) {
       ${n && onLinks ? html`<button class="pill rd-links" onClick=${onLinks} title="Links and screens">↗ ${linkLabel(item, d)}</button>` : null}
     </div>
     ${d?.sinceOwner ? html`<${ConversationStack} window=${d.sinceOwner} item=${item} d=${d} store=${store} />` : reply ? html`${reply.text ? html`<${Markdown} text=${reply.text} store=${store} />` : null}<${Thumbs} images=${reply.attachments} store=${store} />` : html`<p class="note">${d?.loading ? 'Loading…' : 'No reply yet.'}</p>`}
+    ${!d?.sinceOwner ? workingNotes(reply?.notes) : null}
     ${!d?.sinceOwner && d?.laterNotes?.count ? html`<div class=${`ml-sum${notesOpen ? ' open' : ''}`}>
       <button class="ml-sum-h" aria-expanded=${notesOpen} onClick=${() => setNotesOpen(!notesOpen)}><span class="ml-sum-t">${d.laterNotes.count} later ${d.laterNotes.count === 1 ? 'note' : 'notes'}</span></button>
-      ${notesOpen ? html`<div class="ml">${d.laterNotes.notes.map(note => html`<div><${Markdown} text=${note.text} store=${store} /><${Thumbs} images=${note.attachments} store=${store} /></div>`)}</div>` : null}
+      ${notesOpen ? html`<div class="ml">${d.laterNotes.notes.map(note => html`<div><${Markdown} text=${note.text} store=${store} /><${Thumbs} images=${note.attachments} store=${store} />${workingNotes(note.notes)}</div>`)}</div>` : null}
     </div>` : null}
   </section>`;
 }

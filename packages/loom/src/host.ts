@@ -10,6 +10,7 @@ import { ResourceLeases } from "./leases.js";
 import { createManagedProcess, externalMappings, externalResourceProcesses, processBackend, inspectProcess } from "./managed-process.js";
 import { approvedWork, prAsset, readMergeFacts, mergeReady, type ReadMergeFacts, type PrRef } from "./merge-facts.js";
 import { codexIncompatible, validSessionProfile, profileHash, redactProfile, sessionHash, type SessionProfile } from "./session-profile.js";
+import { stall } from "./stall.js";
 import { readPressure, hostMemory, warmthLimits, overBudget, ownerFits, diskFits, type Pressure, type WarmthLimits } from "./warmth.js";
 import { TriggerService, describeTrigger, checkCommand, type TriggerRow } from "./triggers.js";
 import { CatchupStore, lintNote, lintUpdate } from "./catchup.js";
@@ -245,6 +246,12 @@ export const WARMTH_STEP_MS = 90_000;
 export const WORKER_WARM_FLOOR_MS = Number(process.env.LOOM_WORKER_WARM_FLOOR_MS) > 0 ? Number(process.env.LOOM_WORKER_WARM_FLOOR_MS) : 120_000;
 /** A pressure reading that takes longer than this is replaced by the last good one. */
 export const PRESSURE_READ_MS = 10_000;
+/**
+ * How long maintenance may hold the owner's own message. A drain waits for every running turn, so on 10/24 one
+ * held owner messages for up to 12 minutes behind another thread's 13-minute turn. Past this the owner's turn starts
+ * anyway: hosts outlive a coordinator restart, so the drain loses nothing but its count of zero.
+ */
+export const MAINTENANCE_OWNER_GRACE_MS = 120_000;
 
 /** Keep or Fresh start whose asker stopped waiting before its turn in the mailbox came (Codex review on #840). */
 const ABANDONED = { ok: false, code: "abandoned", message: "The request was given up before it could apply; nothing changed" } as const;
@@ -258,6 +265,8 @@ export class LoomHost {
   private readonly heartbeats = new Map<string, { runId: string; at: number }>();
   private readonly sessions = new Map<string, RuntimeSession>();
   private readonly opening = new Map<string, Promise<RuntimeSession | null>>();
+  /** One pending kick per thread for an owner's message maintenance holds, at the end of its grace. */
+  private readonly graceKicks = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly mailboxes = new Map<string, Promise<void>>();
   /** Bumped whenever a thread's session is replaced, so a closed session's late events are dropped. */
   private readonly generations = new Map<string, number>();
@@ -332,6 +341,8 @@ export class LoomHost {
       workerWarmFloorMs?: number;
       /** How long a machine pressure reading may take (PRESSURE_READ_MS). */
       pressureReadMs?: number;
+      /** How long maintenance holds the owner's own message (MAINTENANCE_OWNER_GRACE_MS). */
+      maintenanceOwnerGraceMs?: number;
       pool?: AccountPool;
       quotaHistory?: QuotaHistory;
       releasesDir?: string;
@@ -1080,7 +1091,7 @@ export class LoomHost {
     const desk = agents.map((a) => ({ name: this.store.thread(a.threadId)?.title ?? a.threadId, threadId: a.threadId, processes: a.processes, bytes: a.rssBytes }));
     return { at: this.store.now(), memory: { ...p.memory, agents: desk, hostsRssBytes: agents.reduce((n, a) => n + a.rssBytes, 0) }, disk: p.disk,
       retiredJobs: this.retiredJobs, worktrees: { count: await this.worktrees?.count() ?? 0 }, warm: this.sessions.size,
-      cooled: this.store.threads().filter(t => !this.sessions.has(t.id)).length, limits: this.limits(), hostOpens: timings, medianOpenMs: median };
+      cooled: this.store.threads().filter(t => !this.sessions.has(t.id)).length, limits: this.limits(), hostOpens: timings, medianOpenMs: median, stall: stall.reading() };
   }
 
   capacity() { return capacitySnapshot(this.store, this.options.pool, t => this.allowedAccounts(t), this.options.quotaHistory); }
@@ -1089,6 +1100,25 @@ export class LoomHost {
   private maintenanceState(): { on: boolean; reason: string | null; since: number | null } {
     const row = this.store.db.prepare("SELECT value FROM coordinator_state WHERE key = 'maintenance'").get() as { value: string } | undefined;
     return row ? JSON.parse(row.value) : { on: false, reason: null, since: null };
+  }
+
+  /**
+   * Whether maintenance holds this thread's queued work: everything, except the owner's own message once it has waited
+   * the grace (MAINTENANCE_OWNER_GRACE_MS). A running turn is never held.
+   */
+  private maintenanceHolds(threadId: string): boolean {
+    if (!this.maintenanceState().on) return false;
+    const at = this.ownerTurnAt(threadId);
+    if (at < 0) return true;
+    const due = this.store.queuedRuns(threadId)[at]!.created_at + (this.options.maintenanceOwnerGraceMs ?? MAINTENANCE_OWNER_GRACE_MS) - this.store.now();
+    if (due <= 0) return false;
+    // Held anywhere in dispatch (even mid-open), the owner's turn is kicked again when its grace runs out (Codex review on #1135).
+    if (!this.graceKicks.has(threadId)) {
+      const timer = setTimeout(() => { this.graceKicks.delete(threadId); if (!this.detaching) void this.kick(threadId); }, due + 50);
+      timer.unref?.();
+      this.graceKicks.set(threadId, timer);
+    }
+    return true;
   }
 
   maintenance() {
@@ -2890,7 +2920,9 @@ export class LoomHost {
 
   private async dispatch(threadId: string): Promise<void> {
     if (!this.fanOuts.canDispatch(threadId)) return;
-    if (this.maintenanceState().on) return;
+    // The owner's own message waits out the grace, then goes ahead of the automatic runs maintenance still holds.
+    if (this.maintenanceHolds(threadId)) return;
+    if (this.maintenanceState().on) this.ownerFirst(threadId, this.ownerTurnAt(threadId));
     await this.applyAccountMove(threadId);
     await this.upgradeSession(threadId);
     let thread = this.store.thread(threadId);
@@ -3008,7 +3040,7 @@ export class LoomHost {
     // A move accepted while this dispatch was opening the session goes first: the run stays queued,
     // and the move's own kick (next in this thread's mailbox) applies it and then starts the run.
     const latest = this.store.thread(threadId);
-    if (this.maintenanceState().on || this.store.pendingAccountMove(threadId) || this.sessionHashes.get(threadId) !== sessionHash(latest?.session_profile ? JSON.parse(latest.session_profile) : undefined, latest?.role)) return;
+    if (this.maintenanceHolds(threadId) || this.store.pendingAccountMove(threadId) || this.sessionHashes.get(threadId) !== sessionHash(latest?.session_profile ? JSON.parse(latest.session_profile) : undefined, latest?.role)) return;
     // A run that already had an attempt was cut off by a limit: the harness has its message, so it gets a continue.
     // Unless the session came back on a new native thread (Codex on an account without the transcript): then it
     // has none of it, and the run goes again in full, images included.
@@ -3277,11 +3309,11 @@ export class LoomHost {
     let connected: RuntimeSession | null = null;
     const started = performance.now();
     const connect = async () => {
-      if (!attachOnly && this.maintenanceState().on && !this.store.activeRun(thread.id)) return null;
+      if (!attachOnly && this.maintenanceHolds(thread.id) && !this.store.activeRun(thread.id)) return null;
       // A move swaps one host for another: it never counts against the limit (a refused replacement would
       // leave the thread with no host at all, as the 10/17 deploy did to 12 threads).
       if (!attachOnly && reason !== "move" && !this.takeReplacement(thread.id) && !await this.admit(thread.id)) return null;
-      if (!attachOnly && this.maintenanceState().on && !this.store.activeRun(thread.id)) return null;
+      if (!attachOnly && this.maintenanceHolds(thread.id) && !this.store.activeRun(thread.id)) return null;
       return open(
         { threadId: thread.id, cwd: thread.cwd, account: thread.account, nativeSessionId: thread.native_session_id, role: thread.role, kind: thread.kind, worktreeMode: thread.worktree_mode, session: thread.session_profile ? JSON.parse(thread.session_profile) : undefined },
         (event, seq) => {
@@ -3299,7 +3331,7 @@ export class LoomHost {
           return null;
         }
         // Maintenance began while this host was opening: nothing may start, so don't leave an idle host behind.
-        if (!attachOnly && this.maintenanceState().on && !this.store.activeRun(thread.id)) {
+        if (!attachOnly && this.maintenanceHolds(thread.id) && !this.store.activeRun(thread.id)) {
           await session.close().catch(() => {});
           return null;
         }
@@ -3321,7 +3353,7 @@ export class LoomHost {
           }));
         }
         await session.activate?.(this.store.thread(thread.id)!.host_seq);
-        if (!attachOnly && this.maintenanceState().on && !this.store.activeRun(thread.id)) {
+        if (!attachOnly && this.maintenanceHolds(thread.id) && !this.store.activeRun(thread.id)) {
           await this.closeSession(thread.id);
           return null;
         }
@@ -3368,6 +3400,7 @@ export class LoomHost {
     clearInterval(this.leaseTimer);
     for (const timer of this.waits.values()) clearTimeout(timer);
     for (const timer of this.budgetTimers.values()) clearTimeout(timer);
+    for (const timer of this.graceKicks.values()) clearTimeout(timer);
     this.waits.clear();
     await Promise.allSettled([...this.opening.values()]);
     await Promise.all([...this.mailboxes.values()]);
@@ -3395,6 +3428,7 @@ export class LoomHost {
     clearInterval(this.leaseTimer);
     for (const timer of this.waits.values()) clearTimeout(timer);
     for (const timer of this.budgetTimers.values()) clearTimeout(timer);
+    for (const timer of this.graceKicks.values()) clearTimeout(timer);
     this.waits.clear();
     await Promise.all([...this.sessions.keys()].map((id) => this.closeSession(id)));
     await this.ledger.drain();
@@ -3459,7 +3493,10 @@ export class LoomHost {
         this.publish({ threadId, type: "delta", runId: event.runId, text: event.text });
         return;
       case "message.completed":
-        store.tx(() => store.addMessage(threadId, event.runId, "assistant", event.text));
+        store.tx(() => store.addMessage(threadId, event.runId, "assistant", event.text, null, undefined, event.phase, event.messageId));
+        return;
+      case "message.phase":
+        store.tx(() => store.setMessagePhase(threadId, event.runId, event.messageIds, event.phase));
         return;
       case "worktree.promote": {
         const thread = store.thread(threadId)!;

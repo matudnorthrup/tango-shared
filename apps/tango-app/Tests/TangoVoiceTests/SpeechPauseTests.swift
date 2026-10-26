@@ -10,6 +10,19 @@ import XCTest
         }
         return result
     }
+    func testSpeechEntirelyDuringStartupStillEndsOnSilence() async throws {
+        let session = VoiceSession(); defer { session.cancel() }
+        let now = Date(); let id = session.press(now: now)!
+        session.release(now: now.addingTimeInterval(0.1))
+        session.bufferStartupAudio(pcm(0, windows: 15))
+        session.bufferStartupAudio(pcm(2000, windows: 10))
+        session.bufferStartupAudio(pcm(0, windows: 75))
+        XCTAssertTrue(session.ready(nil, generation: id))
+        for frame in session.takeStartupAudio() { session.observeAudio(frame) }
+        XCTAssertTrue(session.takeStartupAudio().isEmpty)
+        for _ in 0..<100 { if session.state == .undo { break }; try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertEqual(session.state, .undo)
+    }
     func testInitialSilenceClicksAndLowNoiseDoNotEndInput() {
         var detector = SpeechPause()
         XCTAssertFalse(detector.append(pcm(0, windows: 200)))

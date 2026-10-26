@@ -1,15 +1,15 @@
 // The List view's tabs are views the owner defines (Settings → Views), like a Notion database's views:
 // which statuses it holds (in rotation, snoozed, parked, done), filters on facts the desk knows for sure (live state from the
-// sources, the owner's own stage, type and projects, repository, agent), whether projects fold into
+// sources, the owner's own type and projects, repository, agent), whether projects fold into
 // one row each, how it groups, and how it sorts. The
 // defaults are the tabs the List had before, so nothing changes until the owner edits them.
 // Kept free of the DOM so it can be tested.
 
-import { matches, viewForFlags, viewToQuery, dispositionOf } from './query.js';
+import { matches, normalizeRetiredView, viewToQuery, dispositionOf } from './query.js';
 export { viewToQuery } from './query.js';
 import { PROJECT_STATES, knownGrouping, sectionsOf } from './list-model.js';
 
-/** Where an item sits in the owner's attention: in rotation, snoozed, parked, or done. Not a stage, not a live state. */
+/** Where an item sits in the owner's attention: in rotation, snoozed, parked, or done. Independent of live state. */
 export const STATUSES = [
   ['active', 'Active'],
   ['snoozed', 'Snoozed'],
@@ -21,7 +21,6 @@ const LEGACY_SHOW = { active: ['active'], open: ['active', 'snoozed', 'parked'],
 /** Live states as a view filters them. A message nobody picked up counts as Failed (see liveState). */
 export const LIVE = [['failed', 'Failed'], ['stuck', 'Stuck'], ['needs', 'Needs you'], ['finished', 'Finished'], ['working', 'Working'], ['waiting', 'Waiting'], ['idle', 'Idle'], ['unknown', 'Unknown']];
 export const VIEW_GROUPS = [
-  ['stage', 'Stage'],
   ['project', 'Project'],
   ['workspace', 'Workspace'],
   ['live', 'Live state'],
@@ -42,7 +41,7 @@ export const SORTS = [
   // timed one, parked last (list-model.js, wakeOrder).
   ['wake', 'Wakes soonest'],
 ];
-/** The stage and type filters' "nothing set" choice. */
+/** The type filter's "nothing set" choice. */
 export const UNSET = 'none';
 
 // Projects fold into one row each outside History. The Inbox lists threads directly.
@@ -69,7 +68,7 @@ function narrow(value, allowed) {
 }
 
 /** A view as saved, completed and cleaned: unknown keys dropped, defaults filled in. Null when unusable. */
-export function normalizeView(raw, stageKeys = [], typeKeys = []) {
+export function normalizeView(raw, typeKeys = []) {
   if (!raw || typeof raw !== 'object') return null;
   const id = typeof raw.id === 'string' && /^[a-z0-9][a-z0-9-]{0,39}$/.test(raw.id) ? raw.id : null;
   const name = typeof raw.name === 'string' ? raw.name.trim().slice(0, 40) : '';
@@ -77,7 +76,7 @@ export function normalizeView(raw, stageKeys = [], typeKeys = []) {
   const view = {
     id,
     name,
-    group: keys(VIEW_GROUPS).includes(raw.group) ? raw.group : 'stage',
+    group: keys(VIEW_GROUPS).includes(raw.group) ? raw.group : 'live',
     sort: keys(SORTS).includes(raw.sort) ? raw.sort : 'recent',
     // Saved under the four tabs: a list without it predates them (viewsOf).
     rev: 2,
@@ -85,21 +84,19 @@ export function normalizeView(raw, stageKeys = [], typeKeys = []) {
   // No status at all is every status; a view from before reads its old `show`.
   const status = Array.isArray(raw.status) ? list(raw.status, keys(STATUSES)) : raw.show ? LEGACY_SHOW[raw.show] || ['active'] : [];
   const live = narrow(raw.live, keys(LIVE));
-  const stage = narrow(raw.stage, stageKeys.length ? [...stageKeys, UNSET] : null);
   const type = narrow(raw.type, typeKeys.length ? [...typeKeys, UNSET] : null);
   // A view from before projects named repositorys `project`.
   const workspace = list(raw.workspace ?? raw.project).map((p) => p.slice(0, 60));
   const projects = list(raw.projects).map((p) => p.slice(0, 40));
   const agent = list(raw.agent).map((a) => a.slice(0, 60));
   if (raw.emptyShelf === false) view.emptyShelf = false;
-  if (raw.where && typeof raw.where === 'object' && !Array.isArray(raw.where)) view.where = structuredClone(raw.where);
+  if (raw.where && typeof raw.where === 'object' && !Array.isArray(raw.where)) view.where = structuredClone(normalizeRetiredView(raw).where);
   for (const key of ['busy', 'unread', 'kind', 'pinned']) {
     const values = list(raw[key]);
     if (values.length) view[key] = values;
   }
   if (status.length) view.status = status;
   if (live.length) view.live = live;
-  if (stage.length) view.stage = stage;
   if (type.length) view.type = type;
   if (workspace.length) view.workspace = workspace;
   if (projects.length) view.projects = projects;
@@ -195,12 +192,12 @@ export function viewSort(view) {
 }
 
 /** One line on what a view holds, for the Views list in Settings. */
-export function describeView(view, names = {}, flags) {
-  view = viewForFlags(view, flags);
+export function describeView(view, names = {}) {
+  view = normalizeRetiredView(view);
   const label = (pairs, key) => pairs.find(([k]) => k === key)?.[1] ?? names[key] ?? key;
   if (view.where) {
     const query = viewToQuery(view);
-    const labels = { disposition: 'Status', live: 'Live state', where: 'Where', workspace: 'Repo', project: 'Project', busy: 'Busy', unread: 'Unread', pinned: 'Pinned', type: 'Type', stage: 'Stage', agent: 'Agent', kind: 'Kind', repo: 'Repo', space: 'Space', wait: 'Waiting on', age: 'Last active', overdue: 'Overdue', source: 'Source', account: 'Account' };
+    const labels = { disposition: 'Status', live: 'Live state', where: 'Where', workspace: 'Repo', project: 'Project', busy: 'Busy', unread: 'Unread', pinned: 'Pinned', type: 'Type', agent: 'Agent', kind: 'Kind', repo: 'Repo', space: 'Space', wait: 'Waiting on', age: 'Last active', overdue: 'Overdue', source: 'Source', account: 'Account' };
     const parts = Object.entries(query.where).flatMap(([facet, filter]) => {
       const valueName = (v) => names[`${facet}:${v}`] || names[v] || [...STATUSES, ...LIVE].find(([key]) => key === v)?.[1] || ({ true: facet === 'unread' ? 'Unread' : 'Pinned', false: facet === 'unread' ? 'Read' : 'Unpinned', background: 'Background' }[v]) || v;
       const title = labels[facet] || facet;
@@ -214,7 +211,6 @@ export function describeView(view, names = {}, flags) {
   }
   const parts = [view.status?.length ? view.status.map((k) => label(STATUSES, k)).join(' or ') : 'Any status'];
   if (view.live?.length) parts.push(view.live.map((k) => label(LIVE, k)).join(' or '));
-  if (view.stage?.length) parts.push(view.stage.map((k) => (k === UNSET ? 'no stage' : names[k] || k)).join(' or '));
   if (view.type?.length) parts.push(view.type.map((k) => (k === UNSET ? 'no type' : names[k] || k)).join(' or '));
   if (view.inProject === 'some') parts.push(view.projects?.length ? `in ${view.projects.map((id) => names[`project:${id}`] || id).join(' or ')}` : 'in a project');
   if (view.inProject === 'none') parts.push('not in a project');

@@ -1,22 +1,20 @@
 import { historyEnabled, setHistoryEnabled } from './voice-history.js';
-// Settings: one window with six pages, picked from a side nav (a strip of tabs on a phone). Each thing is set in one place.
+// Settings: one window with five pages, picked from a side nav (a strip of tabs on a phone). Each thing is set in one place.
 //   This device       · text size, preview lines, sort order; what each open window is for (role.js)
 //   Inbox tabs        · the tabs (views-editor.js); mutes at the foot
 //   Projects & agents · projects, agents' and repos' icons, a project page's sections, space views
 //   Notifications     · the Screen feed, snooze times
 //   Accounts          · routing (which accounts each repo's threads run on)
-//   Labs              · flags, and stage order while stage labels are on
 // Everything saves as it changes. A page can open a sub-page (one tab, one project) with a way back.
 
 import { html, useEffect, useState } from '../vendor/preact-htm.js';
 import { DEFAULT_SNOOZE_TIMES, agentColor } from './util.js';
 import { viewsOf } from './list-views.js';
 import { GROUPS, agentsOf } from './next/model.js';
-import { AGENT_ICON_DEFAULTS, ICON_COLORS, SECTION_KEYS, baseAgent, labelOrderOf, repoIconOf, repoOf, sectionName } from './list-model.js';
+import { AGENT_ICON_DEFAULTS, ICON_COLORS, baseAgent, repoIconOf, repoOf } from './list-model.js';
 import { facetsFor, isHidden, DEFAULT_TEXT_SCALE, PREVIEW_LINE_CHOICES, applyPreviewLines, applyTextScale, savedPreviewLines, savedTextScale } from './filters.js';
 import { IconMask, IconPicker } from './icon-picker.js';
 import { ProjectForm, ProjectTile } from './projects-editor.js';
-import { ReorderList } from './reorder.js';
 import { ROLE_HINTS, ROLE_NAMES, SCREEN_ROLES } from './role.js';
 import { Seg, TabEditor, TabsPage } from './views-editor.js';
 
@@ -26,11 +24,10 @@ const NAV = [
   ['projects', 'Projects & agents', 'folder'],
   ['notifications', 'Notifications', 'bell'],
   ['accounts', 'Accounts', 'route'],
-  ['labs', 'Labs', 'flask-conical'],
 ];
 const PAGES = NAV.map(([key]) => key);
 /** The pages before they were regrouped, so a link to one opens its new home at that section. */
-export const SETTINGS_HOME = { display: 'device', windows: 'device', mutes: 'tabs', agents: 'projects', repos: 'projects', spaceviews: 'projects', feed: 'notifications', snooze: 'notifications', routing: 'accounts', flags: 'labs', stages: 'labs' };
+export const SETTINGS_HOME = { display: 'device', windows: 'device', mutes: 'tabs', agents: 'projects', repos: 'projects', spaceviews: 'projects', feed: 'notifications', snooze: 'notifications', routing: 'accounts', };
 const SCOPE = { device: 'This device only' };
 
 /** A section of a page: its heading, with an anchor an old page's link scrolls to. */
@@ -51,7 +48,6 @@ export function SettingsPanel({ store, phone }) {
     <h2>${text}</h2>
     <span class="stg-scope">${SCOPE[page] || 'Every screen'}</span>
   </header>`;
-  const stages = !!state.flags?.stageLabels;
   let body;
   if (asked === 'spaceviews' && sub?.tab) body = html`<${TabEditor} key=${`space:${sub.tab}`} store=${store} id=${sub.tab} space=${null} fresh=${!!sub.fresh} head=${(t) => head(t, 'Space views', 'spaceviews')} />`;
   else if (asked === 'spaceviews') body = html`<${TabsPage} key="space" store=${store} space=${null} head=${(t) => head(t, title)} />`;
@@ -80,10 +76,6 @@ export function SettingsPanel({ store, phone }) {
       <${FeedPage} store=${store} head=${section('feed', 'Feed', focus)} />
       <${SnoozePage} store=${store} head=${section('snooze', 'Snooze times', focus)} />`;
   else if (page === 'accounts') body = html`<${RoutingPage} store=${store} head=${html`${head(title)}${section('routing', 'Routing', focus)}`} />`;
-  else
-    body = html`${head(title)}
-      <${FlagsPage} store=${store} head=${section('flags', 'Flags', focus)} />
-      ${stages ? html`<${StagesPage} store=${store} head=${section('stages', 'Stage order', focus)} />` : null}`;
 
   return html`<div class="scrim stg-scrim" onClick=${close}>
     <div class=${`stg${phone ? ' phone' : ''}`} role="dialog" aria-modal="true" aria-label="Settings" onClick=${(e) => e.stopPropagation()}>
@@ -163,21 +155,6 @@ function FeedPage({ store, head }) {
     </div>`;
 }
 
-/** Features the owner is trying the desk without (desk/flags.ts): off hides them, and on brings them back as they were. */
-function FlagsPage({ store, head }) {
-  const { state } = store;
-  const [error, setError] = useState(null);
-  const save = async (patch) => setError(await store.saveFlags(patch));
-  return html`${head}
-    <p class="stg-hint">A feature switched off here is hidden, not deleted: switch it back on and it shows as it was.</p>
-    ${error ? html`<p class="warn" role="alert">${error}</p>` : null}
-    <div class="stg-group">
-      <div class="stg-row">
-        <div class="stg-k"><b>Stage labels</b><small>Discovery, Building and Feedback on rows and threads, in menus and filters, and grouping by stage. Threads keep their stage while it’s off</small></div>
-        <${Seg} label="Stage labels" options=${[[false, 'Off'], [true, 'On']]} value=${!!state.flags?.stageLabels} onChange=${(stageLabels) => save({ stageLabels })} />
-      </div>
-    </div>`;
-}
 
 /** What each open window is for: this one first, then every other one connected now. */
 function WindowsPage({ store, head }) {
@@ -211,30 +188,6 @@ function WindowsPage({ store, head }) {
     </div>`;
 }
 
-function StagesPage({ store, head }) {
-  const [error, setError] = useState(null);
-  const order = labelOrderOf(store.state.labelOrder);
-  // Shown in its new order while the desk saves it.
-  const [pending, setPending] = useState(null);
-  useEffect(() => setPending(null), [store.state.labelOrder]);
-  const keys = pending || order;
-  const save = async (next) => {
-    setPending(next);
-    const err = await store.saveLabelOrder(next);
-    setError(err);
-    if (err) setPending(null);
-  };
-  const isDefault = keys.every((key, i) => key === SECTION_KEYS[i]);
-  return html`${head}
-    <p class="stg-hint">The order of the sections in a tab grouped by stage. Pinned stays on top.</p>
-    ${error ? html`<p class="warn" role="alert">${error}</p>` : null}
-    <div class="stg-group">
-      <${ReorderList} label="Stage order" keys=${keys} name=${sectionName} onMove=${save} row=${(key) => html`<span class="ro-name">${sectionName(key)}</span>`} />
-    </div>
-    <div class="stg-foot">
-      <button class="linkish" disabled=${isDefault} onClick=${() => save([...SECTION_KEYS])}>Reset to the default order</button>
-    </div>`;
-}
 
 function ProjectsPage({ store, head }) {
   const { state } = store;

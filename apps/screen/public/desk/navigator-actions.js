@@ -1,6 +1,7 @@
 // A deliberately smaller vocabulary than the Discord operator. No arbitrary command payloads.
-export const NAVIGATOR_OPS = ['open', 'tab', 'view', 'space', 'page', 'back', 'seen', 'unseen', 'snooze', 'done', 'pin', 'unpin'];
+export const NAVIGATOR_OPS = ['app', 'open', 'tab', 'view', 'space', 'page', 'back', 'seen', 'unseen', 'snooze', 'done', 'pin', 'unpin'];
 export function validNavigatorAction(a) {
+  if (a?.op === 'app') return typeof a.id === 'string' && a.id.length > 0 && a.id.length <= 256 && Object.keys(a).every(k => ['op', 'id'].includes(k));
   if (!a || !NAVIGATOR_OPS.includes(a.op) || typeof a.target !== 'string' || a.target.length > 256) return false;
   if (Object.keys(a).some(k => !['op', 'target', 'when'].includes(k))) return false;
   if (a.op === 'back') return a.target === '' && a.when === undefined;
@@ -10,5 +11,5 @@ export function validNavigatorAction(a) {
   return !!a.target && a.when === undefined;
 }
 export function sameNavigatorAction(a, b) {
-  return validNavigatorAction(a) && validNavigatorAction(b) && a.op === b.op && a.target === b.target && a.when === b.when;
+  return validNavigatorAction(a) && validNavigatorAction(b) && a.op === b.op && a.id === b.id && a.target === b.target && a.when === b.when;
 }

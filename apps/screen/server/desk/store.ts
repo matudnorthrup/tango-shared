@@ -29,6 +29,7 @@ const ITEM_COLUMNS: Record<string, string> = {
   area: 'TEXT',
   channel_id: 'TEXT',
   thread_id: 'TEXT',
+  // The stage field in facts is retired; existing stored values are preserved.
   facts: "TEXT NOT NULL DEFAULT '{}'",
   summary: 'TEXT',
   prs: "TEXT NOT NULL DEFAULT '[]'",
@@ -81,6 +82,12 @@ function json<T>(text: string | null | undefined, fallback: T): T {
   }
 }
 
+export function readItemFacts(raw: string): DeskItemRow['facts'] {
+  const facts = json<Record<string, unknown>>(raw, {});
+  delete facts.stage;
+  return facts;
+}
+
 type Row = Record<string, string | number | null>;
 
 function toItemRow(row: Row): DeskItemRow {
@@ -95,7 +102,7 @@ function toItemRow(row: Row): DeskItemRow {
     area: (row.area as string | null) ?? null,
     channelId: (row.channel_id as string | null) ?? null,
     threadId: (row.thread_id as string | null) ?? null,
-    facts: json(row.facts as string, {}),
+    facts: readItemFacts(row.facts as string),
     summary: json(row.summary as string | null, null),
     artifacts: json(row.artifacts as string, []),
     prs: json(row.prs as string, []),
@@ -321,7 +328,13 @@ export class DeskStore {
     for (const [key, value] of Object.entries(patch)) {
       const spec = PATCHABLE[key];
       if (!spec || value === undefined) continue;
-      const stored: SQLInputValue = spec.json ? (value === null ? null : JSON.stringify(value)) : spec.bool ? (value ? 1 : 0) : (value as SQLInputValue);
+      let stored: SQLInputValue = spec.json ? (value === null ? null : JSON.stringify(value)) : spec.bool ? (value ? 1 : 0) : (value as SQLInputValue);
+      if (key === 'facts') {
+        stored = this.db.prepare(`SELECT CASE WHEN json_type(facts, '$.stage') IS NULL
+          THEN json_remove(?, '$.stage')
+          ELSE json_set(json_remove(?, '$.stage'), '$.stage', json_extract(facts, '$.stage')) END AS value
+          FROM desk_items WHERE id = ?`).get(stored, stored, id)!.value as string;
+      }
       if (current[spec.column] === stored) continue;
       sets.push(`${spec.column} = ?`);
       values.push(stored);

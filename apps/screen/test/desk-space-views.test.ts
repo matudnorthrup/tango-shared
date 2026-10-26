@@ -1,3 +1,6 @@
+import { Hono } from 'hono';
+import { registerDeskRoutes } from '../server/desk/routes.js';
+import { makeHarness } from './desk-harness.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parseSpaceViews, readSpaceViews } from '../server/desk/space-views.js';
 import { parseSpaces } from '../server/desk/spaces.js';
@@ -24,7 +27,7 @@ describe('saved space views', () => {
     }
   });
   it('uses one set for every project and agent, else the built-ins (owner, 10/19)', () => {
-    expect(spaceViewDefs({})).toBe(SPACE_VIEWS);
+    expect(spaceViewDefs({})).toEqual(SPACE_VIEWS);
     expect(spaceViewDefs({ spaceViews: [view] })).toEqual([view]);
     expect(spaceViewDefs({ spaceViews: [view], spaces: { 'project:p': { views: [{ ...view, name: 'Only here' }] } } })).toEqual([view]);
   });
@@ -44,9 +47,9 @@ describe('saved space views', () => {
     expect(spaceViews(rows, [], [defs[1]])[0].items).toEqual([]);
     expect(spaceViews(rows, [], [{ ...view, where: { future: { in: ['x'] } } }])[0].items).toEqual([]);
   });
-  it('leads custom views with matching defaults and honors stage grouping', () => {
+  it('leads custom views with matching defaults and honors status grouping', () => {
     const lead = item('lead', 'idle', 'default');
-    const defs = [{ ...view, where: { kind: { not: ['worker'] } }, group: 'stage' }];
+    const defs = [{ ...view, where: { kind: { not: ['worker'] } }, group: 'status' }];
     const views = spaceViews([item('ask'), lead], [], defs);
     expect(spaceGroups(views[0], views[0].items)[0]).toMatchObject({ key: 'default', items: [lead] });
   });
@@ -87,9 +90,9 @@ describe('saved space views', () => {
 });
 
 describe('space layout and shared saves', () => {
-  it('honors hidden status sections even when the first view groups by stage', () => {
+  it('honors hidden status sections even when the first view groups by status', () => {
     const rows = [item('failure', 'failed'), item('idle', 'idle')];
-    const def = { ...view, group: 'stage' };
+    const def = { ...view, group: 'status' };
     expect(spaceGroups(def, rows, Date.now(), ['failed']).flatMap((g: any) => g.items).map((i: any) => i.id)).toEqual(['idle']);
     expect(spaceGroups(def, rows).flatMap((g: any) => g.items)).toHaveLength(2);
   });
@@ -104,9 +107,6 @@ describe('space layout and shared saves', () => {
 });
 
 it('persists and broadcasts validated space views through settings HTTP without changing Inbox tabs', async () => {
-  const { Hono } = await import('hono');
-  const { registerDeskRoutes } = await import('../server/desk/routes.js');
-  const { makeHarness } = await import('./desk-harness.js');
   const h = makeHarness();
   const app = new Hono();
   registerDeskRoutes(app, { core: h.core, scenes: () => [], keepAliveMs: 20 });

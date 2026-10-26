@@ -1,4 +1,4 @@
-// A list the owner puts in order (Settings → Tabs, Stage order): drag a row by its handle (mouse or
+// A list the owner puts in order (Settings → Tabs): drag a row by its handle (mouse or
 // touch) or use its arrows. Every reorderable list in the desk uses this one, so they all move alike:
 //   pick up  the row lifts (raised, a shadow, a little larger) under the pointer;
 //   move     it follows the pointer, and the rows it passes slide aside to open its new slot;

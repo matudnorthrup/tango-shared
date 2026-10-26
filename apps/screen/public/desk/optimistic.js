@@ -34,7 +34,7 @@ export function inList(item, view) {
 
 const PASSIVE_SEEN = new Set(['viewed', 'heard', 'briefed', 'post']); // desk/attention.ts
 const facts = (item, patch) => ({ ...item, facts: { ...(item.facts || {}), ...patch } });
-const STAGE_PREFIX = /^(epic|disc|bug|fix|feat|enh|chore|ops|skill|watch|hold):\s*/i;
+const OLD_PREFIX = /^(epic|disc|bug|fix|feat|enh|chore|ops|skill|watch|hold):\s*/i;
 /** A Loom thread's place is "<project> · <title>": the title part, without a label prefix. */
 const titleOf = (place) => String(place || '').split(' · ').slice(1).join(' · ');
 const whereOf = (place) => String(place || '').split(' · ')[0];
@@ -137,7 +137,7 @@ export function predict(type, item, args = {}, ctx = {}) {
       return { ...item, seen: 'new', status: item.status ? { ...item.status, unread: true } : item.status };
     case 'label': {
       const label = args.label || null;
-      if (isSource(item)) return { ...item, place: `${whereOf(item.place)} · ${label ? `${label}: ` : ''}${titleOf(item.place).replace(STAGE_PREFIX, '')}` };
+      if (isSource(item)) return { ...item, place: `${whereOf(item.place)} · ${label ? `${label}: ` : ''}${titleOf(item.place).replace(OLD_PREFIX, '')}` };
       return facts(item, { listLabel: label });
     }
     case 'rename': {
@@ -162,21 +162,13 @@ export function predict(type, item, args = {}, ctx = {}) {
     }
     case 'tag': {
       const patch = {};
-      if ('stage' in args) patch.stage = args.stage || null;
       if ('type' in args) patch.type = args.type || null;
-      const next = facts(item, patch);
-      // Moving Active work to Feedback is the owner parking it until the agent posts (desk/core.ts): a full park,
-      // read, and its own (a project's hold on it ends). Held by a project counts as active underneath (Codex review on #671).
-      const active = (item.disposition ?? 'active') === 'active' || !!item.heldBy;
-      const toFeedback = args.stage === 'feedback' && item.facts?.stage !== 'feedback' && active;
-      return toFeedback ? predict('park', next) : next;
+      return facts(item, patch);
     }
     case 'watch': {
       const others = (item.facts?.prWatches || []).filter((w) => String(w.url).toLowerCase() !== String(args.url).toLowerCase());
       const prWatches = args.off ? others : [...others, { url: args.url, at: Date.now(), by: 'screen' }];
-      const stage = item.facts?.stage ?? null;
-      const toFeedback = !args.off && (stage === null || stage === 'discovery' || stage === 'building');
-      return facts(item, { prWatches: prWatches.length ? prWatches : null, ...(toFeedback ? { stage: 'feedback' } : {}) });
+      return facts(item, { prWatches: prWatches.length ? prWatches : null });
     }
     case 'respond':
       // A brief the row carries from another thread (desk/asks.ts carryBriefs): answered there, so this row only

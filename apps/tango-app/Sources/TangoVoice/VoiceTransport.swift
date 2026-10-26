@@ -75,12 +75,13 @@ public enum VoiceRequests {
     public func prepareCapture(_ address: DeskAddress, permission: () async throws -> Bool) async throws -> VoiceTarget? {
         let expected = socket
         do {
+            guard try await permission() else { throw DeskError.refused("Microphone access is denied. Open Privacy Settings to enable it.") }
+
             let id = try VoiceTarget.optionalPresentation(await get(address.endpoint("api/desk/presentation")))
             let target: VoiceTarget?
             if let id {
                 target = try VoiceTarget.optionalTarget(id: id, detail: await get(address.endpoint("api/desk/items").appendingPathComponent(id)))
             } else { target = nil }
-            guard try await permission() else { throw DeskError.refused("Microphone access is denied. Open Privacy Settings to enable it.") }
             return target
         } catch {
             // A late failure from an older attempt must not close its replacement.

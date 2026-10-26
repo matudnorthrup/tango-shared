@@ -65,6 +65,10 @@ const MIGRATIONS: string[] = [
   `,
   // A recovery the flap guard held back, retried by the tick once the window passes.
   `ALTER TABLE incidents ADD COLUMN held_recovery_at TEXT;`,
+  // An explicit repair request can cover several checks, and survive a regression.
+  `CREATE TABLE incident_owner_waits(
+    fingerprint TEXT PRIMARY KEY, item_id TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1
+  );`,
 ];
 
 function migrate(db: DatabaseSync): void {

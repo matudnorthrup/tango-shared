@@ -88,8 +88,7 @@ struct ClientMenu: View {
             Text("Destination: \(voice.session.active ? (voice.session.target?.title ?? store.destination) : store.destination)")
             Text(store.endpoint.isEmpty ? "No desk configured" : store.endpoint).font(.caption).textSelection(.enabled)
             Text(voice.session.active ? voice.session.message : (voice.live.armed ? "Live mic armed" : "Microphone off")).font(.caption)
-            Text("Live mic is unavailable until remote validation is complete.").font(.caption)
-            if let error = voice.settingsError { Text(error).foregroundStyle(.orange).font(.caption) }
+            LiveMicMenuControl()
             Button("Refresh connection") { Task { await store.refresh() } }.disabled(store.checking)
             Divider()
             RecentDictations()

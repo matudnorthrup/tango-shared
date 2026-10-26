@@ -1,3 +1,4 @@
+import { loadApps } from './app-list.js';
 import { navigatorContext, executeNavigator } from './navigator-context.js';
 
 /** No microphone: this connection only offers the current catalog and executes confirmed tickets. */
@@ -35,7 +36,9 @@ export function startNavigatorBridge(store, { name = 'Desk window' } = {}) {
   // Coalesce store churn; heartbeats keep background owner windows eligible.
   let queued;
   const unsubscribe = store.subscribe(() => { clearTimeout(queued); queued = setTimeout(update, 150); });
-  const heartbeat = setInterval(update, 10_000);
+  const refreshApps = () => { void loadApps().then(() => { if (!stopped) update(); }); };
+  const heartbeat = setInterval(() => { update(); refreshApps(); }, 10_000);
+  refreshApps();
   window.addEventListener('focus', focus); window.addEventListener('blur', blur);
   window.addEventListener('pointerdown', focus); window.addEventListener('keydown', focus);
   connect();

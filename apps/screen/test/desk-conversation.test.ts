@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 // @ts-expect-error plain browser module, no types
 import { createStore } from '../public/desk/store.js';
 // @ts-expect-error plain browser module, no types
-import { Needs } from '../public/desk/conversation.js';
+import { ConversationStack, Needs } from '../public/desk/conversation.js';
 import { DraftBoard, parseDraftCard } from '../server/desk/draft.js';
 import { clipMessage, fallbackSummary, parseModelSummary, validQuestions } from '../server/desk/summarize.js';
 import { headline, latestReply, sinceOwner, threadBeats } from '../server/desk/view.js';
@@ -136,6 +136,39 @@ describe('latestReply', () => {
   });
 });
 
+describe('conversation stack first answer', () => {
+  const first = { at: 1, messageIds: ['a1'], text: '**Opening answer.**\n\nAll the details.', headline: 'Opening answer.', attachments: [{ url: '/example.png' }] };
+  const latest = { at: 2, messageIds: ['a2'], text: 'Newer report.' };
+  function stack(report: typeof latest | null) {
+    return ConversationStack({
+      window: { owner: { messageId: 'o1', at: 0, text: 'Explain it.' }, first, latest: report, updates: [], acks: [] },
+      item: { id: 'i1' }, d: {}, store: { state: { now: 1000, ownerReceipts: [] } },
+    }).props.children.flat().filter(Boolean);
+  }
+
+  it('folds the first answer with its headline, full markdown and thumbnails when a newer report exists', () => {
+    const rows = stack(latest);
+    const answer = rows[1];
+    expect(answer.type).toBe('details');
+    expect(answer.props.open).toBeUndefined();
+    expect(answer.props.class).toContain('rd-report-update');
+    expect(JSON.stringify(answer.props.children[0])).toContain('First answer');
+    expect(JSON.stringify(answer.props.children[0])).toContain(first.headline);
+    expect(JSON.stringify(answer)).toContain(first.text.replaceAll('\n', '\\n'));
+    expect(JSON.stringify(answer)).toContain('/example.png');
+    expect(rows[2].type).toBe('article');
+    expect(rows[2].props.class).toContain('rd-report-latest');
+  });
+
+  it('keeps the only answer full and marked as latest', () => {
+    const answer = stack(null)[1];
+    expect(answer.type).toBe('article');
+    expect(answer.props.class).toContain('rd-report rd-report-latest');
+    expect(JSON.stringify(answer)).toContain('rd-report-agent');
+    expect(JSON.stringify(answer)).not.toContain('First answer');
+  });
+});
+
 describe('since the owner last spoke', () => {
   it('keeps the conversation window through the real client store and clears it for older responses', async () => {
     const window = sinceOwner(turnsOf([msg('owner', 'owner', 'Which?', 0), msg('answer', 'agent', long('The answer.'), 1)]));
@@ -153,6 +186,7 @@ describe('since the owner last spoke', () => {
       msg('choice', 'agent', 'The Alpine.', 1), msg('reason', 'agent', 'It saves $649.', 2),
       msg('question', 'agent', 'Want me to order it?', 3)]))!;
     expect(window.first?.messageIds).toEqual(['choice', 'reason', 'question']);
+    expect(window.first?.headline).toBe('The Alpine.');
     expect(window.latest).toBeNull();
   });
 
@@ -406,5 +440,50 @@ describe('conversation detail window', () => {
       expect(d.sinceOwner?.acks).toHaveLength(131);
       expect(d.reply?.messageIds).toEqual(['late-129']);
     } finally { h.close(); }
+  });
+});
+
+
+it('gives each phone-note action card its own component identity', () => {
+  const card = (noteId: string) => Needs({ item: { facts: { phoneNote: { noteId } } }, store: {} });
+  expect(card('first').key).toBe('first');
+  expect(card('second').key).toBe('second');
+});
+
+
+describe('labelled replies', () => {
+  const phased = (id: string, text: string, phase: 'note' | 'answer', runId = 'one') => ({ ...msg(id, 'agent', text, 2), meta: { phase, runId } });
+  it('keeps short answers and unknown text while folding long notes in a labelled run', () => {
+    const reply = latestReply([phased('n', long('Working.'), 'note'), msg('unknown', 'agent', 'Unknown', 2), phased('a', 'Done.', 'answer')])!;
+    expect(reply.text).toBe('Unknown\n\nDone.'); expect(reply.messageIds).toEqual(['unknown', 'a']);
+    expect(reply.notes?.map(n => n.messageIds)).toEqual([['n']]);
+  });
+  it('retains a synthetic plan message in a labelled run', () => {
+    const plan = msg('plan:request-1', 'agent', '## Plan\n\nImplement and verify the change.', 3);
+    const messages = [phased('n', 'Checking.', 'note'), phased('a', 'Plan ready.', 'answer'), plan];
+    expect(latestReply(messages)).toMatchObject({
+      text: 'Plan ready.\n\n' + plan.text, messageIds: ['a', plan.messageId], notes: [{ messageIds: ['n'] }],
+    });
+    expect(sinceOwner(turnsOf([msg('owner', 'owner', 'Make a plan.', 1), ...messages]))?.first?.text).toContain(plan.text);
+  });
+  it('uses the last note as the reply when only notes exist', () => {
+    expect(latestReply([phased('n1', 'Checking.', 'note'), phased('n2', 'Still working.', 'note')])).toMatchObject({ text: 'Still working.', messageIds: ['n2'], notes: [{ messageIds: ['n1'] }] });
+    expect(latestReply([phased('n', 'Working.', 'note')])).toMatchObject({ text: 'Working.', messageIds: ['n'], notes: [] });
+  });
+  it('shows a pending null message after a resolved note', () => {
+    expect(latestReply([phased('n', 'Checking.', 'note'), { ...msg('pending', 'agent', 'Current answer.', 3), meta: { phase: null } }])).toMatchObject({ text: 'Current answer.', messageIds: ['pending'], notes: [{ messageIds: ['n'] }] });
+  });
+  it('keeps images in the answer even when their message is labelled a note', () => {
+    const attachments = [{ url: '/chart.png', name: 'chart.png', mimeType: 'image/png' }];
+    expect(latestReply([phased('n', 'Checking.', 'note'), { ...phased('image', 'Chart.', 'note'), attachments }, phased('a', 'Done.', 'answer')])).toMatchObject({ text: 'Chart.\n\nDone.', messageIds: ['image', 'a'], attachments, notes: [{ messageIds: ['n'] }] });
+  });
+  it('uses labels per turn and retains legacy reports and short check-ins', () => {
+    const window = sinceOwner(turnsOf([msg('owner', 'owner', 'Explain', 1), phased('n', long('Working.'), 'note'), phased('a', long('Answer.'), 'answer'),
+      { ...msg('legacy', 'agent', long('Legacy report.'), 3), meta: { wake: { run: 'two' } } },
+      { ...phased('check-note', long('More work.'), 'note', 'three'), at: 4, meta: { phase: 'note' as const, wake: { run: 'three' } } },
+      { ...phased('check', 'Checked.', 'answer', 'three'), at: 5, meta: { phase: 'answer' as const, wake: { run: 'three' } } },
+    ]))!;
+    expect(window.first?.messageIds).toEqual(['a']); expect(window.first?.notes).toHaveLength(1);
+    expect(window.latest?.messageIds).toEqual(['legacy']); expect(window.acks[0]?.text).toBe('Checked.'); expect(window.acks[0]?.notes).toHaveLength(1);
   });
 });

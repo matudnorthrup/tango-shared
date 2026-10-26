@@ -116,6 +116,7 @@ export interface MessageRow {
   created_at: number;
   /** JSON MessageOrigin, or null for the owner's own words (and every assistant message). */
   origin?: string | null;
+  phase?: "note" | "answer" | null;
 }
 
 /**
@@ -446,6 +447,7 @@ export class LoomStore {
     )`);
     // Where a user-role message came from (JSON MessageOrigin; null: the owner), added 10/16.
     const messageColumns = this.db.prepare("PRAGMA table_info(messages)").all() as { name: string }[];
+    if (!messageColumns.some((c) => c.name === "phase")) this.db.exec("ALTER TABLE messages ADD COLUMN phase TEXT");
     if (!messageColumns.some((c) => c.name === "origin")) this.db.exec("ALTER TABLE messages ADD COLUMN origin TEXT");
     // A steer into a running turn: 'pending' until its host confirms it, then 'delivered' (added with session hosts).
     if (!messageColumns.some((c) => c.name === "delivery")) this.db.exec("ALTER TABLE messages ADD COLUMN delivery TEXT");
@@ -787,13 +789,19 @@ export class LoomStore {
     this.db.prepare("UPDATE decision_deliveries SET acknowledged_at=? WHERE run_id=? AND acknowledged_at IS NULL").run(this.now(), runId);
   }
 
-  addMessage(threadId: string, runId: string | null, role: "user" | "assistant", text: string, origin: MessageOrigin | null = null, createdAt?: number): MessageRow {
-    const id = randomUUID();
+  addMessage(threadId: string, runId: string | null, role: "user" | "assistant", text: string, origin: MessageOrigin | null = null, createdAt?: number, phase: "note" | "answer" | null = null, id: string = randomUUID()): MessageRow {
     this.db
-      .prepare("INSERT INTO messages (id, thread_id, run_id, role, text, created_at, origin) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run(id, threadId, runId, role, text, createdAt ?? this.now(), origin ? JSON.stringify(origin) : null);
+      .prepare("INSERT INTO messages (id, thread_id, run_id, role, text, created_at, origin, phase) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+      .run(id, threadId, runId, role, text, createdAt ?? this.now(), origin ? JSON.stringify(origin) : null, phase);
     this.change(threadId, "message", id);
     return this.db.prepare("SELECT * FROM messages WHERE id = ?").get(id) as unknown as MessageRow;
+  }
+
+  setMessagePhase(threadId: string, runId: string, messageIds: string[], phase: "note" | "answer"): void {
+    for (const id of messageIds) {
+      const changed = this.db.prepare("UPDATE messages SET phase=? WHERE id=? AND thread_id=? AND run_id=? AND role='assistant'").run(phase, id, threadId, runId);
+      if (changed.changes) this.change(threadId, "message", id);
+    }
   }
 
   // Images on messages (bytes on disk, see attachments.ts)

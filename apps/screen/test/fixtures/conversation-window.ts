@@ -15,3 +15,16 @@ export function seedConversationWindow(core: DeskCore, now: number) {
   }
   core.recordMessage(id, { messageId: 'window-ack', author: 'agent', at: now + 30, text: 'The worker’s closing report matches my last update. Nothing else is needed.', meta: { wake: { run: 'window-ack-run' } } });
 }
+
+
+/** A labelled run beside a legacy update, used by sandbox browser checks. */
+export function seedLabelledConversation(core: DeskCore, now: number) {
+  const id = 'loom:labelled-conversation-fixture';
+  core.store.createItem({ id, source: 'loom', kind: 'thread', conversationKey: id, agentId: 'helper', agentName: 'Helper', place: 'Answer and working notes' });
+  core.recordMessage(id, { messageId: 'label-owner', author: 'owner', at: now, text: 'Does the reply keep the answer separate from the working notes?' });
+  core.recordMessage(id, { messageId: 'label-note', author: 'agent', at: now + 1, text: 'I will trace the message labels, then check both conversation layouts.', meta: { phase: 'note', runId: 'label-first' } });
+  core.recordMessage(id, { messageId: 'label-note-2', author: 'agent', at: now + 2, text: 'The runtime now preserves the source label. I am checking older conversations next.', meta: { phase: 'note', runId: 'label-first' } });
+  core.recordMessage(id, { messageId: 'label-answer', author: 'agent', at: now + 3, text: 'Yes. The reply shows the answer, with working notes available in a folded line below. Older conversations keep their existing selection rule.\n\nThe same layout is used in both views: your message sits in a light card and the answer has no colored side rule.', meta: { phase: 'answer', runId: 'label-first' } });
+  core.recordMessage(id, { messageId: 'label-update', author: 'agent', at: now + 4, text: 'The sandbox checks passed.\n\n' + detail.repeat(3), meta: { phase: 'answer', wake: { run: 'label-update' } } });
+  core.recordMessage(id, { messageId: 'label-ack', author: 'agent', at: now + 5, text: 'The final check is complete.', meta: { phase: 'answer', wake: { run: 'label-check' } } });
+}

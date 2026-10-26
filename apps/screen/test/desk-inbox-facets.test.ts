@@ -17,8 +17,7 @@ const row = (id: string, facts = {}, busy: string | null = null, seen = 'seen') 
 });
 const rows = [row('bug', { type: 'bug', projectId: 'p', pinned: true }, 'background', 'new'), row('feature', { type: 'feat', role: 'default' }, 'working'), row('idle'), row('other', { type: 'bug', agentSpace: { id: 'helper', name: 'Helper' } })];
 const base = { id: 'all', name: 'All', status: ['active'], group: 'none', sort: 'recent', fold: false };
-// Stage-pick coverage runs with the feature enabled; flag-off behavior has its own regressions.
-const state = { flags: { stageLabels: true }, lists: { active: { loaded: true, items: rows }, history: { loaded: true, items: [] }, snoozed: { loaded: true, items: [] } }, projects, listViews: [base], nextRoute: { page: 'inbox', view: 'all' }, now: 1 };
+const state = { lists: { active: { loaded: true, items: rows }, history: { loaded: true, items: [] }, snoozed: { loaded: true, items: [] } }, projects, listViews: [base], nextRoute: { page: 'inbox', view: 'all' }, now: 1 };
 const ids = (items: any[]) => items.map((i) => i.id).sort();
 
 describe('Inbox filter facets', () => {
@@ -51,13 +50,6 @@ describe('Inbox filter facets', () => {
   });
 });
 
-describe('the stage labels flag', () => {
-  it('a tab grouped by stage shows by live state while the flag is off, and by stage again when it is on', () => {
-    const groupOf = (flags?: object) => inboxViews({ ...state, listViews: [{ ...base, group: 'stage' }], flags }).find((v: any) => v.view.id === 'all').view.group;
-    expect(groupOf()).toBe('live');
-    expect(groupOf({ stageLabels: true })).toBe('stage');
-  });
-});
 
 describe('saved filter membership and validation', () => {
   it('can save from every built-in tab, including To-dos', () => {
@@ -76,7 +68,7 @@ describe('saved filter membership and validation', () => {
   });
   it('preserves exactly the shown ids through save, server parsing, normalization and voice', () => {
     const views = [base, { ...base, type: ['bug'] }, { ...base, where: { disposition: { in: ['snoozed'] } } }, { ...base, stage: ['none'] }, { ...base, inProject: 'some' }, { ...base, inProject: 'none' }, { ...base, workspace: ['REPO'] }, { ...base, agent: ['Helper-CLASSIC'] }, { ...base, busy: ['working', 'none'] }, { ...base, where: { type: { not: ['bug'] }, busy: { unset: false } } }];
-    const picks = [{ busy: ['background'], type: ['bug'] }, { type: ['feat'] }, { type: [NONE] }, { type: ['bug', NONE] }, { project: [NONE] }, { project: ['p', NONE] }, { stage: [NONE] }, { busy: [NONE] }, { kind: ['thread'], pinned: ['true'], unread: ['true'], space: ['project:p'] }, { repo: ['repo'] }, { agent: ['helper'] }];
+    const picks = [{ busy: ['background'], type: ['bug'] }, { type: ['feat'] }, { type: [NONE] }, { type: ['bug', NONE] }, { project: [NONE] }, { project: ['p', NONE] }, { busy: [NONE] }, { kind: ['thread'], pinned: ['true'], unread: ['true'], space: ['project:p'] }, { repo: ['repo'] }, { agent: ['helper'] }];
     for (const view of views) for (const filter of picks) {
       const before = inboxViews({ ...state, listViews: [view] }).find((v: any) => v.view.id === view.id).items;
       const expected = ids(applyFilter(before, filter, projects));
@@ -116,7 +108,7 @@ it('saves shared tabs before clearing device picks and switching; failure and a 
 it('keeps an empty saved filter empty instead of substituting completed work', () => {
   const done = { ...rows[0], id: 'done-bug', disposition: 'done', doneAt: Date.now() };
   const s = { ...state, now: Date.now(), lists: { ...state.lists, active: { loaded: true, items: [] }, history: { loaded: true, items: [done] } } };
-  const filter = { stage: ['building'] };
+  const filter = { repo: ['other-repo'] };
   expect(nextListReport({ ...s, nextFilter: filter }).rows).toEqual([]);
   const saved = filteredView(base, filter, [base], 'Bugs');
   const parsed = parseListViews([saved]);

@@ -15,6 +15,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { hydratePath } from "./env.js";
 import { AUTOMATIC_SETTLE_MS, LoomHost, ROLE_MODELS } from "./host.js";
+import { stall } from "./stall.js";
 import { createLoomServer } from "./http.js";
 import { processStart, reapOrphans } from "./proc.js";
 import { QuotaHistory } from "./forecast.js";
@@ -152,15 +153,17 @@ async function main(): Promise<void> {
   const server = createLoomServer(host, { token });
   server.listen(config.port, "127.0.0.1", () => {
     console.log(
-      `[loom] release=${process.env.LOOM_RELEASE} listening on 127.0.0.1:${config.port} state=${config.home} providers=${Object.keys(runtimes).join(",") || "none"} reaped=${reaped} ` +
+      `[loom] ${new Date().toISOString()} release=${process.env.LOOM_RELEASE} listening on 127.0.0.1:${config.port} state=${config.home} providers=${Object.keys(runtimes).join(",") || "none"} reaped=${reaped} ` +
         `interrupted=${recovered.interrupted} continued=${recovered.continued} asks=${asks}`,
     );
   });
 
   const compactTimer = setInterval(() => store.compact(), COMPACT_EVERY_MS);
+  stall.start();
   const shutdown = async (signal: string) => {
-    console.log(`[loom] ${signal}: shutting down`);
+    console.log(`[loom] ${signal} ${new Date().toISOString()}: shutting down`);
     clearInterval(compactTimer);
+    stall.stop();
     stopUsage();
     server.close();
     await host.detachAll();

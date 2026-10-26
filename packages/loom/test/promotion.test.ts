@@ -9,6 +9,12 @@ import { createWorktree, parkWorktree } from "../src/git.js";
 import { FakeRuntime } from "./fake-runtime.js";
 const roots: string[] = [], hosts: LoomHost[] = [];
 afterEach(async () => { await Promise.all(hosts.splice(0).map(h => h.closeAll())); for (const p of roots.splice(0)) rmSync(p, { recursive: true, force: true }); vi.unstubAllEnvs(); });
+// Drain the dispatch queued by the fake runtime event, including promotion interrupt.
+// Do not poll for 1 second while real Git allocation is still in flight.
+async function dispatched(host: LoomHost, id: string) {
+  await Promise.resolve();
+  await host["inMailbox"](id, async () => {});
+}
 function repo() {
   const root = mkdtempSync(join(tmpdir(), "loom-promote-")); roots.push(root);
   const git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -28,11 +34,13 @@ describe("Auto promotion", () => {
     old.emit({ type: "session.native", nativeSessionId: "old-session" });
     old.emit({ type: "worktree.promote", runId: old.currentRun });
     old.emit({ type: "worktree.promote", runId: old.currentRun });
-    await vi.waitFor(() => expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`"));
+    await dispatched(host, id);
+    expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`");
     expect(old.interrupted).toBe(1); expect(allocate).not.toHaveBeenCalled();
     host.saveHandoff(id, { summary: "Need to edit tracked.txt", next: "retry denied edit" });
     old.complete("Saved");
-    await vi.waitFor(() => expect(runtime.sessions).toHaveLength(2));
+    await dispatched(host, id);
+    expect(runtime.sessions).toHaveLength(2);
     expect(old.closed).toBe(true); expect(allocate).toHaveBeenCalledTimes(1);
     expect(allocate).toHaveBeenCalledWith(root, id, { fromHead: true });
     const moved = store.thread(id)!;
@@ -61,15 +69,18 @@ describe("Auto promotion", () => {
     old.emit({ type: "session.native", nativeSessionId: "old" });
     await host.execute({ type: "submit", commandId: "queued", threadId: id, text: "Also check the note" });
     old.emit({ type: "worktree.promote", runId: old.currentRun });
-    await vi.waitFor(() => expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`"));
+    await dispatched(host, id);
+    expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`");
     old.complete("saved");
-    await vi.waitFor(() => expect(allocate).toHaveBeenCalledTimes(1));
+    await dispatched(host, id);
+    expect(allocate).toHaveBeenCalledTimes(1);
     expect(runtime.sessions).toHaveLength(1); expect(old.closed).toBe(true);
     expect(store.thread(id)!.cwd).toBe(root);
     expect(JSON.parse(store.thread(id)!.fresh!).worktree.stage).toBe("ready");
     expect(host.ledger.timeline(id).some((e: any) => e.kind === "worktree-promotion-failed")).toBe(true);
     await host.execute({ type: "submit", commandId: "retry", threadId: id, text: "Retry now" });
-    await vi.waitFor(() => expect(runtime.sessions).toHaveLength(2));
+    await dispatched(host, id);
+    expect(runtime.sessions).toHaveLength(2);
     expect(allocate).toHaveBeenCalledTimes(2); expect(runtime.last.options.worktreeMode).toBe("worktree");
     expect(old.turns.map(t => t.text)).not.toContain("Also check the note");
   });
@@ -91,14 +102,17 @@ describe("Auto promotion", () => {
     // Admission/budget can legitimately move an owner turn ahead of an automatic save.
     store.db.prepare("UPDATE runs SET position = -100 WHERE id = ?").run(owner.runId);
     old.complete("Denied edit");
-    await vi.waitFor(() => expect(old.turns.at(-1)?.text).toBe("Check progress"));
+    await dispatched(host, id);
+    expect(old.turns.at(-1)?.text).toBe("Check progress");
     expect(runtime.sessions).toHaveLength(1); expect(old.closed).toBe(false);
     expect(JSON.parse(store.thread(id)!.fresh!).worktree.stage).toBe("handoff");
     old.complete("Still guarded");
-    await vi.waitFor(() => expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`"));
+    await dispatched(host, id);
+    expect(old.turns.at(-1)?.text).toContain("Call `loom.save_handoff`");
     host.saveHandoff(id, { summary: "Saved from replacement session" });
     old.complete("Saved");
-    await vi.waitFor(() => expect(runtime.sessions).toHaveLength(2));
+    await dispatched(host, id);
+    expect(runtime.sessions).toHaveLength(2);
     expect(runtime.last.turns[0]!.text).toContain("Saved from replacement session");
     expect(runtime.last.options.worktreeMode).toBe("worktree");
     expect(store.thread(id)!.fresh_opt_out).toBe(1);

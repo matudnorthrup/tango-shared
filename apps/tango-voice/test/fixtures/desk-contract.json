@@ -336,7 +336,7 @@
       },
       "tag": {
         "policy": "silent",
-        "reason": "Desk stage and type tags have no voice command.",
+        "reason": "Desk type tags have no voice command.",
         "receipt": {
           "source": "server"
         }

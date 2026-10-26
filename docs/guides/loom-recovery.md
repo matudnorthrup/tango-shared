@@ -343,3 +343,65 @@ Stop this backup supervisor (SIGTERM also stops its Litestream child). Leave
 verified replicas and bundles intact. No coordinator restart or schema rollback
 is needed; the additive recovery tables can remain unused. Restore directories
 are inert evidence, not a second live Loom instance.
+
+## External namespace identity guard
+
+Install `namespace_guard.py` and `monitor.py` on the monitoring host, outside the
+remote backup root. This guard detects disappearance or replacement; it neither
+prevents deletion nor identifies the actor. It works even when the remote backup
+script is gone: a bounded SSH call sends a read-only Python probe directly.
+
+After verifying the active destination and its last published bundle, explicitly
+enroll it once (keep actual paths in private configuration):
+
+```sh
+python3 namespace_guard.py enroll PRIVATE_CONFIG /absolute/monitor/namespace.json
+```
+
+Enrollment writes a random `.recovery-identity` with exclusive creation in the
+existing active **destination**, and saves its expected hash, required tool hashes
+and last-good manifest hash on the monitoring host. It refuses an existing state
+or canary. No health check creates directories, replicas or canaries remotely.
+The initial enrollment needs a successful publication (`spool/last-good.json`).
+
+Wire every existing health tick to this entry point, using the same monitor-state
+file as before to preserve generic health notification deduplication:
+
+```sh
+python3 monitor.py PRIVATE_CONFIG \
+  --state /absolute/monitor/monitor-state.json \
+  --guard-state /absolute/monitor/namespace.json \
+  --backup-script /absolute/monitor/loom_backup.py \
+  --event-command /absolute/bin/tango-event
+```
+
+The guard runs independently before the backup status command, including when
+its health file is cached or the backup executable is missing. It checks the
+root, canary identity, both required tool hashes and the last published bundle's
+manifest. A mismatch latches first-failed time, last-seen time, last-good marker
+and observed hashes durably before delivering a separate critical
+`recovery.namespace_identity` event on `loom:recovery`. Failed event delivery
+retries; accepted delivery is recorded and subsequent ticks do not emit another
+event. Normal ledger reminder policy still applies. Generic health recoveries
+cannot resolve this incident. An SSH timeout is an unavailable reading, not proof
+of deletion, and goes through the existing generic health alarm.
+
+A manifest mismatch is confirmed under the publisher's `bundle.lock`, because
+remote retention can precede the local last-good pointer update. While a publisher
+holds that lock, manifest confirmation waits for a later tick; canary and tool
+checks continue, and the last-good observation is not advanced.
+
+A restored file or supervisor restart never clears the latch. A deliberate
+rotation or tooling upgrade also requires explicit guard maintenance: stop the
+health tick, preserve its state as evidence, verify the new target and tooling,
+and enroll using new state. If retaining the same destination, preserve and move
+its old canary aside explicitly before enrollment; never automate this step.
+Resolve the original incident only after inspection. A crash during enrollment
+may leave a canary without state: inspect and preserve it rather than retrying
+with an overwrite. The guard does not monitor its own host's failure; the
+existing process/health monitoring remains necessary.
+
+For scratch verification, `namespace_guard.py check CONFIG STATE` without
+`--event-command` returns the latched result without sending notifications.
+Use an isolated event sink to verify delivery retries and single-event behavior;
+never remove or replace the live canary for a test.

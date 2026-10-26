@@ -248,7 +248,7 @@ describe('the Inbox filter', () => {
   const items = [
     item({ id: 'a', facts: { type: 'bug', projectId: 'p1' } }),
     item({ id: 'b', facts: { type: 'feat' } }),
-    item({ id: 'c', source: 'loom', agentId: 'loom', area: 'tango', facts: { type: 'bug', stage: 'building' } }),
+    item({ id: 'c', source: 'loom', agentId: 'loom', area: 'tango', facts: { type: 'bug' } }),
   ];
   it('keeps what matches every facet with picks; none means no value', () => {
     expect(applyFilter(items, {}, projects).map((i: { id: string }) => i.id)).toEqual(['a', 'b', 'c']);

@@ -89,14 +89,20 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
     let release!: () => void;
     const gate = new Promise<void>(resolve => { release = resolve; });
     let blocked = false;
+    let entered!: () => void;
+    const started = new Promise<void>(resolve => { entered = resolve; });
     const spy = vi.spyOn(fs, "readdir").mockImplementation(async (...args: Parameters<typeof fs.readdir>) => {
-      if (String(args[0]) === realpathSync(f.path) && !blocked) { blocked = true; await gate; }
+      if (String(args[0]) === realpathSync(f.path) && !blocked) { blocked = true; entered(); await gate; }
       return original(...args);
     });
     const service = f.service({ ioTimeoutMs: 2000 });
+    // Let real I/O reach the injected stall before expiring its deadline.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
       const pending = service.reclaimScheduled(true);
-      const result = await Promise.race([pending, new Promise<null>(resolve => setTimeout(() => resolve(null), 10_000))]);
+      await started;
+      await vi.advanceTimersByTimeAsync(2000);
+      const result = await pending;
       expect(result?.plans[0]).toMatchObject({ action: "keep", reason: "inspect timed out" });
       expect(result?.inspectTimeouts).toBe(1);
       expect(blocked).toBe(true);
@@ -106,7 +112,7 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
       service["options"].ioTimeoutMs = 30_000;
       expect((await service.reclaimScheduled(true))?.plans[0]?.action).toBe("remove");
       expect(existsSync(f.path)).toBe(true);
-    } finally { release(); spy.mockRestore(); }
+    } finally { release(); spy.mockRestore(); vi.useRealTimers(); }
   });
 
   it("reads default disk pressure with one outstanding native request", async () => {
@@ -135,6 +141,27 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
       await expect(service.pressure(true, limits)).rejects.toThrow("inspect timed out");
       expect(reader).toHaveBeenCalledTimes(2);
     } finally { for (const release of releases) release(); }
+  });
+
+  it("keeps a row alive while dependency removal advances beyond both composite budgets", async () => {
+    const f = setup(); age(f);
+    mkdirSync(join(f.path, "node_modules"));
+    for (let i = 0; i < 40; i++) writeFileSync(join(f.path, "node_modules", `cache-${i}`), "cache");
+    const original = fs.unlink;
+    let advanced = 0;
+    const spy = vi.spyOn(fs, "unlink").mockImplementation(async path => {
+      await original(path);
+      if (String(path).includes("/node_modules/")) { advanced += 40; await vi.advanceTimersByTimeAsync(40); }
+    });
+    const service = f.service({ passTimeoutMs: 1000, ioTimeoutMs: 100 });
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const pass = await service.reclaim(false);
+      expect(advanced).toBe(1600);
+      expect(pass.inspectTimeouts).toBe(0);
+      expect(pass.plans[0]).toMatchObject({ action: "remove" });
+      expect(existsSync(f.path)).toBe(false);
+    } finally { spy.mockRestore(); vi.useRealTimers(); }
   });
 
   it.each(["missing", "mismatched"])("parks with a %s stamp and one outstanding native request", async stamp => {
@@ -184,13 +211,18 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
       if (String(args[0]).includes("/.pool/") && String(args[0]).endsWith("/node_modules")) { entered(); await gate; }
       return original(...args);
     });
+    // Let real Git reach the injected fault before advancing the watchdog.
+    // A short wall-clock budget can expire before parking on a busy CI runner.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
       const pass = service.reclaim(false);
       const outcome = pass.catch(error => error);
       await started;
       expect(existsSync(f.path)).toBe(false); // Fault is after the real git move.
-      await outcome;
+      await vi.advanceTimersByTimeAsync(2001);
+      expect(await outcome).toMatchObject({ message: "inspect timed out" });
       expect(mailboxHeld).toBe(true);
+      vi.useRealTimers();
       releaseRead();
       await done;
       expect(mailboxHeld).toBe(false);
@@ -205,7 +237,7 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
       service["options"].passTimeoutMs = 30_000;
       expect((await service.reclaim(false)).plans[0]).toMatchObject({ action: "remove" });
       expect((await service.reclaim(false)).plans.every(plan => plan.action === "unowned" || plan.action === "keep")).toBe(true);
-    } finally { releaseRead(); releaseSlot(); await pending; spy.mockRestore(); }
+    } finally { vi.useRealTimers(); releaseRead(); releaseSlot(); await pending; spy.mockRestore(); }
   });
 
   it("runs the default cwd check with one native I/O slot already occupied", async () => {
@@ -224,7 +256,26 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
     });
   });
 
-  it.each(["lifecycle", "pressure"])("%s watchdog logs heartbeats, abandons the pass and accepts a new pass", async mode => {
+  it("lets a progressing scheduled pass exceed the watchdog budget", async () => {
+    const f = setup();
+    const service = f.service({ passTimeoutMs: 100, ioTimeoutMs: 1000 });
+    vi.useFakeTimers();
+    try {
+      const pass = service.withPass("disk pressure", false, () => service["scheduleReclaim"](true, async () => {
+        for (let i = 0; i < 8; i++) {
+          await reclaimCall(() => new Promise<void>(resolve => setTimeout(resolve, 40)));
+        }
+        return "complete";
+      }));
+      const result = expect(pass).resolves.toBe("complete");
+      await vi.advanceTimersByTimeAsync(320);
+      await result;
+    } finally { vi.useRealTimers(); }
+  });
+
+  it.each([
+    ["lifecycle", true], ["lifecycle", false], ["pressure", true], ["pressure", false],
+  ] as const)("%s watchdog (dryRun=%s) logs heartbeats, abandons the pass and accepts a new pass", async (mode, dryRun) => {
     const f = setup(); age(f); outputs(f);
     let release!: () => void;
     const gate = new Promise<void>(resolve => { release = resolve; });
@@ -233,7 +284,7 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
       passTimeoutMs: 1000, ioTimeoutMs: 2000, heartbeatMs: 100, diskFree: async () => 10,
       mailbox: async (_id, work) => { if (stuck) await gate; return work(); },
     });
-    const run = () => mode === "lifecycle" ? service.reclaimScheduled(true) : service.pressure(true, pressureLimits);
+    const run = () => mode === "lifecycle" ? service.reclaimScheduled(dryRun) : service.pressure(dryRun, pressureLimits);
     try {
       await expect(run()).rejects.toThrow("inspect timed out");
       const entries = readFileSync(join(f.home, "reclaim.log"), "utf8").trim().split("\n").map(line => JSON.parse(line));
@@ -251,7 +302,7 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
       // Give the resumed mailbox a chance to hit its aborted context.
       await new Promise(resolve => setImmediate(resolve));
       expect(await run()).toBeDefined();
-      expect(existsSync(f.path)).toBe(true);
+      expect(existsSync(f.path)).toBe(mode !== "lifecycle" || dryRun);
     } finally { release(); }
   });
 
@@ -404,6 +455,67 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
     await f.service({ diskFree: async () => 10 }).pressure(false, { ...pressureLimits, maxTargets: 1 });
     expect(existsSync(join(f.path, ".turbo"))).toBe(false);
     expect(existsSync(join(f.path, "node_modules"))).toBe(true);
+  });
+  it.each(["tracked", "symlinked"])("does not invalidate %s yarn install state", async kind => {
+    const f = setup(); age(f, 100);
+    git(f.path, "commit", "-qm", "unmerged", "--allow-empty");
+    mkdirSync(join(f.path, "node_modules"));
+    writeFileSync(join(f.path, "node_modules/.loom-lock"), "keep");
+    const yarn = kind === "tracked" ? join(f.path, ".yarn") : join(f.root, "external-yarn");
+    mkdirSync(yarn); writeFileSync(join(yarn, "install-state.gz"), "keep");
+    if (kind === "tracked") {
+      git(f.path, "add", ".yarn/install-state.gz"); git(f.path, "commit", "-qm", "tracked state");
+    } else {
+      symlinkSync(yarn, join(f.path, ".yarn"));
+    }
+    const result = await f.service().reclaim(false);
+    expect(result.plans[0]!.reason).toContain("stamp invalidation refused");
+    expect(readFileSync(join(yarn, "install-state.gz"), "utf8")).toBe("keep");
+    expect(readFileSync(join(f.path, "node_modules/.loom-lock"), "utf8")).toBe("keep");
+    expect(f.store.thread(f.thread.id)!.worktree_shrunk_at).toBeNull();
+  });
+  it("restores workspace dependencies after an interrupted removal with a full pool", async () => {
+    const f = setup(); age(f);
+    writeFileSync(join(f.repo, "package.json"), JSON.stringify({ workspaces: ["apps/*"] }));
+    writeFileSync(join(f.repo, "package-lock.json"), "{}");
+    mkdirSync(join(f.repo, "apps/demo"), { recursive: true });
+    writeFileSync(join(f.repo, "apps/demo/package.json"), "{}");
+    writeFileSync(join(f.repo, ".gitignore"), "node_modules/\n.yarn/\n");
+    git(f.repo, "add", "."); git(f.repo, "commit", "-qm", "workspace");
+    git(f.repo, "push", "-q", "origin", "main");
+    git(f.path, "reset", "--hard", "origin/main");
+    for (const dir of ["node_modules", "apps/demo/node_modules"]) {
+      mkdirSync(join(f.repo, dir), { recursive: true });
+      writeFileSync(join(f.repo, dir, "value"), "restored");
+    }
+    writeFileSync(join(f.repo, "node_modules/.package-lock.json"), "{}");
+    expect(await seedDependencies(f.path, [f.repo])).toBe(true);
+    mkdirSync(join(f.path, ".yarn"));
+    writeFileSync(join(f.path, ".yarn/install-state.gz"), "stale install state");
+    for (let i = 0; i < 3; i++) mkdirSync(join(f.home, "worktrees/repo/.pool", `occupied-${i}`), { recursive: true });
+    const original = fs.readdir;
+    const spy = vi.spyOn(fs, "readdir").mockImplementation(async (...args: Parameters<typeof fs.readdir>) => {
+      if (String(args[0]) === join(realpathSync(f.path), "node_modules") && !existsSync(join(f.path, "apps/demo/node_modules"))) throw new Error("interrupted dependency drain");
+      return original(...args);
+    });
+    try {
+      const result = await f.service().reclaim(false);
+      expect(result.plans[0]).toMatchObject({ action: "keep", reason: "failed: Error: interrupted dependency drain" });
+    } finally { spy.mockRestore(); }
+    expect(existsSync(join(f.path, "apps/demo/node_modules"))).toBe(false);
+    expect(existsSync(join(f.path, "node_modules/value"))).toBe(true);
+    const partial = f.store.thread(f.thread.id)!;
+    expect(partial.worktree_removed_at).not.toBeNull();
+    expect(partial.worktree_shrunk_at).not.toBeNull();
+    expect(existsSync(join(f.path, "node_modules/.loom-lock"))).toBe(false);
+    expect(existsSync(join(f.path, "node_modules/.package-lock.json"))).toBe(false);
+    expect(existsSync(join(f.path, ".yarn/install-state.gz"))).toBe(false);
+    const install = vi.fn(async () => "unexpected install");
+    expect(await f.service({ install }).restore(partial)).toBeNull();
+    expect(readFileSync(join(f.path, "apps/demo/node_modules/value"), "utf8")).toBe("restored");
+    expect(install).not.toHaveBeenCalled();
+    expect(f.store.thread(f.thread.id)!.worktree_removed_at).toBeNull();
+    expect(f.store.thread(f.thread.id)!.worktree_shrunk_at).toBeNull();
   });
   it("restores a partial nested shrink even while the root install survives", async () => {
     const f = setup(); age(f, 2);
@@ -847,6 +959,16 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
     expect(f.store.thread(f.thread.id)!.worktree_removed_at).toBeNull();
   });
 
+  it("recreates a pooled worktree removed outside Loom from the branch its directory names", async () => {
+    const f = setup(); git(f.path, "commit", "-qm", "kept on the pooled branch", "--allow-empty");
+    // A pooled checkout keeps its original name; the thread that adopted it has a different id and no saved branch.
+    const adopted = f.store.tx(() => f.store.createThread({ id: "12345678-9abc", cwd: f.path, repo: f.repo, kind: "test", provider: "fake" }));
+    git(f.repo, "worktree", "remove", "--force", f.path);
+    expect(await f.service({ install: async () => null }).restore(adopted)).toBeNull();
+    expect(git(f.path, "log", "-1", "--format=%s")).toBe("kept on the pooled branch");
+    expect(f.store.thread(adopted.id)!.worktree_removed_at).toBeNull();
+  });
+
   it("clears a half-written checkout when recreation fails, so the retry starts clean", async () => {
     const f = setup(); git(f.path, "commit", "-qm", "kept on the branch", "--allow-empty");
     git(f.repo, "worktree", "remove", "--force", f.path);
@@ -1254,6 +1376,11 @@ describe("worktree lifecycle", { timeout: 30_000 }, () => {
     expect((await call("POST", "/worktrees/reclaim", "bad-json")).status).toBe(400);
     expect((await call("POST", "/worktrees/reclaim", '{"dryRun":true}')).body.plans[0].action).toBe("remove");
     expect(existsSync(f.path)).toBe(true);
+    const stalled = f.service({ passTimeoutMs: 20 });
+    vi.spyOn(host.worktrees!, "reclaim").mockImplementationOnce(() => stalled.withPass("lifecycle", false, () => new Promise(() => {})));
+    expect(await call("POST", "/worktrees/reclaim", '{"dryRun":false}')).toEqual({
+      status: 500, body: { ok: false, code: "internal", message: "inspect timed out" },
+    });
     expect((await call("POST", "/worktrees/reclaim", '{"dryRun":false}')).status).toBe(200);
     expect(existsSync(f.path)).toBe(false);
   });
@@ -1330,3 +1457,57 @@ describe("hasCwdProcess without a machine-wide lsof", () => {
   });
 });
 
+
+describe("turn checkpoint", () => {
+  /** The pre-#1136 checkpoint: a cold temp index loaded with `read-tree HEAD`, then `add -A`. */
+  const coldTree = (cwd: string) => {
+    const dir = mkdtempSync(join(tmpdir(), "loom-cold-index-")); roots.push(dir);
+    const env = { ...process.env, GIT_INDEX_FILE: join(dir, "index") };
+    for (const args of [["read-tree", "HEAD"], ["add", "-A"]]) execFileSync("git", args, { cwd, env, stdio: "ignore" });
+    return execFileSync("git", ["write-tree"], { cwd, env, encoding: "utf8" }).trim();
+  };
+  const realIndex = (cwd: string) => { const path = git(cwd, "rev-parse", "--path-format=absolute", "--git-path", "index"); return { bytes: readFileSync(path), mtime: statSync(path).mtimeMs }; };
+  function dirty() {
+    const f = setup();
+    writeFileSync(join(f.path, "gone"), "x"); writeFileSync(join(f.path, "staged-edit"), "v1"); git(f.path, "add", "."); git(f.path, "commit", "-qm", "more");
+    writeFileSync(join(f.path, "tracked"), "edited, not staged");
+    writeFileSync(join(f.path, "untracked"), "new");
+    writeFileSync(join(f.path, "staged-new"), "staged"); git(f.path, "add", "staged-new");
+    writeFileSync(join(f.path, "staged-edit"), "v2"); git(f.path, "add", "staged-edit"); writeFileSync(join(f.path, "staged-edit"), "v3");
+    git(f.path, "rm", "-q", "gone");
+    mkdirSync(join(f.path, "dist")); writeFileSync(join(f.path, "dist", "forced"), "ignored but staged"); git(f.path, "add", "-f", "dist/forced");
+    writeFileSync(join(f.path, "dist", "plain"), "ignored");
+    return f;
+  }
+
+  it("records the same tree as a cold index, leaving the real index alone", async () => {
+    const f = dirty(); const before = realIndex(f.path); const expected = coldTree(f.path);
+    const saved = await checkpoint(f.thread);
+    expect(saved!.tree).toBe(expected);
+    expect(git(f.path, "show", `${saved!.commit}:staged-edit`)).toBe("v3");
+    expect(() => git(f.path, "cat-file", "-e", `${saved!.commit}:dist/forced`)).toThrow();
+    expect(git(f.path, "rev-parse", `${saved!.commit}^`)).toBe(git(f.path, "rev-parse", "HEAD"));
+    expect(realIndex(f.path)).toEqual(before);
+    expect(git(f.path, "diff", "--cached", "--name-status")).toBe("A\tdist/forced\nD\tgone\nM\tstaged-edit\nA\tstaged-new");
+  });
+
+  it("still records edits to assume-unchanged and skip-worktree files", async () => {
+    const f = dirty();
+    writeFileSync(join(f.path, "hidden"), "v1"); writeFileSync(join(f.path, "sparse"), "v1"); git(f.path, "add", "hidden", "sparse"); git(f.path, "commit", "-qm", "flagged");
+    git(f.path, "update-index", "--assume-unchanged", "hidden"); git(f.path, "update-index", "--skip-worktree", "sparse");
+    writeFileSync(join(f.path, "hidden"), "v2"); writeFileSync(join(f.path, "sparse"), "v2");
+    const before = realIndex(f.path); const expected = coldTree(f.path);
+    const saved = await checkpoint(f.thread);
+    expect(saved!.tree).toBe(expected);
+    expect(git(f.path, "show", `${saved!.commit}:hidden`)).toBe("v2");
+    expect(git(f.path, "show", `${saved!.commit}:sparse`)).toBe("v2");
+    expect(realIndex(f.path)).toEqual(before);
+    expect(git(f.path, "ls-files", "-v", "hidden", "sparse")).toBe("h hidden\nS sparse");
+  });
+
+  it("falls back to a cold index when the real one can't seed it", async () => {
+    const f = dirty(); const expected = coldTree(f.path);
+    writeFileSync(git(f.path, "rev-parse", "--path-format=absolute", "--git-path", "index"), "not an index");
+    expect((await checkpoint(f.thread))!.tree).toBe(expected);
+  });
+});

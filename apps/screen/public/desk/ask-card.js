@@ -59,7 +59,7 @@ export function AskCard({ ask, itemId, line = null, spaceId = null, store, place
       <div class="nx-chm-acts">
         ${canDo && !steps.length ? html`<button type="button" class="btn sm pri" disabled=${busy} onClick=${() => act(() => complete())}>Did it</button>` : null}
         <button class="btn sm" type="submit" disabled=${busy || !reply.trim()}>Send reply</button>
-        <button type="button" class="btn sm ghost" disabled=${busy} onClick=${() => act(() => line && spaceId ? store.chapterLine(spaceId, line, 'defer') : store.deferAsk(ask, { itemId, line, spaceId }))}>${line && spaceId ? 'Snooze' : 'Defer'}</button>
+        <button type="button" class="btn sm ghost" disabled=${busy} onClick=${() => act(() => line && spaceId ? itemId ? store.openSnooze(itemId, { spaceId, line }) : store.chapterLine(spaceId, line, 'defer') : store.deferAsk(ask, { itemId, line, spaceId }))}>${line && spaceId ? 'Snooze' : 'Defer'}</button>
         <button type="button" class="btn sm ghost" onClick=${() => store.nextOpen(itemId)}>Open thread</button>
       </div>
     </form>` : null}

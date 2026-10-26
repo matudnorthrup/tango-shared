@@ -78,7 +78,17 @@ describe('private persistence and deletion', () => {
   });
   it('bounds retention at 200 without letting evicted retry records resurrect', () => {
     const first = entry(); store.put(owner, 'a', generation(), first);
-    for (let i = 0; i < 200; i++) { now += 61_000; store.put(owner, 'a', generation(), entry()); }
+    // Seed the pre-boundary persisted state, then exercise the real 201st write.
+    // Hundreds of fsyncs test disk throughput, not the retention boundary.
+    const file = join(dir, readdirSync(dir).find(n => n.endsWith('.json'))!);
+    const state = JSON.parse(readFileSync(file, 'utf8'));
+    for (let i = 0; i < 199; i++) { now += 61_000; state.entries.push({ ...entry(), device: 'a' }); }
+    writeFileSync(file, JSON.stringify(state));
+    store = new DictationHistoryStore(dir, () => now);
+    expect(store.list(owner).entries).toHaveLength(200);
+    expect(store.list(owner).deleted).not.toContain(first.id);
+    now += 61_000; store.put(owner, 'a', generation(), entry());
+    store = new DictationHistoryStore(dir, () => now);
     expect(store.list(owner).entries).toHaveLength(200);
     expect(store.list(owner).deleted).toContain(first.id);
     expect(() => store.put(owner, 'a', generation(), first)).toThrow('entry_deleted');

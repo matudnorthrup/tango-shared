@@ -11,7 +11,7 @@ export function ScreenWindow({ store, held, onBack, onPick }) {
   const shown = held?.kind === 'scene' ? state.scenes[held.id] : held?.kind === 'prototype' ? held.prototype : null;
   const name = shown?.agentName || 'Agent';
   const settings = html`<button class="lgear" onClick=${() => store.openSettings('windows')} aria-label="Settings" title="Settings: what this window is for">${GEAR}</button>`;
-  const ctx = { flags: state.flags, projects: state.projects, listViews: state.listViews };
+  const ctx = { projects: state.projects, listViews: state.listViews };
   const needs = held ? 0 : needsYouCount(state.lists, state.now, state.feedScope, ctx);
   const stuck = held ? 0 : stuckCount(state.lists, state.now, state.feedScope, ctx);
   const counts = [needs ? `${needs} need${needs === 1 ? 's' : ''} you` : null, stuck ? `${stuck} stuck` : null].filter(Boolean).join(' · ');

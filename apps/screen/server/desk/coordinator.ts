@@ -116,7 +116,6 @@ export interface MemberBrief {
   pullRequest: string | null;
   failed: string | null;
   ownerAsked: string | null;
-  stage: string | null;
   type: string | null;
   goal: string | null;
   milestone: string | null;
@@ -505,7 +504,6 @@ export class ProjectCoordinators {
       pullRequest: pr ? [pr.url, review, checks].filter(Boolean).join(' · ') : null,
       failed: f.failed ? clip(f.failed.message, 300) : null,
       ownerAsked: f.lastOwnerRequest?.text ? clip(f.lastOwnerRequest.text, 400) : null,
-      stage: f.stage ?? null,
       type: f.type ?? null,
       goal: item.summary?.goal ?? null,
       milestone: item.summary?.milestone ?? null,

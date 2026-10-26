@@ -35,6 +35,9 @@ Primary product/design specs live here so they are versioned with code.
 - `tango-conversations-off-discord.md` is the design for making the runtime's
   conversation store the record for Tango agents: the desk reads it, turns no
   longer need a Discord message, and Discord becomes an optional mirror.
+- `loom-change-lane.md` is the design for serializing and bounding changes to
+  the live system: one change lane for deploys, restarts and drains, scoped
+  drains with deadlines, a release train, and cheaper builds.
 - If a separate private notes system exists, treat this repo copy as the
   source of truth for code-facing work and keep it updated alongside changes.
 

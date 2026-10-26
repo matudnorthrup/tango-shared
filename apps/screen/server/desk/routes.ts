@@ -1,7 +1,8 @@
+import { PhoneNotes, parsePhoneNote, phoneNoteRuntime, type PhoneNoteRuntime } from './phone-note.js';
+import { registerAgentHome } from './agent-home.js';
 import { DeskDevices, parseDevice } from './devices.js';
 import { postInFeedScope } from '../../public/desk/feed-scope.js';
 import { createHash, randomUUID } from 'node:crypto';
-import { parseFlags, readFlags, type DeskFlags } from './flags.js';
 import { closedBareState, parseFeedSettings, readFeedSettings, type DeskFeed, type FeedSettings } from './feed.js';
 import { DESK_BUILD } from '../build.js';
 import * as fs from 'node:fs';
@@ -33,7 +34,7 @@ import { PROJECT_SECTIONS, parseHiddenSections, parseProjects, readHiddenSection
 import { isThreadRole } from './roles.js';
 import { parseSpaceViews, readSpaceViews, type SpaceView } from './space-views.js';
 import { parseSpaces, readSpaces, type SpaceRecord } from './spaces.js';
-import { COMMAND_TYPES, THREAD_ROLES, ITEM_TYPES, LIST_SECTIONS, STAGES, type Actor, type CommandType, type ListSection } from './types.js';
+import { COMMAND_TYPES, THREAD_ROLES, ITEM_TYPES, LIST_SECTIONS, type Actor, type CommandType, type ListSection } from './types.js';
 import { isTraceSource, parseTraceTime, TRACE_SOURCES, type DeskTrace, type TraceInput, type TraceSource } from './trace.js';
 import { activityFeed, briefing, DESK_GROUPS, DESK_VIEWS, itemDetail, listItems, nextUpQueue, presentItem, type DeskGroup, type DeskView } from './view.js';
 import type { DeskSearch, SearchDoc } from './search.js';
@@ -82,6 +83,10 @@ export function searchIcons(query: string, limit = 48): string[] {
 // `operator` status.
 
 export interface DeskRoutesOptions {
+  /** The existing bot reply path for a home channel not yet represented on the desk. */
+  phoneAgentReply?: (agentId: string, threadId: string | undefined, text: string, commandId: string) => Promise<{ ok: boolean; notDelivered?: boolean }>;
+  /** Injectable compiler/context for the sandbox; production uses the operator profile. */
+  phoneNoteRuntime?: () => Promise<PhoneNoteRuntime>;
   conversations?: {
     push: (key: string, messageId: number) => Promise<unknown>;
     report: () => unknown;
@@ -133,7 +138,7 @@ export interface DeskRoutesOptions {
 
 /**
  * A conversation the desk no longer holds, shaped like a List row so the views filter it like any
- * other: done, quiet, with the stage, type and project it last had.
+ * other: done, quiet, with the type and project it last had.
  */
 export function archivedRow(doc: SearchDoc) {
   return {
@@ -195,8 +200,6 @@ export interface DeskSettings {
   projectSectionsHidden: ProjectSection[];
   /** What the Screen window's feed shows (desk/feed.ts). */
   feed: FeedSettings;
-  /** The owner's feature flags (desk/flags.ts). */
-  flags: DeskFlags;
 }
 
 /** A Lucide icon name and one of T3's color names, the same vocabulary as a T3 project icon. */
@@ -228,7 +231,7 @@ export interface ListViewSpec {
   id: string;
   name: string;
   /** `project`: the owner's projects; `workspace`: T3's workspaces (a view saved before projects said `project`). */
-  group: 'stage' | 'type' | 'project' | 'workspace' | 'live' | 'none';
+  group: 'type' | 'project' | 'workspace' | 'live' | 'none';
   sort: 'recent' | 'oldest' | 'asks' | 'wake';
   /** In rotation, snoozed, parked, done; empty means every status. */
   status?: string[];
@@ -246,7 +249,6 @@ export interface ListViewSpec {
   agentsTogether?: boolean;
   /** 2: saved under the four tabs, so its built-in tabs are the owner's. */
   rev?: number;
-  stage?: string[];
   type?: string[];
   /** T3 workspaces by name (`project` before projects; read as this). */
   workspace?: string[];
@@ -263,7 +265,7 @@ export interface ListViewSpec {
 const VIEW_STATUSES = ['active', 'snoozed', 'parked', 'done'] as const;
 /** Views saved before Status was a filter said which one list they showed. */
 const LEGACY_SHOW: Record<string, string[]> = { active: ['active'], open: ['active', 'snoozed', 'parked'], snoozed: ['snoozed'], parked: ['parked'], history: ['done'] };
-const VIEW_GROUPS = ['stage', 'type', 'project', 'workspace', 'live', 'none'] as const;
+const VIEW_GROUPS = ['type', 'project', 'workspace', 'live', 'none'] as const;
 const VIEW_SORTS = ['recent', 'oldest', 'asks', 'wake'] as const;
 const VIEW_LIVE = ['failed', 'stuck', 'needs', 'finished', 'working', 'waiting', 'idle', 'unknown'] as const;
 /** A view saved under the retired live states reads in the six-pill vocabulary (docs/specs/desk-status.md). */
@@ -288,7 +290,8 @@ export function parseListViews(raw: unknown): { views: ListViewSpec[] | null } |
   };
   for (const entry of raw) {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return { error: 'each view must be an object' };
-    const v = entry as Record<string, unknown>;
+    const v = { ...entry } as Record<string, unknown>;
+    if (v.group === 'stage') v.group = 'live';
     if (typeof v.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(v.id)) return { error: `bad view id ${String(v.id)}` };
     if (ids.has(v.id)) return { error: `two views share the id ${v.id}` };
     ids.add(v.id);
@@ -309,7 +312,6 @@ export function parseListViews(raw: unknown): { views: ListViewSpec[] | null } |
       ['unread', ['true', 'false']],
       ['kind', ['thread', 'default']],
       ['pinned', ['true', 'false']],
-      ['stage', [...STAGES, 'none']],
       ['type', [...ITEM_TYPES, 'none']],
       ['workspace', undefined],
       ['projects', undefined],
@@ -334,11 +336,12 @@ export function parseListViews(raw: unknown): { views: ListViewSpec[] | null } |
         source: undefined, account: undefined,
         disposition: VIEW_STATUSES, live: VIEW_LIVE, busy: ['working', 'background'],
         unread: ['true', 'false'], kind: ['thread', 'default'], pinned: ['true', 'false'],
-        stage: [...STAGES, 'none'], type: [...ITEM_TYPES, 'none'], project: undefined,
+        type: [...ITEM_TYPES, 'none'], project: undefined,
         agent: undefined, repo: undefined, workspace: undefined, space: undefined, where: undefined,
       };
       const where: NonNullable<ListViewSpec['where']> = {};
       for (const [facet, rawFilter] of Object.entries(v.where)) {
+        if (facet === 'stage') continue;
         if (!Object.hasOwn(allowed, facet) || !rawFilter || typeof rawFilter !== 'object' || Array.isArray(rawFilter)) return { error: 'unknown or invalid Inbox facet' };
         const filter = rawFilter as Record<string, unknown>;
         if (Object.keys(filter).some((key) => !['in', 'not', 'unset'].includes(key)) || (filter.unset !== undefined && typeof filter.unset !== 'boolean')) return { error: 'invalid Inbox facet filter' };
@@ -498,6 +501,7 @@ function isBotCaller(c: Context, token: string | undefined): boolean {
 
 export function registerDeskRoutes(app: Hono, options: DeskRoutesOptions): void {
   const { core } = options;
+  registerAgentHome(app, core);
   const devices = new DeskDevices(core.store.db);
   app.post('/api/desk/devices', async (c) => {
     const device = parseDevice(await c.req.json().catch(() => null));
@@ -509,9 +513,47 @@ export function registerDeskRoutes(app: Hono, options: DeskRoutesOptions): void 
   let operator: OperatorStatus = { live: false, status: 'idle', agentName: null, transcript: null, at: Date.now() };
   const operatorListeners = new Set<(status: OperatorStatus) => void>();
   const draft = options.draft ?? new DraftBoard();
+  const phoneNotes = new PhoneNotes({ core, canStartAgent: !!options.agentStart, canStartRepo: !!options.startWork,
+    runtime: options.phoneNoteRuntime ?? (async () => phoneNoteRuntime(core, (await options.startWork?.service.options().catch(() => ({ repos: [] })))?.repos.map(repo => repo.name) ?? [])),
+    deliver: async (destination, message, commandId) => {
+      if (destination.kind === 'new_loom' && options.startWork) {
+        const result = await options.startWork.service.start({ repo: destination.repo, prompt: message, title: destination.title, commandId });
+        if (result.ok) options.startWork.afterStart?.();
+        return result.ok ? { ok: true, itemId: result.itemId } : { ok: false, notDelivered: !!result.check && (!result.check.ready || !result.check.plan) };
+      }
+      if (destination.kind === 'new_thread' && options.agentStart) {
+        const result = await options.agentStart.service.start({ agentId: destination.agentId, prompt: message, title: destination.title, commandId });
+        if (result.ok) options.agentStart.afterStart?.();
+        return result.ok ? { ok: true, itemId: result.itemId } : { ok: false };
+      }
+      const itemId = destination.itemId ?? core.items().filter(item => item.agentId === destination.agentId && item.replyable && item.disposition === 'active'
+        && (destination.kind === 'thread' ? item.threadId === destination.threadId : destination.kind === 'home' && item.kind === 'chapter'))
+        .sort((a, b) => b.lastActivityAt - a.lastActivityAt)[0]?.id;
+      if (!itemId) return (destination.kind === 'home' || destination.kind === 'thread') && options.phoneAgentReply
+        ? options.phoneAgentReply(destination.agentId, destination.threadId, message, commandId) : { ok: false, notDelivered: true };
+      const result = await core.command({ type: 'reply', commandId, itemId, actor: 'owner', args: { text: message } });
+      return { ok: result.status === 'applied', itemId };
+    },
+  });
+  app.post('/api/desk/voice-note', async c => {
+    const request = parsePhoneNote(await c.req.json().catch(() => null));
+    if (!request) return c.json({ error: 'text and a valid noteId are required' }, 400);
+    return c.json(await phoneNotes.submit(request));
+  });
+  app.get('/api/desk/voice-note/destinations', async c => {
+    try { return c.json({ choices: await phoneNotes.choices() }); }
+    catch { return c.json({ error: 'Destinations are unavailable. Your note is saved.' }, 503); }
+  });
+  app.post('/api/desk/voice-note/:id/send', async c => {
+    const body = await c.req.json().catch(() => null);
+    if (typeof body?.key !== 'string') return c.json({ error: 'Choose a destination' }, 400);
+    const result = await phoneNotes.sendHeld(c.req.param('id'), body.key);
+    return result ? c.json(result) : c.json({ error: 'Note is already sent, delivery is unconfirmed, or destination is unavailable' }, 409);
+  });
+
   const pause = options.pause ?? new PauseBoard();
   const settingsListeners = new Set<(settings: DeskSettings) => void>();
-  const settings = (): DeskSettings => ({ sweepDay: core.sweepDay(), filters: readFilters(core.store), agentIcons: readAgentIcons(core.store.setting('agent_icons')), repoIcons: readAgentIcons(core.store.setting('repo_icons')), labelOrder: readLabelOrder(core.store.setting('label_order')), snoozeTimes: readSnoozeTimes(core.store.setting('snooze_times')), spaceViews: readSpaceViews(core.store.setting('space_views')), listViews: readListViews(core.store.setting('list_views')), projects: readProjects(core.store.setting('projects')), projectsRev: Number(core.store.setting('projects_rev') ?? 0), mailOff: readMailOff(core.store.setting('mail_off')), projectSectionsHidden: readHiddenSections(core.store.setting('project_sections_hidden')), feed: readFeedSettings(core.store.setting('feed')), flags: readFlags(core.store.setting('flags')), spaces: readSpaces(core.store.setting('spaces')) });
+  const settings = (): DeskSettings => ({ sweepDay: core.sweepDay(), filters: readFilters(core.store), agentIcons: readAgentIcons(core.store.setting('agent_icons')), repoIcons: readAgentIcons(core.store.setting('repo_icons')), labelOrder: readLabelOrder(core.store.setting('label_order')), snoozeTimes: readSnoozeTimes(core.store.setting('snooze_times')), spaceViews: readSpaceViews(core.store.setting('space_views')), listViews: readListViews(core.store.setting('list_views')), projects: readProjects(core.store.setting('projects')), projectsRev: Number(core.store.setting('projects_rev') ?? 0), mailOff: readMailOff(core.store.setting('mail_off')), projectSectionsHidden: readHiddenSections(core.store.setting('project_sections_hidden')), feed: readFeedSettings(core.store.setting('feed')), spaces: readSpaces(core.store.setting('spaces')) });
   // A project changed on the desk's side (woke, went away, finished): every screen gets the newest.
   core.onProjectsChanged(() => {
     const next = settings();
@@ -693,7 +735,7 @@ export function registerDeskRoutes(app: Hono, options: DeskRoutesOptions): void 
     const scope = c.req.query('scope') || 'everything';
     if (!/^(everything|tab:.+|space:(project|agent):.+)$/.test(scope)) return c.json({ error: 'invalid feed scope' }, 400);
     const items = new Map(core.items().map((item) => [item.id, item]));
-    const ctx = { flags: readFlags(core.store.setting('flags')), listViews: readListViews(core.store.setting('list_views')), projects: readProjects(core.store.setting('projects')), now: Date.now() };
+    const ctx = { listViews: readListViews(core.store.setting('list_views')), projects: readProjects(core.store.setting('projects')), now: Date.now() };
     const settings = readFeedSettings(core.store.setting('feed'));
     const posts = options.feed.recent({ limit, settings, hidden, projectOf: (itemId) => items.get(itemId)?.facts.projectId ?? null, matches: (post) => postInFeedScope(post, items.get(post.itemId || ''), scope, ctx) && (settings.needsYou || !closedBareState(post, items.get(post.itemId || ''), ctx.now)) });
     return c.json({ posts });
@@ -751,12 +793,6 @@ export function registerDeskRoutes(app: Hono, options: DeskRoutesOptions): void 
       if ('error' in parsed) return c.json({ error: parsed.error }, 400);
       feedSettings = parsed.settings;
     }
-    let flags: DeskFlags | undefined;
-    if (body.flags !== undefined) {
-      const parsed = parseFlags(body.flags, readFlags(core.store.setting('flags')));
-      if ('error' in parsed) return c.json({ error: parsed.error }, 400);
-      flags = parsed.flags;
-    }
     let labelOrder: ListSection[] | undefined;
     if (body.labelOrder !== undefined) {
       const parsed = parseLabelOrder(body.labelOrder);
@@ -784,7 +820,6 @@ export function registerDeskRoutes(app: Hono, options: DeskRoutesOptions): void 
     if (body.sweepDay !== undefined) core.store.setSetting('sweep_day', body.sweepDay as string);
     if (snoozeTimes) core.store.setSetting('snooze_times', JSON.stringify(snoozeTimes));
     if (feedSettings) core.store.setSetting('feed', JSON.stringify(feedSettings));
-    if (flags) core.store.setSetting('flags', JSON.stringify(flags));
     if (filters) writeFilters(core.store, filters);
     if (agentIcons) core.store.setSetting('agent_icons', JSON.stringify(agentIcons));
     if (spaces) core.store.setSetting('spaces', JSON.stringify(spaces));
@@ -805,7 +840,7 @@ export function registerDeskRoutes(app: Hono, options: DeskRoutesOptions): void 
     }
     if (projectSectionsHidden) core.store.setSetting('project_sections_hidden', JSON.stringify(projectSectionsHidden));
     const next = settings();
-    if (body.sweepDay !== undefined || filters || agentIcons || repoIcons || labelOrder || snoozeTimes || spaceViews !== undefined || listViews !== undefined || projects || projectSectionsHidden || feedSettings || flags || spaces) for (const listener of settingsListeners) listener(next);
+    if (body.sweepDay !== undefined || filters || agentIcons || repoIcons || labelOrder || snoozeTimes || spaceViews !== undefined || listViews !== undefined || projects || projectSectionsHidden || feedSettings || spaces) for (const listener of settingsListeners) listener(next);
     return c.json(next);
   });
 
@@ -1498,6 +1533,17 @@ export function registerDeskRoutes(app: Hono, options: DeskRoutesOptions): void 
     if (given !== undefined && (typeof given !== 'number' || !Number.isFinite(given) || given <= now)) return c.json({ error: 'backAt must be a future time (ms)' }, 400);
     const backAt = via === 'deferred' ? ((given as number | undefined) ?? nextMorning(now, readSnoozeTimes(options.core.store.setting('snooze_times')).morning)) : null;
     return c.json({ ok: true, updates: options.updates.seen(ids, via, (body?.outcome as string | null | undefined) ?? null, { backAt }) });
+  });
+
+  /** Restore only the matching mark left by a catch-up card snooze. */
+  app.post('/api/desk/updates/restore-snooze', async (c) => {
+    if (!options.updates) return c.json({ error: 'the desk has no update ledger' }, 404);
+    const body = await c.req.json().catch(() => null);
+    if (!Array.isArray(body?.ids) || !body.ids.length || body.ids.some((id: unknown) => !Number.isInteger(id) || Number(id) <= 0)
+      || !(body.backAt === null || (typeof body.backAt === 'number' && Number.isFinite(body.backAt) && body.backAt > 0))
+      || !(body.seenAt === null || (typeof body.seenAt === 'number' && Number.isFinite(body.seenAt) && body.seenAt > 0))
+      || (body.backAt === null && body.seenAt === null)) return c.json({ error: 'ids and a snooze mark (backAt, seenAt) are required' }, 400);
+    return c.json({ ok: true, updates: options.updates.restoreSnooze(body.ids, body.backAt, body.seenAt) });
   });
 
   // ── decided for you (decided.ts) ────────────────────────────────────────

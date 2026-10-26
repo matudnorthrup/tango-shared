@@ -1277,17 +1277,12 @@ export function createFixtureClient({ params = new URLSearchParams(location.sear
         return { status: 'applied', outcome: { seq: e.seq } };
       }
       case 'tag': {
-        // As the desk does it: stage and type kept on the item, never in a title.
+        // As the desk does it: type kept on the item, never in a title.
         const facts = { ...(item.facts || {}) };
-        const toFeedback = cmd.args?.stage === 'feedback' && item.facts?.stage !== 'feedback' && (item.disposition ?? 'active') === 'active';
-        if (cmd.args && 'stage' in cmd.args) facts.stage = cmd.args.stage || null;
         if (cmd.args && 'type' in cmd.args) facts.type = cmd.args.type || null;
         item.facts = facts;
-        // As the desk does it: the owner moving Active work to Feedback parks it (undoable).
-        const parked = toFeedback ? logEvent(item, 'park', 'screen', { via: 'feedback' }) : null;
-        if (parked) item.disposition = 'parked';
         touch(item, at);
-        return { status: 'applied', outcome: { stage: facts.stage ?? null, type: facts.type ?? null, ...(parked ? { parked: true, seq: parked.seq } : {}) } };
+        return { status: 'applied', outcome: { type: facts.type ?? null } };
       }
       case 'project': {
         // As the desk does it: kept on the item, any source.
@@ -1386,9 +1381,7 @@ export function createFixtureClient({ params = new URLSearchParams(location.sear
         const canonical = `https://github.com/${m[1]}/${m[2]}/pull/${Number(m[3])}`;
         const others = (item.facts?.prWatches || []).filter((w) => w.url.toLowerCase() !== canonical.toLowerCase());
         const prWatches = cmd.args?.off ? others : [...others, { url: canonical, number: Number(m[3]), onApprove: 'continue', at, by: 'screen' }];
-        const stage = item.facts?.stage ?? null;
-        const toFeedback = !cmd.args?.off && (stage === null || stage === 'discovery' || stage === 'building');
-        item.facts = { ...(item.facts || {}), prWatches: prWatches.length ? prWatches : null, ...(toFeedback ? { stage: 'feedback' } : {}) };
+        item.facts = { ...(item.facts || {}), prWatches: prWatches.length ? prWatches : null };
         touch(item, at);
         return { status: 'applied', outcome: { watching: !cmd.args?.off, url: canonical } };
       }

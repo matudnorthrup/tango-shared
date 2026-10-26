@@ -48,8 +48,8 @@ describe('the projects setting', () => {
   });
 
   it('views saved before projects: their `project` filter and grouping become `workspace`', () => {
-    expect(viewsWithWorkspaces([{ id: 'a', group: 'project', project: ['acme'] }, { id: 'b', group: 'stage' }])).toEqual([{ id: 'a', group: 'workspace', workspace: ['acme'] }, { id: 'b', group: 'stage' }]);
-    expect(viewsWithWorkspaces([{ id: 'b', group: 'stage' }])).toBeNull();
+    expect(viewsWithWorkspaces([{ id: 'a', group: 'project', project: ['acme'] }, { id: 'b', group: 'live' }])).toEqual([{ id: 'a', group: 'workspace', workspace: ['acme'] }, { id: 'b', group: 'live' }]);
+    expect(viewsWithWorkspaces([{ id: 'b', group: 'live' }])).toBeNull();
     expect(viewsWithWorkspaces(null)).toBeNull();
     // Saved views predating the To-dos built-in get it once, right after the owner's-move view; never twice.
     const top = { id: 'ready', name: 'Top', status: ['active'], live: ['needs', 'ready'] };
@@ -345,7 +345,7 @@ describe('folders in the List', () => {
     const pinned = [...items.slice(0, 4), row('p', { lastActivityAt: NOW - 70 }, { projectId: 'desk', pinned: true }), row('q', { lastActivityAt: NOW - 2 }, { pinned: true })];
     const heads = (group: string) => sectionsOf(pinned, group, 'recent', null, { projects: PROJECTS }).map((s: { label: string | null; items: Array<{ id: string }> }) => [s.label, ids(s.items)]);
     expect(heads('live')[0]).toEqual(['Needs you', ['c']]);
-    for (const group of ['stage', 'type', 'project', 'workspace', 'none']) expect(heads(group)[0]).toEqual(['Pinned', ['q', 'p']]);
+    for (const group of ['project', 'workspace', 'none']) expect(heads(group)[0]).toEqual(['Pinned', ['q', 'p']]);
     expect(heads('project')).toEqual([['Pinned', ['q', 'p']], ['Desk', ['b', 'a']], ['Alerts', ['c']], ['No project', ['d']]]);
     // Ungrouped, the rest gets a heading so it doesn't read as more pins; with no pins it has none.
     expect(heads('none')).toEqual([['Pinned', ['q', 'p']], ['Everything else', ['d', 'b', 'a', 'c']]]);
@@ -370,7 +370,7 @@ describe('folders in the List', () => {
     expect((parseListViews([{ id: 'a', name: 'A', group: 'none', showProjects: ['active', 'snoozed'] }]) as { views: Array<Record<string, unknown>> }).views[0].showProjects).toEqual(['active', 'snoozed']);
     expect((parseListViews([{ id: 'a', name: 'A', group: 'none', fold: false, showProjects: ['active'] }]) as { views: Array<Record<string, unknown>> }).views[0].showProjects).toBeUndefined();
     expect(parseListViews([{ id: 'a', name: 'A', group: 'none', showProjects: ['done'] }])).toMatchObject({ error: expect.stringContaining('showProjects') });
-    expect(describeView(normalizeView({ id: 'x', name: 'X', status: ['active'], showProjects: ['active', 'snoozed'] }), {}, { stageLabels: true })).toBe('Active · projects folded, active and snoozed always shown · by stage');
+    expect(describeView(normalizeView({ id: 'x', name: 'X', status: ['active'], showProjects: ['active', 'snoozed'] }), {})).toBe('Active · projects folded, active and snoozed always shown · by live state');
   });
 
   it('views filter on being in a project; inside a project its own filters are set aside', () => {
@@ -382,7 +382,7 @@ describe('folders in the List', () => {
     expect(ids(viewItems(lists, view({ inProject: 'none' }), PROJECTS, 'desk'))).toEqual(['a', 'b']);
     expect(ids(viewItems(lists, view({ status: ['snoozed'] }), PROJECTS, 'desk'))).toEqual(['z']);
     expect(matchesView(items[0], view({ inProject: 'some' }))).toBe(false); // no projects known: in none
-    expect(describeView(view({ inProject: 'some', projects: ['alerts'] }), { 'project:alerts': 'Alerts' }, { stageLabels: true })).toBe('Active · in Alerts · projects folded · by stage');
+    expect(describeView(view({ inProject: 'some', projects: ['alerts'] }), { 'project:alerts': 'Alerts' })).toBe('Active · in Alerts · projects folded · by live state');
   });
 
   it('groups by project in the owner’s order, then No project; workspaces group as before', () => {

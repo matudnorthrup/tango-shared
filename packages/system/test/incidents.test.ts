@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   incidentRoute,
+  incidentHasOwnerWait,
+  linkIncidentOwnerWait,
+  refreshIncidentOwnerWaits,
   listEvents,
   listIncidents,
   markNotified,
@@ -10,6 +13,7 @@ import {
   setIncidentStatus,
   takeDeskNotifications,
 } from "../src/incidents.js";
+import { openLedger } from "../src/ledger.js";
 import { upsertJob } from "../src/jobs.js";
 import { minutesAgo, tempLedger } from "./helpers.js";
 
@@ -227,5 +231,95 @@ describe("notification transitions", () => {
     expect(takeDeskNotifications(l)).toHaveLength(0);
     expect(pendingNotifications(l, "critical")).toHaveLength(0);
     expect((l.db.prepare("SELECT COUNT(*) AS n FROM incidents WHERE notify_pending IS NOT NULL").get() as { n: number }).n).toBe(0);
+  });
+});
+
+
+describe("one owner errand for related checks", () => {
+  it("retains its explicit link across process restarts", () => {
+    const l = tempLedger();
+    const a = recordEvent(l, fail());
+    linkIncidentOwnerWait(l, a.incidentId!, "loom:repair");
+    const path = l.path;
+    l.close();
+    const reopened = openLedger({ path });
+    try {
+      expect(incidentHasOwnerWait(reopened, listIncidents(reopened)[0]!)).toBe(true);
+    } finally { reopened.close(); }
+  });
+
+  it("suppresses initial/repeat/regression asks, retaining evidence and recovery", () => {
+    const l = tempLedger();
+    const a = recordEvent(l, fail(minutesAgo(360), undefined, "critical"));
+    markNotified(l, a.incidentId!, minutesAgo(360));
+    linkIncidentOwnerWait(l, a.incidentId!, "loom:repair");
+    const b = recordEvent(l, { ...fail(), jobId: "service:upstream", kind: "service.down", severity: "critical" });
+    linkIncidentOwnerWait(l, b.incidentId!, "loom:repair");
+    scheduleReminders(l);
+    expect(pendingNotifications(l, "critical")).toEqual([]);
+    recordEvent(l, fail(undefined, undefined, "critical"));
+    expect(listIncidents(l).find((i) => i.id === a.incidentId)?.count).toBe(2);
+    recordEvent(l, recover());
+    expect(pendingNotifications(l, "critical").map((p) => p.transition)).toEqual(["resolved"]);
+    markNotified(l, a.incidentId!);
+    const regression = recordEvent(l, fail(undefined, undefined, "critical"));
+    expect(regression.incidentId).not.toBe(a.incidentId);
+    expect(pendingNotifications(l, "critical")).toEqual([]);
+    expect(listIncidents(l)).toHaveLength(2); // neither check is falsely recovered
+    refreshIncidentOwnerWaits(l, () => null); // source outage is not an answer
+    expect(pendingNotifications(l, "critical")).toEqual([]);
+    refreshIncidentOwnerWaits(l, () => false);
+    expect(pendingNotifications(l, "critical")).toHaveLength(2);
+    expect(listEvents(l)).toHaveLength(5);
+    // A later unrelated ask in that conversation cannot revive the old link.
+    refreshIncidentOwnerWaits(l, () => true);
+    expect(pendingNotifications(l, "critical")).toHaveLength(2);
+  });
+
+  it("does not revive expired links when another check shares the repair conversation", () => {
+    const l = tempLedger();
+    const a = recordEvent(l, fail(undefined, undefined, "critical"));
+    linkIncidentOwnerWait(l, a.incidentId!, "loom:repair");
+    refreshIncidentOwnerWaits(l, () => false);
+    const b = recordEvent(l, { ...fail(undefined, undefined, "critical"), jobId: "service:other" });
+    linkIncidentOwnerWait(l, b.incidentId!, "loom:repair");
+
+    refreshIncidentOwnerWaits(l, () => true);
+
+    const incidents = listIncidents(l);
+    expect(incidentHasOwnerWait(l, incidents.find((i) => i.id === a.incidentId)!)).toBe(false);
+    expect(incidentHasOwnerWait(l, incidents.find((i) => i.id === b.incidentId)!)).toBe(true);
+    expect(pendingNotifications(l, "critical").map((p) => p.incident.id)).toEqual([a.incidentId]);
+    expect(incidents).toHaveLength(2);
+    expect(listEvents(l)).toHaveLength(2);
+  });
+
+  it("keeps escalation and unrelated failures visible", () => {
+    const l = tempLedger();
+    const a = recordEvent(l, fail());
+    markNotified(l, a.incidentId!);
+    linkIncidentOwnerWait(l, a.incidentId!, "loom:repair");
+    recordEvent(l, fail(undefined, undefined, "critical"));
+    recordEvent(l, { ...fail(undefined, undefined, "critical"), jobId: "service:other" });
+    expect(pendingNotifications(l, "critical").map((p) => p.transition)).toEqual(["escalated", "opened"]);
+  });
+
+  it("does not lose escalation behind a suppressed initial notification", () => {
+    const l = tempLedger();
+    const a = recordEvent(l, fail());
+    linkIncidentOwnerWait(l, a.incidentId!, "loom:repair");
+    recordEvent(l, fail(undefined, undefined, "critical"));
+    expect(pendingNotifications(l, "critical").map((p) => p.transition)).toEqual(["escalated"]);
+  });
+
+  it("acknowledging clears a reminder already queued by another sender", () => {
+    const l = tempLedger();
+    const a = recordEvent(l, fail(minutesAgo(360), undefined, "critical"));
+    markNotified(l, a.incidentId!, minutesAgo(360));
+    scheduleReminders(l);
+    expect(pendingNotifications(l, "critical")).toHaveLength(1);
+    setIncidentStatus(l, a.incidentId!, "acked");
+    expect(pendingNotifications(l, "critical")).toEqual([]);
+    expect(listIncidents(l)[0]!.status).toBe("acked");
   });
 });

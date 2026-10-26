@@ -29,7 +29,7 @@ export function parseSearchFields(raw: string, spaces: NamedSpace[] = [], agents
       if (['failed', 'stuck', 'needs', 'finished', 'working', 'waiting', 'idle', 'unknown'].includes(live)) parsed = query({ live: { in: [live] } });
       if (['unread', 'pinned'].includes(value)) parsed = query({ [value]: { in: ['true'] } });
     } else if (field === 'kind' && ['thread', 'default', 'job', 'worker'].includes(value)) parsed = query({ kind: { in: [value] } });
-    else if (['agent', 'type', 'stage', 'repo'].includes(field)) {
+    else if (['agent', 'type', 'repo'].includes(field)) {
       const id = field === 'agent' ? agents.find((a) => a.name.toLowerCase() === value.toLowerCase() || a.id.toLowerCase() === value.toLowerCase())?.id ?? value : value;
       parsed = query({ [field === 'repo' ? 'workspace' : field]: { in: [id] } });
     } else if (field === 'in') {
@@ -66,7 +66,7 @@ export function searchQuery(where: string | undefined, scope = 'global', audienc
 }
 
 // Snapshots retain identity, role, metadata, pin and project membership, but no current attention/read state.
-const ARCHIVE_FACETS = new Set(['kind', 'stage', 'type', 'project', 'workspace', 'repo', 'agent', 'pinned', 'space', 'parent']);
+const ARCHIVE_FACETS = new Set(['kind', 'type', 'project', 'workspace', 'repo', 'agent', 'pinned', 'space', 'parent']);
 export function searchMatches(row: { archived?: boolean; lastActivityAt: number }, queries: DeskQuery[], fields: SearchFields, ctx: QueryContext): boolean {
   if (fields.before !== undefined && row.lastActivityAt >= fields.before) return false;
   if (fields.after !== undefined && row.lastActivityAt <= fields.after) return false;

@@ -37,6 +37,7 @@
 //
 // All names, ids and links here are invented.
 
+import { createDraftCompiler } from '@tango/tango-voice/live/draft-mode';
 import { voiceSnapshot } from '../server/desk/voice-exchange.js';
 import { attachDeskVoice, type DeskVoiceOptions } from '../server/desk/voice.js';
 import { itemDetail } from '../server/desk/view.js';
@@ -58,7 +59,7 @@ import { choiceLabel, Hub, type FallbackRouter } from '../server/hub.js';
 import { SceneStore } from '../server/store.js';
 import { BundleStore } from '../server/bundles.js';
 import { PrototypeStore } from '../server/prototypes.js';
-import { seedConversationWindow } from '../test/fixtures/conversation-window.js';
+import { seedConversationWindow, seedLabelledConversation } from '../test/fixtures/conversation-window.js';
 import { seedAskReport, seedMissingAnswerReport } from '../test/fixtures/ask-report.js';
 import { sandboxProfileEnv } from './sandbox-profile.js';
 
@@ -507,9 +508,43 @@ const voice: DeskVoiceOptions | undefined = args.has('--voice') ? {
     return voiceSnapshot(detail);
   },
 } : undefined;
+// Deterministic text-model fixtures for Shortcut HTTP checks: no model credentials or paid calls.
+if (args.has('--phone-note-fixtures')) desk.routes.phoneNoteRuntime = async () => {
+  const rows = desk.core.items().filter(item => item.replyable && item.disposition === 'active');
+  const byHandle = new Map(rows.map((item, i) => [`i${i + 1}`, item]));
+  return {
+    context: { input: { agents: AGENTS.map(agent => ({ ...agent, role: 'test agent' })), tasks: [], threads: [], transcript: [], now: Date.now(), startPlace: null, loomRepos: ['tango'],
+      desk: { items: [...byHandle].map(([handle, item]) => ({ handle, agentName: item.agentName, place: item.place, step: item.nextStep, line: '', threadId: item.threadId })) } },
+      resolveItem: handle => { const row = byHandle.get(handle); return row ? { ...row, isAgent: false } : null; } },
+    compile: createDraftCompiler(async request => {
+      const text = request.input.map(part => part.text).join('\n').split('Fragments, in order:')[1]?.split('Message rules:')[0] ?? '';
+      const clarification = request.input.map(part => part.text).join('\n').split('Clarifications:')[1] ?? '';
+      const agent = AGENTS.find(agent => (text + clarification).includes(agent.name));
+      return JSON.stringify({ message: text.trim(), agent_id: agent?.id ?? '', item: '', thread_id: '', new_thread_title: '', new_loom_repo: '', questions: agent ? [] : ["Who's it for?"] });
+    }),
+  };
+};
 const app = createApp({ voice, store, hub, publicDir, bundles, prototypes, desk: { routes: { ...desk.routes, scenes: () => hub.liveScenes(), prototypes: () => prototypes.live() }, compat: desk.compat } });
 
-const httpServer = serve({ fetch: app.fetch, port: PORT, hostname: '127.0.0.1' }, async () => {
+const httpServer = serve({ fetch: (request) => {
+  if (new URL(request.url).pathname === '/apps.json') {
+    return Response.json([
+      { id: 'desk', name: 'Tango Desk', path: '/tango-screen/', icon: 'desk' },
+      { id: 'lift', name: 'Tango Lift', path: '/tango-workout/', icon: 'lift' },
+      { id: 'food', name: 'Tango Food', path: '/tango-food/', icon: 'food' },
+      { id: 'kilo', name: 'Kilo Ledger', path: '/kilo/', icon: 'kilo' },
+      { id: 'usage', name: 'Tango Usage', path: '/tango-usage/', icon: 'usage' },
+      { id: 'state', name: 'Tango State', path: '/tango-state/', icon: 'state' },
+    ], { headers: { 'Cache-Control': 'no-store' } });
+  }
+  // Mirror the production proxy mount so native tests exercise a path-scoped desk.
+  const mounted = new URL(request.url);
+  if (mounted.pathname === '/tango-screen' || mounted.pathname.startsWith('/tango-screen/')) {
+    mounted.pathname = mounted.pathname.slice('/tango-screen'.length) || '/';
+    return app.fetch(new Request(mounted, request));
+  }
+  return app.fetch(request);
+}, port: PORT, hostname: '127.0.0.1' }, async () => {
   log('listening', {
     url: `http://127.0.0.1:${PORT}/`,
     bot: `http://127.0.0.1:${BOT_PORT}`,
@@ -529,6 +564,7 @@ const httpServer = serve({ fetch: app.fetch, port: PORT, hostname: '127.0.0.1' }
   await desk.pollSources();
   await desk.core.drainSummaries();
   if (args.has('--conversation-window')) seedConversationWindow(desk.core, Date.now() - 60_000);
+  if (args.has('--labelled-conversation')) seedLabelledConversation(desk.core, Date.now() - 60_000);
   if (args.has('--ask-report')) seedAskReport(desk.core, Date.now() - 60_000, 't3');
   if (args.has('--missing-answer')) seedMissingAnswerReport(desk.core, Date.now() - 60_000, 't3');
   // Retained history has no source adapter: exercise its read-only UI in the sandbox.

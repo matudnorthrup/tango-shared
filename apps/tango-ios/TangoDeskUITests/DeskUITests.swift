@@ -1,6 +1,34 @@
 import XCTest
 
 final class DeskUITests: XCTestCase {
+    @MainActor func testAppSwitcherKeepsFoodInWebView() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-deskURL", "http://127.0.0.1:9461/tango-screen/", "-ui-test-web-url"]
+        app.launch()
+        let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow"]
+        if allow.waitForExistence(timeout: 5) { allow.tap() }
+        let switcher = app.webViews.descendants(matching: .any)["Switch Tango app"]
+        XCTAssertTrue(switcher.waitForExistence(timeout: 30), app.debugDescription)
+        switcher.tap()
+        let food = app.webViews.descendants(matching: .any)["Tango Food"]
+        XCTAssertTrue(food.waitForExistence(timeout: 10), app.debugDescription)
+        attach("app-switcher-sheet")
+        food.tap()
+        let webView = app.webViews.firstMatch
+        let loaded = NSPredicate(format: "value == %@", "http://127.0.0.1:9461/tango-food/")
+        expectation(for: loaded, evaluatedWith: webView)
+        waitForExpectations(timeout: 20)
+        XCTAssertEqual(app.state, .runningForeground)
+        XCTAssertNotEqual(XCUIApplication(bundleIdentifier: "com.apple.mobilesafari").state, .runningForeground)
+        attach("app-switcher-food-in-app")
+        // The sandbox intentionally has no Food server. Retry stays on Food.
+        XCTAssertTrue(app.buttons["Retry"].exists)
+        app.buttons["Retry"].tap()
+        expectation(for: loaded, evaluatedWith: webView)
+        waitForExpectations(timeout: 20)
+        XCTAssertTrue(app.buttons["Open settings"].exists)
+    }
+
     @MainActor func testMicrophonePermissionPrompt() {
         let app = XCUIApplication()
         app.resetAuthorizationStatus(for: .microphone)

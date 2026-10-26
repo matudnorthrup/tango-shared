@@ -1,11 +1,11 @@
-import { ITEM_TYPES, STAGES } from './types.js';
+import { ITEM_TYPES } from './types.js';
 
 export interface SpaceView {
   id: string;
   name: string;
   where: Record<string, { in?: string[]; not?: string[]; unset?: boolean }>;
   done?: boolean;
-  group?: 'status' | 'stage' | 'type' | 'health' | 'none';
+  group?: 'status' | 'type' | 'health' | 'none';
   sort?: 'recent' | 'asks';
 }
 const FACETS: Record<string, readonly string[] | null> = {
@@ -15,23 +15,25 @@ const FACETS: Record<string, readonly string[] | null> = {
   kind: ['thread', 'default', 'job', 'worker'],
   live: ['needs', 'failed', 'stuck', 'finished', 'working', 'waiting', 'idle', 'unknown'],
   busy: ['working', 'background'], unread: ['true', 'false'], pinned: ['true', 'false'],
-  stage: STAGES, type: ITEM_TYPES, agent: null, workspace: null, repo: null,
+  type: ITEM_TYPES, agent: null, workspace: null, repo: null,
 };
 export function parseSpaceViews(raw: unknown): { views: SpaceView[] | null } | { error: string } {
   if (raw === null) return { views: null };
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 20) return { error: 'space views must contain 1 to 20 views, or null' };
   const ids = new Set<string>();
   const views: SpaceView[] = [];
-  for (const v of raw) {
+  for (const entry of raw) {
+    const v = entry && typeof entry === 'object' ? { ...entry, ...(entry.group === 'stage' ? { group: 'status' } : {}) } : entry;
     if (!v || typeof v !== 'object' || Array.isArray(v) || typeof v.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(v.id) || ids.has(v.id)) return { error: 'space view ids must be valid and unique' };
     ids.add(v.id);
     if (typeof v.name !== 'string' || !v.name.trim() || v.name.length > 40) return { error: 'space view names must be 1 to 40 characters' };
     if (!v.where || typeof v.where !== 'object' || Array.isArray(v.where)) return { error: 'space view where must be an object' };
     if (v.done !== undefined && typeof v.done !== 'boolean') return { error: 'done must be boolean' };
-    if (v.group !== undefined && !['status', 'stage', 'type', 'health', 'none'].includes(v.group)) return { error: 'unknown space view grouping' };
+    if (v.group !== undefined && !['status', 'type', 'health', 'none'].includes(v.group)) return { error: 'unknown space view grouping' };
     if (v.sort !== undefined && !['recent', 'asks'].includes(v.sort)) return { error: 'unknown space view sort' };
     const where: SpaceView['where'] = {};
     for (const [facet, rawFilter] of Object.entries(v.where)) {
+      if (facet === 'stage') continue;
       if (!Object.hasOwn(FACETS, facet) || !rawFilter || typeof rawFilter !== 'object' || Array.isArray(rawFilter)) return { error: 'unknown or invalid space view facet' };
       const filter = rawFilter as Record<string, unknown>;
       if (Object.keys(filter).some((k) => !['in', 'not', 'unset'].includes(k)) || (filter.unset !== undefined && typeof filter.unset !== 'boolean')) return { error: 'invalid facet filter' };

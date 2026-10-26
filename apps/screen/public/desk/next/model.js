@@ -2,9 +2,9 @@ export { prChip, prGroups } from './pr-model.js';
 // The next layout's model (docs/specs/agent-desk-next.md): what a thread row says, where a thread
 // lives, the pages and their breadcrumb. No DOM here, so it runs under the tests.
 
-import { agentId, facets, matches, countFor, facetCounts, picksToQuery, viewForFlags, viewToQuery, intersectPicks, kindOf } from '../query.js';
+import { agentId, facets, matches, countFor, facetCounts, picksToQuery, normalizeRetiredView, viewToQuery, intersectPicks, kindOf } from '../query.js';
 export { kindOf, reachesOwner } from '../query.js';
-import { sectionsOf, sortRows, busyOf, heldLabel, liveState, ownerOrderAt, wantsOwner, projectOf, projectState, watchingLabel, stageOf, typeOf, typeName, stageName, isCoding, repoOf, rowTitle } from '../list-model.js';
+import { sectionsOf, sortRows, busyOf, heldLabel, liveState, ownerOrderAt, wantsOwner, projectOf, projectState, watchingLabel, typeOf, typeName, isCoding, repoOf, rowTitle } from '../list-model.js';
 import { age, askOf, failureText, inFlightFact, inFlightOf, wakeLabel, waitAge, dayLabel } from '../util.js';
 import { draftView } from '../draft-model.js';
 import { viewItems, viewsOf, currentView, trophyShelf, viewSections, newViewId } from '../list-views.js';
@@ -305,7 +305,6 @@ export function headerMeta(item, projects = [], now = Date.now()) {
   return out;
 }
 
-export { stageOf, stageName };
 
 // ── pages and the breadcrumb ────────────────────────────────────────
 
@@ -447,13 +446,11 @@ function projectTrail(project, id, { projects = [], agents = [] } = {}) {
 }
 
 /** The Inbox's views (the owner's List views), each with what it holds. Only open threads, no projects folded in. */
-/** Apply stage visibility only to runtime views, never the saved definitions. */
-const unstaged = (state, view, status) => viewForFlags(view, state.flags, status);
 
 export function inboxViews(state) {
   const projects = state.projects || [];
   // Every view, whatever it groups by: the Inbox groups threads by status itself.
-  const views = viewsOf(state.listViews, state.listGroup).map((view) => unstaged(state, view, 'live'));
+  const views = viewsOf(state.listViews, state.listGroup);
   // The server's audience admits owner-facing workers too, when their lead is gone.
   return views.map((view) => ({ view, items: viewItems(state.lists, view, projects, null).filter((item) => matches(item, { scope: { kind: 'global' }, audience: 'owner', where: { muted: { in: ['false'] } } }, { projects, filters: state.filters })) }));
 }
@@ -637,7 +634,6 @@ export const NONE = '\u0000none';
 // still honored and shown as a chip so a saved pick can be removed; 'advanced', the tab editor's Advanced only;
 // 'spaces', the space views' editor only.
 export const FILTER_FACETS = [
-  ['stage', 'Stage'],
   ['where', 'Where'],
   ['project', 'Project', 'old'],
   ['agent', 'Agent', 'old'],
@@ -721,7 +717,7 @@ export function filterOptions(items, projects = [], filter = {}, now = Date.now(
 }
 
 export function facetLabel(facet, value, projects = [], items = []) {
-  if (value === NONE) return { type: 'No type', stage: 'No stage', project: 'No project', agent: 'No agent', repo: 'No repo', busy: 'Idle', space: 'No space', wait: 'No wait', health: 'No health', source: 'No source', account: 'No account', age: 'No activity' }[facet] || 'None';
+  if (value === NONE) return { type: 'No type', project: 'No project', agent: 'No agent', repo: 'No repo', busy: 'Idle', space: 'No space', wait: 'No wait', health: 'No health', source: 'No source', account: 'No account', age: 'No activity' }[facet] || 'None';
   if (facet === 'wait') return { person: 'Person', agent: 'Agent', review: 'PR review', job: 'Job', monitor: 'Monitor', 'check-back': 'Check back' }[value] || value;
   if (facet === 'overdue') return value === 'true' ? 'Overdue' : 'Not overdue';
   if (facet === 'age') return { today: 'Today', week: 'This week', month: 'This month', older: 'Older' }[value] || value;
@@ -742,7 +738,6 @@ export function facetLabel(facet, value, projects = [], items = []) {
     return facetLabel(kind, id, projects, items);
   }
   if (facet === 'type') return typeName(value);
-  if (facet === 'stage') return stageName(value);
   if (facet === 'project') return projects.find((p) => p.id === value)?.name || value;
   if (facet === 'agent') return agentNameOf(items.find((i) => facets.agent(i) === value)) || value.charAt(0).toUpperCase() + value.slice(1);
   return value;
@@ -942,23 +937,23 @@ export const SPACE_VIEWS = [
 export function spaceViewDefs(state) {
   const saved = state.spaceViews;
   // Preserve unknown filters: the shared evaluator refuses unknown facets and unknown inclusions match nothing.
-  return Array.isArray(saved) && saved.length ? saved : SPACE_VIEWS;
+  return (Array.isArray(saved) && saved.length ? saved : SPACE_VIEWS).map((view) => normalizeRetiredView(view, 'status'));
 }
 
-/** The space views as a page shows them (the editor reads spaceViewDefs, so a view keeps what it saved). */
+/** The space views as a page shows them. */
 export function shownSpaceViews(state) {
-  return spaceViewDefs(state).map((view) => unstaged(state, view, 'status'));
+  return spaceViewDefs(state);
 }
 
 export function spaceViews(open, done, defs = SPACE_VIEWS, ctx = {}) {
-  return defs
+  return defs.map((def) => normalizeRetiredView(def, 'status'))
     .map((def) => ({ ...def, items: (def.done ? done : open).filter((i) => matches(i, { scope: { kind: 'global' }, audience: 'all', where: def.where || {} }, ctx)) }))
     .filter((v, index) => index === 0 || v.items.length);
 }
 
 /** A view's sections: by status, except jobs on schedule, which wait together at the bottom ("On schedule"). */
 export function spaceGroups(view, items, now = Date.now(), hidden = []) {
-  const def = typeof view === 'string' ? SPACE_VIEWS.find((v) => v.id === view) || {} : view || {};
+  const def = normalizeRetiredView(typeof view === 'string' ? SPACE_VIEWS.find((v) => v.id === view) || {} : view || {}, 'status');
   // Items already passed the view's query, so a matching default is admitted by all its filters.
   const lead = !def.done ? items.filter((i) => kindOf(i) === 'default') : [];
 

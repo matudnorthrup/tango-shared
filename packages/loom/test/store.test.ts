@@ -6,6 +6,21 @@ import { describe, expect, it } from "vitest";
 import { capText, LoomStore } from "../src/store.js";
 
 describe("LoomStore", () => {
+  it("migrates existing messages with unknown phase and persists new labels", () => {
+    const root = mkdtempSync(join(tmpdir(), "loom-phase-"));
+    const db = join(root, 'loom.sqlite');
+    try {
+      let store = new LoomStore(db);
+      store.tx(() => { store.createThread({ id: 't', kind: 'coding', cwd: '/work', provider: 'fake' }); store.addMessage('t', null, 'assistant', 'Legacy'); });
+      store.close();
+      const old = new DatabaseSync(db); old.exec('ALTER TABLE messages DROP COLUMN phase'); old.close();
+      store = new LoomStore(db);
+      expect(store.messages('t')[0]?.phase).toBeNull();
+      store.tx(() => store.addMessage('t', null, 'assistant', 'Answer', null, undefined, 'answer'));
+      store.close(); store = new LoomStore(db);
+      expect(store.messages('t').map(m => m.phase)).toEqual([null, 'answer']); store.close();
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
   it("backfills owned worktrees once, excluding probes and adjacent paths", () => {
     const root = mkdtempSync(join(tmpdir(), "loom-mode-"));
     const db = join(root, "loom.sqlite");

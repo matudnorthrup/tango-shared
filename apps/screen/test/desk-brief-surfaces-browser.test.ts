@@ -25,6 +25,11 @@ it('one brief card on every surface: rows, tripwires, read-only outcomes and sta
     await page.waitForTimeout(200); // Let the real sheets finish their focus effects before taking focus back.
     await page.locator('h1').click();
     expect(await page.locator('.bc').count()).toBe(8);
+    const catchupCards = page.locator('[data-surface="catchup"] .bc');
+    expect(await catchupCards.first().getByRole('button', { name: 'Snooze', exact: true }).count()).toBe(1);
+    expect(await catchupCards.first().getByRole('button', { name: 'Defer', exact: true }).count()).toBe(0);
+    expect(await catchupCards.last().getByRole('button', { name: 'Snooze', exact: true }).count()).toBe(0);
+
     expect(await page.locator('.rd-needs .bc').count()).toBe(0);
     for (const surface of ['thread', 'catchup', 'decision']) {
       const cards = page.locator(`[data-surface="${surface}"] .bc`);
@@ -150,6 +155,28 @@ it('one brief card on every surface: rows, tripwires, read-only outcomes and sta
     await page.evaluate(() => (window as any).fixtureUnaddressed());
     for (const surface of ['thread', 'catchup', 'decision']) {
       expect(await page.locator(`[data-surface="${surface}"]`).innerText()).toContain("You replied; the agent didn't address it");
+    }
+    // Missing brief data still offers thread snooze; a brief without a thread retains line-only snooze.
+    for (const variant of ['missing-brief', 'no-thread']) {
+      await page.evaluate(async (variant) => {
+        const vendorPath = '/vendor/preact-htm.js';
+        const chapterPath = '/desk/next/chapter.js';
+        const browserImport = new Function('path', 'return import(path)');
+        const { html, render } = await browserImport(vendorPath);
+        const { ChapterBrief } = await browserImport(chapterPath);
+        const host = document.createElement('div'); host.id = 'snooze-case'; document.body.append(host);
+        const calls: unknown[] = []; (window as any).snoozeCalls = calls;
+        const store = { state: {}, openSnooze: (...args: unknown[]) => calls.push(['thread', ...args]), chapterLine: (...args: unknown[]) => calls.push(['line', ...args]) };
+        const line = { id: 77, briefId: 'D-77', title: 'Continue?', ...(variant === 'missing-brief' ? { itemId: 'sample' } : {}) };
+        const brief = variant === 'no-thread' ? { id: 'D-77', status: 'open', ask: 'Continue?', options: [] } : null;
+        render(html`<${ChapterBrief} line=${line} brief=${brief} store=${store} spaceId="unfiled"/>`, host);
+      }, variant);
+      await page.locator('#snooze-case').getByRole('button', { name: 'Snooze', exact: true }).click();
+      const calls = await page.evaluate(() => (window as any).snoozeCalls);
+      expect(calls[0][0]).toBe(variant === 'missing-brief' ? 'thread' : 'line');
+      if (variant === 'missing-brief') expect(calls[0][1]).toBe('sample');
+      else expect(calls[0][3]).toBe('defer');
+      await page.locator('#snooze-case').evaluate(el => el.remove());
     }
   } finally { await browser.close(); }
 }, 30_000);

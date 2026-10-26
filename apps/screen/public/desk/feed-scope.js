@@ -1,5 +1,5 @@
 // Per-window feed membership uses exactly the saved-tab and space query contract.
-import { matches, viewForFlags, viewToQuery } from './query.js';
+import { matches, normalizeRetiredView, viewToQuery } from './query.js';
 import { viewsOf } from './list-views.js';
 
 export function feedScopeOf(value) {
@@ -7,18 +7,18 @@ export function feedScopeOf(value) {
   return typeof value === 'string' && /^(tab:.+|space:(project|agent):.+)$/.test(value) ? value : 'tab:unavailable';
 }
 
-export function feedScopeQuery(scope, views, flags) {
+export function feedScopeQuery(scope, views) {
   if (!scope || scope === 'everything') return null;
   if (scope.startsWith('tab:')) {
     const view = viewsOf(views).find((v) => v.id === scope.slice(4));
     // A deleted tab remains empty until the owner chooses another scope.
-    return view ? viewToQuery(viewForFlags(view, flags), { audience: 'owner' }) : { scope: { kind: 'global' }, audience: 'all', where: { missing: { unset: true } } };
+    return view ? viewToQuery(normalizeRetiredView(view), { audience: 'owner' }) : { scope: { kind: 'global' }, audience: 'all', where: { missing: { unset: true } } };
   }
   return { scope: { kind: 'space', id: scope.slice(6), descendants: true }, audience: 'all', where: {} };
 }
 
 export function itemInFeedScope(item, scope, ctx = {}) {
-  const query = feedScopeQuery(scope, ctx.listViews, ctx.flags);
+  const query = feedScopeQuery(scope, ctx.listViews);
   return !query || !!item && matches(item, query, ctx);
 }
 

@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { defaultContext, listIncidents, loadAnnotations, openLedger, recordEvent, recordRun, setCursor, setJobState, upsertJob, type Ledger, type SystemContext } from '@tango/system';
+import { defaultContext, linkIncidentOwnerWait, listIncidents, loadAnnotations, openLedger, recordEvent, recordRun, setCursor, setJobState, upsertJob, type Ledger, type SystemContext } from '@tango/system';
 import { DeskFeed } from '../server/desk/feed.js';
 import { registerDeskRoutes } from '../server/desk/routes.js';
 import { deskStatus } from '../server/desk/status.js';
@@ -381,6 +381,95 @@ describe('the System routes', () => {
 });
 
 describe('critical incidents on the desk, and the feed', () => {
+  it('updates failure evidence without renewing attention on every retry', async () => {
+    seed();
+    const s = system();
+    await s.tick();
+    const id = `${SYSTEM_ITEM_PREFIX}${critical().id}`;
+    const before = h.core.store.item(id)!;
+    const attention = h.core.store.attention(id);
+    recordEvent(ledger, { source: 'tango-run', jobId: PULL, kind: 'run.failed', severity: 'error', title: 'Exited 1: Health store locked', at: new Date(Date.now() + 60_000).toISOString() });
+    await s.tick();
+    expect(h.core.store.item(id)!.lastActivityAt).toBe(before.lastActivityAt);
+    expect(h.core.store.item(id)!.facts.failed?.at).toBe(before.facts.failed?.at);
+    expect(h.core.store.attention(id)).toEqual(attention);
+    expect(h.core.store.item(id)!.facts.system?.count).toBe(3);
+    const worseAt = new Date(Date.now() + 120_000).toISOString();
+    recordEvent(ledger, { source: 'tango-run', jobId: PULL, kind: 'run.failed', severity: 'critical', title: 'Exited 1: Health store locked', at: worseAt });
+    await s.tick();
+    expect(h.core.store.item(id)!.facts.failed?.at).toBe(Date.parse(worseAt));
+  });
+
+  it('automatically links a Fix worker owner ask without acknowledging or recovering the check', async () => {
+    seed();
+    const s = system();
+    h.core.ensureItem({ id: 'loom:fixer', source: 'loom', kind: 'thread', agentId: 'loom', agentName: 'Repair', conversationKey: 'fixer', place: 'Repair', createdAt: Date.now() }, 'agent');
+    h.core.setFacts('loom:fixer', { openAsk: { text: 'Restart the source', at: Date.now() } } as never);
+    setCursor(ledger, `fix.${critical().id}`, JSON.stringify({ itemId: 'loom:fixer', at: new Date().toISOString(), attempt: 1, via: 'worker' }));
+    await s.tick();
+    expect(h.core.store.items().filter((i) => i.source === 'system')).toHaveLength(0);
+    expect(critical().status).toBe('open');
+    expect(ledger.db.prepare('SELECT item_id, active FROM incident_owner_waits').get()).toMatchObject({ item_id: 'loom:fixer', active: 1 });
+  });
+
+  it('does not create or retain an owner wait for a request addressed to an agent', async () => {
+    seed();
+    const s = system();
+    const id = critical().id;
+    h.core.ensureItem({ id: 'loom:fixer', source: 'loom', kind: 'thread', agentId: 'loom', agentName: 'Repair', conversationKey: 'fixer', place: 'Repair', createdAt: Date.now() }, 'agent');
+    setCursor(ledger, `fix.${id}`, JSON.stringify({ itemId: 'loom:fixer', at: new Date().toISOString(), attempt: 1, via: 'worker' }));
+    const agentAsk = { text: 'Review the repair plan', at: Date.now(), to: 'loom:lead' };
+    h.core.setFacts('loom:fixer', { openAsk: agentAsk });
+    await s.tick();
+    expect(ledger.db.prepare('SELECT * FROM incident_owner_waits').all()).toHaveLength(0);
+    expect(h.core.item(`${SYSTEM_ITEM_PREFIX}${id}`)?.disposition).toBe('active');
+    h.core.setFacts('loom:fixer', { openAsk: { text: 'Restart the source', at: Date.now() } });
+    await s.tick();
+    expect(h.core.item(`${SYSTEM_ITEM_PREFIX}${id}`)?.disposition).toBe('done');
+    h.core.setFacts('loom:fixer', { openAsk: agentAsk });
+    await s.tick();
+    expect(ledger.db.prepare('SELECT active FROM incident_owner_waits').get()).toMatchObject({ active: 0 });
+    expect(h.core.item(`${SYSTEM_ITEM_PREFIX}${id}`)?.disposition).toBe('active');
+    expect(critical().status).toBe('open');
+    expect(ledger.db.prepare('SELECT notify_pending FROM incidents WHERE id = ?').get(id)).toMatchObject({ notify_pending: 'opened' });
+  });
+
+  it('does not revive an answered Fix errand for a later unrelated ask, but permits explicit relinking', async () => {
+    seed();
+    const s = system();
+    const id = critical().id;
+    h.core.ensureItem({ id: 'loom:fixer', source: 'loom', kind: 'thread', agentId: 'loom', agentName: 'Repair', conversationKey: 'fixer', place: 'Repair', createdAt: Date.now() }, 'agent');
+    setCursor(ledger, `fix.${id}`, JSON.stringify({ itemId: 'loom:fixer', at: new Date().toISOString(), attempt: 1, via: 'worker' }));
+    h.core.setFacts('loom:fixer', { openAsk: { text: 'Restart the source', at: Date.now() } } as never);
+    await s.tick();
+    h.core.setFacts('loom:fixer', { openAsk: null });
+    await s.tick();
+    h.core.setFacts('loom:fixer', { openAsk: { text: 'Choose a report format', at: Date.now() } } as never);
+    await s.tick();
+    expect(ledger.db.prepare('SELECT active FROM incident_owner_waits').get()).toMatchObject({ active: 0 });
+    expect(h.core.item(`${SYSTEM_ITEM_PREFIX}${id}`)?.disposition).toBe('active');
+    expect(critical().status).toBe('open');
+    expect(ledger.db.prepare('SELECT notify_pending FROM incidents WHERE id = ?').get(id)).toMatchObject({ notify_pending: 'opened' });
+    linkIncidentOwnerWait(ledger, id, 'loom:fixer');
+    await s.tick();
+    expect(ledger.db.prepare('SELECT active FROM incident_owner_waits').get()).toMatchObject({ active: 1 });
+    expect(h.core.item(`${SYSTEM_ITEM_PREFIX}${id}`)?.disposition).toBe('done');
+  });
+
+  it('lets one explicit owner errand carry the ask and restores an unresolved incident after it ends', async () => {
+    seed();
+    const s = system();
+    h.core.ensureItem({ id: 'loom:repair', source: 'loom', kind: 'thread', agentId: 'loom', createdAt: Date.now(), conversationKey: 'repair', agentName: 'Repair', place: 'Repair' }, 'agent');
+    h.core.setFacts('loom:repair', { openAsk: { text: 'Restart the upstream service', at: Date.now() } } as never);
+    linkIncidentOwnerWait(ledger, critical().id, 'loom:repair');
+    await s.tick();
+    expect(h.core.store.items().filter((i) => i.source === 'system')).toHaveLength(0);
+    expect(critical().status).toBe('open');
+    h.core.setFacts('loom:repair', { openAsk: null });
+    await s.tick();
+    expect(h.core.item(`${SYSTEM_ITEM_PREFIX}${critical().id}`)?.disposition).toBe('active');
+  });
+
   it('makes each critical open incident an Inbox item that needs the owner, and settles it when held or resolved', async () => {
     seed();
     const s = system();
@@ -494,4 +583,12 @@ describe('the page’s model (browser)', () => {
     expect(createSystemFixture(NOW).command('incident.fix', { incidentId: inc.id })).toMatchObject({ ok: true, outcome: { itemId: `fixture:fix-${inc.id}` } });
     expect(predictSystem('nope', data, {})).toBeUndefined();
   });
+});
+
+it('does not settle or take ownership of held phone notes while polling incidents', async () => {
+  h.core.ensureItem({ id: 'phone:held', source: 'system', kind: 'thread', conversationKey: 'phone:held', agentId: 'phone-note', agentName: 'Phone note', createdAt: Date.now(), facts: { phoneNote: { noteId: 'held', text: 'Keep this', uncertain: false } } }, 'owner');
+  const service = system();
+  expect(service.owns(h.core.store.item('phone:held')!)).toBe(false);
+  await service.snapshot();
+  expect(h.core.item('phone:held')?.disposition).toBe('active');
 });

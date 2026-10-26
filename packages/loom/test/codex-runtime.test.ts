@@ -24,6 +24,13 @@ async function setup(nativeSessionId: string | null = null, model = "gpt-test", 
 }
 
 describe("Codex app-server 0.163.0", () => {
+  it.each([['commentary', 'note'], ['partial_answer', 'answer'], ['final_answer', 'answer'], [null, undefined]])('maps phase %s to %s', async (phase, expected) => {
+    const { session, events } = await setup();
+    session.startTurn({ runId: 'phase', text: `phase:${JSON.stringify(phase)}` });
+    await wait(events, 'turn.completed');
+    const message = events.find(e => e.type === 'message.completed');
+    expect(message && 'phase' in message ? message.phase : undefined).toBe(expected);
+  });
   it("initializes a new session, streams a turn and tools, and prepends carry exactly once", async () => {
     const { session, events, messages, ledger, carry, dir } = await setup();
     expect(events).toContainEqual({ type: "session.native", nativeSessionId: "native-new" });

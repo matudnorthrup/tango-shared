@@ -217,6 +217,9 @@ function heldAway(row: Row, items: Map<string, DeskItem>, awaySpaces: ReadonlySe
   return disposition === 'snoozed' || disposition === 'parked';
 }
 
+/** Desk events that put a conversation away or bring it back (attention.ts), so heldAway reads differently after them. */
+const AWAY_EVENTS: ReadonlySet<string> = new Set(['snooze', 'park', 'snooze.expired', 'reopen', 'pickup', 'undo']);
+
 /** Incident statuses that mean the owner has it in hand. */
 const HELD_INCIDENT: ReadonlySet<string> = new Set(['acked', 'snoozed', 'muted']);
 const RULE_MOMENTS: ReadonlySet<string> = new Set(['rule-created', 'rule-reaffirmed', 'rule-suspended', 'class-demoted']);
@@ -515,8 +518,19 @@ export class DeskUpdates {
     return () => this.listeners.delete(listener);
   }
 
+  /**
+   * Which lines Catch me up shows changed without a line changing: a conversation or a project went away or came
+   * back (heldAway reads that at read time). Screens re-read their chapters; no line is re-posted.
+   */
+  awayChanged(): void {
+    this.notify([]);
+  }
+
   private emit(ids: number[]): void {
-    if (!ids.length) return;
+    if (ids.length) this.notify(ids);
+  }
+
+  private notify(ids: number[]): void {
     for (const listener of this.listeners) {
       try {
         listener(ids);
@@ -865,6 +879,20 @@ export class DeskUpdates {
     return marked;
   }
 
+  /** Undo a card snooze without erasing a newer mark, resolution or replacement. */
+  restoreSnooze(ids: number[], backAt: number | null, seenAt: number | null): DeskUpdate[] {
+    const restored: DeskUpdate[] = [];
+    for (const id of [...new Set(ids)]) {
+      const result = this.options.db.prepare(`UPDATE desk_updates SET seen_at = NULL, seen_via = NULL, outcome = NULL, back_at = NULL
+        WHERE id = ? AND superseded_by IS NULL AND resolved_at IS NULL
+        AND seen_via = ? AND outcome = ? AND back_at IS ? AND (? IS NULL OR seen_at = ?)`)
+        .run(id, backAt === null ? 'read' : 'deferred', backAt === null ? 'got-it' : 'later', backAt, seenAt, seenAt);
+      if (result.changes) restored.push(this.get(id)!);
+    }
+    this.emit(restored.map(u => u.id));
+    return restored;
+  }
+
   /**
    * The owner chose how a decision counts (Always / Ask me next time / Just this once) on its new-rule moment: the
    * rule-event lines for it carry the choice now, and are handled with it. Returns the lines marked.
@@ -991,6 +1019,8 @@ export class DeskUpdates {
         this.emit(restored);
         return;
       }
+      // Snooze, Park and their ends change what Catch me up leaves out: screens re-read now, not on their next tick.
+      if (AWAY_EVENTS.has(event.type)) this.awayChanged();
       if (event.type === 'seen' && event.payload.via === 'viewed') {
         const shown = Array.isArray(event.payload.updates) ? (event.payload.updates as unknown[]).filter((id): id is number => Number.isInteger(id)) : [];
         this.readThread(event.itemId, shown);

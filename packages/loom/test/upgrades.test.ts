@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { LoomHost } from "../src/host.js";
 import { LoomStore } from "../src/store.js";
 import type { OpenSessionOptions, RuntimeEmit, RuntimeSession } from "../src/runtime.js";
@@ -196,6 +196,9 @@ describe("release upgrades", () => {
   });
 
   it("shows target release and whether safe point or maximum age is pending", async () => {
+    // Freeze only the age clock; transport and host timers remain real.
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
+    cleanups.push(async () => { clock.mockRestore(); });
     const { host, runtime, state, submit } = setup({ maxHostAgeMs: 100 });
     const thread = await submit();
     expect(host.detail(thread.threadId!)!.thread).toMatchObject({ host_release: "old", target_release: "old", upgrade: "current" });

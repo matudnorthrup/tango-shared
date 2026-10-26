@@ -43,7 +43,7 @@ describe('the six-pill vocabulary everywhere', () => {
     const parsed = parseListViews(edited);
     if ('error' in parsed) throw new Error(parsed.error);
     expect(viewsOf(parsed.views).map((v: { id: string; name: string }) => `${v.id}:${v.name}`)).toEqual(['active:Going', 'needs:Needs you', 'done:Done']);
-    expect(viewsOf([{ id: 'ready', name: 'Ready', group: 'stage' }, { id: 'mine', name: 'Mine', group: 'none' }]).map((v: { id: string }) => v.id)).toEqual(['needs', 'active', 'later', 'done', 'mine']);
+    expect(viewsOf([{ id: 'ready', name: 'Ready', group: 'live' }, { id: 'mine', name: 'Mine', group: 'none' }]).map((v: { id: string }) => v.id)).toEqual(['needs', 'active', 'later', 'done', 'mine']);
   });
   it('a row marked done with its brief still open stays in Needs you', () => {
     const row = { id: 'x', source: 'loom', kind: 'thread', disposition: 'done', status: { layer: 'needs', pill: 'needs', countsForOwner: true }, nextStep: 'your_move', facts: {} };

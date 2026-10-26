@@ -32,9 +32,7 @@ import {
   ITEM_TYPES,
   LEGACY_LABELS,
   LIST_LABELS,
-  STAGES,
   type ItemType,
-  type Stage,
   isAttentionEvent,
   type Actor,
   type Artifact,
@@ -202,7 +200,7 @@ const FEED_WORKING_EVERY_MS = 7 * 60_000;
 const FEED_UPDATER_MS = 24 * 3600_000;
 
 /** Guessed already, or the owner set a label, None included (a tag left unset is undefined; Codex review on #515). */
-const labeledYet = (facts: DeskFacts): boolean => !!facts.autoTag || facts.type !== undefined || facts.stage !== undefined;
+const labeledYet = (facts: DeskFacts): boolean => !!facts.autoTag || facts.type !== undefined;
 
 /** Actors that mean the owner did something (not an agent, a source or a timer). */
 const OWNER_ACTORS = new Set<Actor>(['owner', 'screen', 'voice']);
@@ -303,8 +301,10 @@ export interface OwnerPostUp {
 }
 
 /** A Discord row showing its agent's Loom records (source-loom.ts linkDiscord), as the Loom item answers go through. */
-function loomBacking(item: DeskItemRow): DeskItemRow | null {
-  return item.source !== 'loom' && item.facts.loomThreadId ? { ...item, id: `loom:${item.facts.loomThreadId}`, source: 'loom' as const } : null;
+function loomBacking(item: DeskItemRow, threadId = item.facts.loomThreadId): DeskItemRow | null {
+  // No conversation key: the Tango conversation source owns rows by that key and would claim the Loom thread's answer
+  // (live 10/25: D-831 on Juliet's chapter row failed "no source to answer through").
+  return item.source !== 'loom' && threadId ? { ...item, id: `loom:${threadId}`, source: 'loom' as const, conversationKey: '' } : null;
 }
 
 export class DeskCore {
@@ -458,7 +458,7 @@ export class DeskCore {
   }
 
   /**
-   * Stage and type, seeded once from what the owner wrote before the desk owned them: a thread title's
+   * Type, seeded once from what the owner wrote before the desk owned them: a thread title's
    * old prefix ("epic: …") or a Discord item's old desk label. `hold` parks it (an open item only).
    * Seeded items are never re-read: from then on the desk is the only place these live.
    */
@@ -469,14 +469,14 @@ export class DeskCore {
     const title = isCodingThread(item) ? (item.place ?? '').split(' · ').slice(1).join(' · ') : (item.place ?? '');
     const prefix = item.facts.listLabel ?? /^\s*([a-z]+):(?!\/\/)/i.exec(title)?.[1]?.toLowerCase() ?? null;
     const legacy = prefix ? LEGACY_LABELS[prefix] : undefined;
-    this.store.patchItem(itemId, { facts: { ...item.facts, tagsSeeded: true, ...(legacy?.stage ? { stage: legacy.stage } : {}), ...(legacy?.type ? { type: legacy.type } : {}) } }, { bump: false });
+    this.store.patchItem(itemId, { facts: { ...item.facts, tagsSeeded: true, ...(legacy?.type ? { type: legacy.type } : {}) } }, { bump: false });
     this.changed.add(itemId);
     const disposition = this.store.attention(itemId)?.disposition;
     if (legacy?.park && (disposition === 'active' || disposition === 'snoozed')) this.apply(itemId, 'park', 'system', { via: 'hold-label' });
   }
 
   /**
-   * Seeds every item not seeded yet, once (stage and type moved off thread titles onto the desk). Run after
+   * Seeds every item not seeded yet, once (type moved off thread titles onto the desk). Run after
    * the first source poll, so a thread renamed while the desk was down seeds from its current name
    * (Codex review on #498). Returns how many it seeded.
    */
@@ -1496,7 +1496,7 @@ export class DeskCore {
         return { seq: this.apply(item.id, 'snooze', actor, { ...(until !== null ? { until } : {}), ...(trigger ? { trigger } : {}) }, cid).seq };
       }
       case 'tag': {
-        // The owner's stage and type, kept on the desk only (never written to the source). A key not given is left as is.
+        // The owner's type, kept on the desk only (never written to the source). A key not given is left as is.
         const item = this.requireItem(command);
         const pick = <T extends string>(value: unknown, allowed: readonly T[], name: string): T | null | undefined => {
           if (value === undefined) return undefined;
@@ -1504,15 +1504,12 @@ export class DeskCore {
           if (!(allowed as readonly string[]).includes(String(value))) throw new CommandError(`${name} must be one of ${allowed.join(', ')}, or null`);
           return String(value) as T;
         };
-        if (args.stage !== undefined && !OWNER_ACTORS.has(actor)) throw new CommandError('stage is owner-only');
-        const stage = pick<Stage>(args.stage, STAGES, 'stage');
         const type = pick<ItemType>(args.type, ITEM_TYPES, 'type');
-        if (stage === undefined && type === undefined) throw new CommandError('tag needs stage or type');
+        if (type === undefined) throw new CommandError('tag needs type');
         this.confirmAutoTag(item.id);
-        this.setFacts(item.id, { tagsSeeded: true, ...(stage !== undefined ? { stage } : {}), ...(type !== undefined ? { type } : {}) });
+        this.setFacts(item.id, { tagsSeeded: true, type });
         this.refresh(item.id);
-        const tags = { stage: stage === undefined ? (item.facts.stage ?? null) : stage, type: type === undefined ? (item.facts.type ?? null) : type };
-        return tags;
+        return { type };
       }
       case 'project': {
         // The owner's project for this conversation, kept on the desk only. null takes it out of its project.
@@ -1525,16 +1522,16 @@ export class DeskCore {
         return this.moveProject(item, projectId, actor, args.parentItemId);
       }
       case 'label': {
-        // The old label chips (one word for both): mapped onto stage and type; hold parks it. Kept for old clients.
+        // The old label chips (one word for both): mapped onto type; hold parks it. Kept for old clients.
         const item = this.requireItem(command);
         const raw = args.label === null || args.label === '' || args.label === undefined ? null : String(args.label);
         if (raw !== null && !(LIST_LABELS as readonly string[]).includes(raw)) throw new CommandError(`label must be one of ${LIST_LABELS.join(', ')}, or null`);
         const legacy = raw ? LEGACY_LABELS[raw] : null;
         if (legacy?.park) return { seq: this.apply(item.id, 'park', actor, {}, cid).seq };
         this.confirmAutoTag(item.id);
-        this.setFacts(item.id, { tagsSeeded: true, ...(legacy?.stage ? { stage: legacy.stage } : {}), ...(legacy?.type ? { type: legacy.type } : {}), ...(raw === null ? { stage: null, type: null } : {}) });
+        this.setFacts(item.id, { tagsSeeded: true, ...(legacy?.type ? { type: legacy.type } : {}), ...(raw === null ? { type: null } : {}) });
         this.refresh(item.id);
-        return { stage: this.store.item(item.id)!.facts.stage ?? null, type: this.store.item(item.id)!.facts.type ?? null };
+        return { type: this.store.item(item.id)!.facts.type ?? null };
       }
       case 'pin': {
         const item = this.requireItem(command);
@@ -1701,11 +1698,10 @@ export class DeskCore {
         }
         const onApprove = args.onApprove === 'notify' ? 'notify' : 'continue';
         const before = current.find(same);
-        const stage = item.facts.stage ?? null;
         this.setFacts(item.id, { prWatches: [...others, { url: pr.url, number: pr.number, onApprove, at: this.now(), by: actor, wokeFor: before?.wokeFor ?? null, ...(before?.wokeState ? { wokeState: before.wokeState } : {}) }] });
         this.refresh(item.id);
         for (const listener of this.prWatchListeners) listener(item.id);
-        return { watching: true, url: pr.url, number: pr.number, onApprove, stage, ...(before ? { updated: true } : {}) };
+        return { watching: true, url: pr.url, number: pr.number, onApprove, ...(before ? { updated: true } : {}) };
       }
       case 'reply':
       case 'answer': {
@@ -1959,7 +1955,7 @@ export class DeskCore {
     const hiddenKey = `${item.id}|${resolution.requestId}`;
     const raisedBy = this.backedHidden.get(hiddenKey);
     this.backedHidden.delete(hiddenKey);
-    const backing = raisedBy ? { ...item, id: `loom:${raisedBy}`, source: 'loom' as const }
+    const backing = raisedBy ? loomBacking(item, raisedBy)
       : [item.facts.pending, item.facts.openBrief].some((entry) => entry?.requestId === resolution.requestId) ? loomBacking(item) : null;
     const adapter = this.adapterFor(backing ?? item);
     if (!adapter?.resolvePending) throw new CommandError('this item has no source to answer through');
@@ -2002,7 +1998,7 @@ export class DeskCore {
 
   /**
    * Guesses a new coding thread's type (Loom) once its opening message is in (desk/autotag.ts).
-   * Stages stay owner-set (owner, 10/20). Only threads that start after the desk began guessing, only once, and never
+   * Only threads that start after the desk began guessing, only once, and never
    * over a label the owner set: their labels, confirmed or untouched, are the examples.
    */
   async maybeAutoTag(itemId: string): Promise<void> {
@@ -2045,7 +2041,7 @@ export class DeskCore {
     for (const item of this.store.items({ sinceMs: 0 })) {
       const guess = item.facts.autoTag;
       if (!isCodingThread(item) || !guess || guess.applied || guess.confidence < AUTOTAG_MIN_CONFIDENCE) continue;
-      if (item.facts.type !== undefined || item.facts.stage !== undefined) continue;
+      if (item.facts.type !== undefined) continue;
       this.setFacts(item.id, { autoTag: { ...guess, applied: true, unconfirmed: true }, type: guess.type });
       applied += 1;
     }
@@ -2535,18 +2531,6 @@ export class DeskCore {
     if (!this.options.autoTag) this.store.deleteSetting('autotag_since');
     else if (this.store.setting('autotag_since') === null) this.store.setSetting('autotag_since', String(this.now()));
     if (this.options.autoTag) this.applyHeldGuesses();
-    // A section order saved with the old labels (disc, epic, chat, …): translated onto the stages in the
-    // same order (disc → Discovery, epic → Building, watch → Feedback; Chats and No label kept).
-    try {
-      const saved = JSON.parse(this.store.setting('label_order') ?? 'null') as unknown;
-      if (Array.isArray(saved) && !saved.some((key) => (STAGES as readonly string[]).includes(String(key)))) {
-        const mapped = [...new Set(saved.map((key) => (key === 'chat' || key === 'none' ? key : (LEGACY_LABELS[String(key)]?.stage ?? null))).filter((key): key is string => !!key))];
-        this.store.setSetting('label_order', JSON.stringify(mapped));
-        this.log('desk.label_order.migrated', { from: saved, to: mapped });
-      }
-    } catch {
-      /* unreadable: readLabelOrder already falls back to the default */
-    }
     // Done, Park and Snooze from the owner read the thread since 10/17: replayed once so the ones already put away
     // read Ready too (a rule's or the system's stay as they were).
     if (!this.store.setting('away_read_v1')) {
@@ -2604,7 +2588,7 @@ export class DeskCore {
       } catch { /* unreadable views fall back to built-ins */ }
       this.store.setSetting('list_views_inbox_v1', '1');
     }
-    // Type filters named old prefixes: keep what maps to a type (epic → project), drop stage words and hold.
+    // Type filters named old prefixes: keep what maps to a type (epic → project), drop prefixes without a type.
     const filters = readFilters(this.store);
     const types = [...new Set(filters.hideTypes.map((t) => ((ITEM_TYPES as readonly string[]).includes(t) ? t : (LEGACY_LABELS[t]?.type ?? null))).filter((t): t is string => !!t))];
     if (types.length !== filters.hideTypes.length || types.some((t, i) => t !== filters.hideTypes[i])) {

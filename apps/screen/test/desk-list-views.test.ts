@@ -12,7 +12,7 @@ import { sectionsOf } from '../public/desk/list-model.js';
 import { makeHarness, NOW, type Harness } from './desk-harness.js';
 
 // The List's tabs are views the owner defines (TGO-955): filters on status and on facts the desk
-// knows (live state, stage, type, project, agent), its grouping and sort. Synthetic names only.
+// knows (live state, type, project, agent), its grouping and sort. Synthetic names only.
 
 const item = (id: string, patch: Record<string, unknown> = {}) => {
   const row = {
@@ -36,14 +36,14 @@ describe('views', () => {
   const lists = {
     active: {
       items: [
-        item('ask', { facts: { project: { name: 'acme' }, pending: { kind: 'question' }, stage: 'discovery', type: 'bug' } }),
-        item('busy', { facts: { project: { name: 'acme' }, running: { since: 1 }, stage: 'building' } }),
+        item('ask', { facts: { project: { name: 'acme' }, pending: { kind: 'question' }, type: 'bug' } }),
+        item('busy', { facts: { project: { name: 'acme' }, running: { since: 1 } } }),
         item('done-turn', { facts: { project: { name: 'beta' }, lastAuthor: 'agent', type: 'feat' }, place: 'beta · done-turn', area: 'beta' }),
         item('chat', { source: 'discord', agentId: 'sierra-ollama', agentName: 'Sierra', place: 'Truck', facts: { lastAuthor: 'owner' }, lastOwnerMessageAt: NOW }),
         item('dropped', { source: 'discord', agentId: 'sierra-ollama', agentName: 'Sierra', place: 'Truck', facts: { lastAuthor: 'owner' }, lastOwnerMessageAt: NOW - 10 * 60_000 }),
       ],
     },
-    snoozed: { items: [item('nap', { disposition: 'snoozed' }), item('shelf', { disposition: 'parked', facts: { stage: 'feedback' } })] },
+    snoozed: { items: [item('nap', { disposition: 'snoozed' }), item('shelf', { disposition: 'parked', facts: {} })] },
     history: { items: [item('old', { disposition: 'done' })] },
   };
 
@@ -70,10 +70,9 @@ describe('views', () => {
     expect(viewsOf(narrowed)[0].live).toEqual(['needs']);
   });
 
-  it('filters combine: status, live state, stage (incl. none), type, workspace, agent', () => {
+  it('filters combine: status, live state, type, workspace, agent', () => {
     const v = (spec: Record<string, unknown>) => ids(viewItems(lists, normalizeView({ id: 'x', name: 'X', ...spec })));
     expect(v({ show: 'active', type: ['bug', 'feat'] })).toEqual(['ask', 'done-turn']);
-    expect(v({ show: 'active', stage: ['none'] })).toEqual(['done-turn', 'chat', 'dropped']);
     expect(v({ show: 'active', workspace: ['beta'] })).toEqual(['done-turn']);
     // A view saved before projects named workspaces `project`.
     expect(v({ show: 'active', project: ['beta'] })).toEqual(['done-turn']);
@@ -83,7 +82,6 @@ describe('views', () => {
     // Quiet is gone: a view saved with it filters on nothing it can't name.
     expect(normalizeView({ id: 'x', name: 'X', live: ['quiet', 'ready'] }).live).toEqual(['ready']);
     expect(parseListViews([{ id: 'q', name: 'Q', status: ['active'], live: ['quiet', 'failed'], group: 'none' }])).toMatchObject({ views: [{ live: ['failed'] }] });
-    expect(v({ status: ['active', 'snoozed', 'parked'], stage: ['feedback', 'discovery'] })).toEqual(['ask', 'shelf']);
     // Status is pick-any like the other filters; none picked is every status, done included.
     expect(v({ status: ['parked', 'done'] })).toEqual(['shelf', 'old']);
     expect(v({ status: [] })).toEqual(['ask', 'busy', 'done-turn', 'chat', 'dropped', 'nap', 'shelf', 'old']);
@@ -120,8 +118,8 @@ describe('views', () => {
     expect(['active', 'open', 'snoozed', 'parked', 'history', 'bogus'].map(v)).toEqual([['active'], ['active', 'snoozed', 'parked'], ['snoozed'], ['parked'], ['done'], ['active']]);
     expect(viewSort(normalizeView({ id: 'x', name: 'X', show: 'history', sort: 'asks' }))).toBe('history');
     expect(viewSort(normalizeView({ id: 'x', name: 'X', status: ['done', 'parked'], sort: 'asks' }))).toBe('asks');
-    expect(parseListViews([{ id: 'a', name: 'A', show: 'open', group: 'stage' }])).toEqual({ views: [{ id: 'a', name: 'A', group: 'stage', sort: 'recent', status: ['active', 'snoozed', 'parked'], show: 'open', fold: true }] });
-    expect(parseListViews([{ id: 'a', name: 'A', status: ['gone'], group: 'stage' }])).toMatchObject({ error: expect.stringContaining('gone') });
+    expect(parseListViews([{ id: 'a', name: 'A', show: 'open', group: 'live' }])).toEqual({ views: [{ id: 'a', name: 'A', group: 'live', sort: 'recent', status: ['active', 'snoozed', 'parked'], show: 'open', fold: true }] });
+    expect(parseListViews([{ id: 'a', name: 'A', status: ['gone'], group: 'live' }])).toMatchObject({ error: expect.stringContaining('gone') });
   });
 
   it('groups by live state when asked', () => {
@@ -136,7 +134,7 @@ describe('views', () => {
 
   it('saved views are cleaned; unusable ones fall back to the built-ins; a device on a gone view lands on the first', () => {
     expect(normalizeView({ id: 'Bad Id', name: 'x' })).toBeNull();
-    expect(normalizeView({ id: 'bugs', name: '  Bugs  ', show: 'nope', live: ['needs', 'bogus'], group: 'weird' })).toEqual({ id: 'bugs', name: 'Bugs', group: 'stage', sort: 'recent', rev: 2, status: ['active'], live: ['needs'], fold: true });
+    expect(normalizeView({ id: 'bugs', name: '  Bugs  ', show: 'nope', live: ['needs', 'bogus'], group: 'weird' })).toEqual({ id: 'bugs', name: 'Bugs', group: 'live', sort: 'recent', rev: 2, status: ['active'], live: ['needs'], fold: true });
     expect(viewsOf([{ id: 'x' }])).toEqual(DEFAULT_VIEWS);
     const mine = viewsOf([{ id: 'bugs', name: 'Bugs', show: 'active', type: ['bug'], group: 'project' }, { id: 'bugs', name: 'Dup' }]);
     expect(mine.map((v: { id: string }) => v.id)).toEqual(['needs', 'active', 'later', 'done', 'bugs']);
@@ -146,7 +144,7 @@ describe('views', () => {
     expect(describeView(mine[4], { bug: 'bug' })).toBe('Active · bug · projects folded · by project');
     // Agents together only means something grouped by workspace (Loom's projects).
     expect(normalizeView({ id: 'naps', name: 'Naps', group: 'workspace', agentsTogether: true })?.agentsTogether).toBe(true);
-    expect(normalizeView({ id: 'naps', name: 'Naps', group: 'stage', agentsTogether: true })).not.toHaveProperty('agentsTogether');
+    expect(normalizeView({ id: 'naps', name: 'Naps', group: 'live', agentsTogether: true })).not.toHaveProperty('agentsTogether');
     expect(describeView(normalizeView({ id: 'naps', name: 'Naps', status: ['snoozed'], group: 'workspace', agentsTogether: true }))).toBe('Snoozed · projects folded · by workspace, agents together');
     expect(normalizeView({ id: 'naps', name: 'Naps', status: ['snoozed'], group: 'none', sort: 'wake' })?.sort).toBe('wake');
     expect(DEFAULT_VIEWS.find((v: { id: string }) => v.id === 'later').sort).toBe('wake');
@@ -213,13 +211,13 @@ describe('the listViews setting', () => {
   it('validates strictly: refuses, never trims', () => {
     expect(parseListViews(null)).toEqual({ views: null });
     expect(parseListViews([])).toMatchObject({ error: expect.stringContaining('non-empty') });
-    expect(parseListViews([{ id: 'a', name: 'A', show: 'active', group: 'stage', live: ['bogus'] }])).toMatchObject({ error: expect.stringContaining('bogus') });
-    expect(parseListViews([{ id: 'a', name: 'A', show: 'active', group: 'stage' }, { id: 'a', name: 'B', show: 'active', group: 'stage' }])).toMatchObject({ error: expect.stringContaining('share') });
+    expect(parseListViews([{ id: 'a', name: 'A', show: 'active', group: 'live', live: ['bogus'] }])).toMatchObject({ error: expect.stringContaining('bogus') });
+    expect(parseListViews([{ id: 'a', name: 'A', show: 'active', group: 'live' }, { id: 'a', name: 'B', show: 'active', group: 'live' }])).toMatchObject({ error: expect.stringContaining('share') });
     expect(parseListViews([{ id: 'a', name: 'A', status: ['snoozed'], group: 'none', sort: 'wake' }])).toMatchObject({ views: [{ sort: 'wake' }] });
     expect(parseListViews([{ id: 'a', name: 'A', status: ['snoozed'], group: 'project', agentsTogether: true }])).toMatchObject({ views: [{ agentsTogether: true }] });
     expect(parseListViews([{ id: 'a', name: 'A', status: ['snoozed'], group: 'project', agentsTogether: 'yes' }])).toMatchObject({ error: expect.stringContaining('agentsTogether') });
     expect(parseListViews([{ id: 'a', name: 'A', status: ['snoozed'], group: 'none', sort: 'bogus' }])).toMatchObject({ error: expect.stringContaining('wake') });
-    expect(parseListViews([{ id: 'a', name: 'A', status: ['active'], group: 'stage', stage: ['discovery', 'none'], type: ['bug'] }])).toEqual({ views: [{ id: 'a', name: 'A', group: 'stage', sort: 'recent', status: ['active'], show: 'active', stage: ['discovery', 'none'], type: ['bug'], fold: true }] });
+    expect(parseListViews([{ id: 'a', name: 'A', status: ['active'], group: 'live', type: ['bug'] }])).toEqual({ views: [{ id: 'a', name: 'A', group: 'live', sort: 'recent', status: ['active'], show: 'active', type: ['bug'], fold: true }] });
   });
 
   it('saves for every screen; null goes back to the built-in views', async () => {
@@ -236,7 +234,7 @@ describe('the listViews setting', () => {
     const back = (await (await app.request('/api/desk/settings')).json()).listViews[0];
     expect(back).toMatchObject({ status: [], show: 'open' });
     expect(normalizeView(back).status).toBeUndefined();
-    expect((await post({ listViews: [{ id: 'x', name: 'X', show: 'nowhere', group: 'stage' }] })).status).toBe(400);
+    expect((await post({ listViews: [{ id: 'x', name: 'X', show: 'nowhere', group: 'live' }] })).status).toBe(400);
     expect((await (await post({ listViews: null })).json()).listViews).toBeNull();
   });
 });

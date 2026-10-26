@@ -16,6 +16,9 @@ export { RUNNERS } from "./types.js";
 export { openLedger, getCursor, setCursor } from "./ledger.js";
 export { normalize, fingerprint } from "./fingerprint.js";
 export {
+  linkIncidentOwnerWait,
+  incidentHasOwnerWait,
+  refreshIncidentOwnerWaits,
   recordEvent,
   listIncidents,
   listEvents,

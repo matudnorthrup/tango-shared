@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
+vi.mock('../public/desk/app-list.js', () => ({ loadApps: async () => [] }));
 vi.mock('../public/desk/navigator-context.js', () => ({ navigatorContext: () => ({ place: 'Inbox', choices: [] }), executeNavigator: vi.fn() }));
 // @ts-expect-error browser module
 import { startNavigatorBridge } from '../public/desk/navigator-bridge.js';

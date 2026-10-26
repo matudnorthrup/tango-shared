@@ -80,6 +80,111 @@ afterEach(async () => {
   for (let i = 0; i < 5; i += 1) await new Promise((resolve) => setTimeout(resolve, 5));
 });
 
+describe('answers sent as new mail', () => {
+  async function delivered(steered = false, kind = 'mail') {
+    const result = mail.send({ from: 'loom:a', to: 'loom:b', text: 'Which port?' });
+    if (!result.ok) throw new Error(result.error);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await mail.tick();
+    h.core.store.db.prepare('UPDATE desk_mail SET steered = ?, kind = ? WHERE id = ?').run(steered ? 1 : 0, kind, result.mail.id);
+    return mail.get(result.mail.id)!;
+  }
+
+  function back(at: number, state = 'done', text = '8080', id = 'm-back') {
+    h.core.store.db.prepare(`INSERT INTO desk_mail
+      (id, from_item, to_item, from_title, to_title, text, expect, state, chain, hops, urgent, created_at)
+      VALUES (?, 'loom:b', 'loom:a', 'B', 'A', ?, 'none', ?, 'm-back', 0, 0, ?)`).run(id, text, state, at);
+  }
+
+  it.each([false, true])('collects back-mail and never sends a duplicate relay (steered: %s)', async (steered) => {
+    const original = await delivered(steered);
+    back(NOW + 1, 'done', 'x'.repeat(7000));
+    h.clock.now += 2;
+    await mail.tick();
+    expect(mail.get(original.id)).toMatchObject({ state: 'answered', answeredAt: NOW + 1, relayedAt: NOW + 2, relayedVia: 'mail' });
+    expect(mail.get(original.id)!.answer).toHaveLength(6000);
+    await mail.tick();
+    expect(turns('a')).toEqual([]);
+  });
+
+  it('collects start back-mail after an owner message breaks the transcript anchor', async () => {
+    const original = await delivered(false, 'start');
+    landTurns('b', 0);
+    details.get('b')!.messages.push({ id: 'owner-followup', role: 'user', text: 'Also check the host', createdAt: iso(1) });
+    details.get('b')!.messages.push({ id: 'worker-answer', role: 'assistant', text: 'Finished', createdAt: iso(2) });
+    await poll();
+    back(NOW + 3 * 60_000);
+    h.clock.now += 4 * 60_000;
+    await mail.tick();
+    expect(mail.get(original.id)).toMatchObject({ state: 'answered', answer: '8080', relayedVia: 'mail' });
+    expect(turns('a')).toEqual([]);
+  });
+
+  it('keeps a start pending through a mid-turn question and relays the final transcript report', async () => {
+    const original = await delivered(false, 'start');
+    landTurns('b', 0);
+    details.set('b', running('b'));
+    await poll();
+    back(NOW + 1, 'sent', 'Which issue tracks this?');
+    h.core.store.db.prepare("UPDATE desk_mail SET expect = 'reply' WHERE id = 'm-back'").run();
+    h.clock.now += 2;
+    await mail.tick();
+    expect(mail.get(original.id)!.state).toBe('sent');
+    details.get('b')!.messages.push({ id: 'final-report', role: 'assistant', text: 'Implemented and verified.', createdAt: iso(1) });
+    details.get('b')!.status = 'idle';
+    details.get('b')!.updatedAt = iso(1);
+    h.clock.now += 60_000;
+    await poll();
+    await mail.tick();
+    expect(mail.get(original.id)).toMatchObject({ state: 'answered', answer: 'Implemented and verified.', relayedVia: 'turn' });
+    expect(turns('a').some((text) => text.includes('Implemented and verified.'))).toBe(true);
+  });
+
+  it.each([false, true])('waits for idle and uses the latest back-mail, excluding future mail (steered: %s)', async (steered) => {
+    const original = await delivered(steered);
+    details.set('b', running('b'));
+    await poll();
+    back(NOW + 1, 'done', 'Early question');
+    back(NOW + 2, 'done', 'Final report', 'm-report');
+    back(NOW + 100, 'done', 'Future mail', 'm-future');
+    h.clock.now += 3;
+    await mail.tick();
+    expect(mail.get(original.id)!.state).toBe('sent');
+    details.get('b')!.status = 'idle';
+    await poll();
+    await mail.tick();
+    expect(mail.get(original.id)).toMatchObject({ state: 'answered', answer: 'Final report', answeredAt: NOW + 2, relayedVia: 'mail' });
+    expect(turns('a')).toEqual([]);
+  });
+
+  it.each([false, true])('does not answer a worker question with its own report-up row (steered: %s)', async (steered) => {
+    // a is the worker asking b (its lead); report-up stores the opposite direction.
+    const original = await delivered(steered);
+    back(NOW + 1, 'answered', 'Report: worker');
+    h.core.store.db.prepare("UPDATE desk_mail SET kind = 'report', relayed_at = ? WHERE id = 'm-back'").run(NOW + 1);
+    h.clock.now += 2;
+    await mail.tick();
+    expect(mail.get(original.id)).toMatchObject({ state: 'sent', answer: null, relayedVia: null });
+  });
+
+  it.each(['draft', 'dropped', 'failed'])('does not count %s back-mail', async (state) => {
+    const original = await delivered(true);
+    back(NOW + 1, state);
+    h.clock.now += 2;
+    await mail.tick();
+    expect(mail.get(original.id)!.state).toBe('sent');
+  });
+
+  it.each([-1, 0])('does not count back-mail before or at delivery (%s)', async (offset) => {
+    const original = await delivered(true);
+    h.core.store.db.prepare('UPDATE desk_mail SET sent_at = ? WHERE id = ?').run(NOW + 100, original.id);
+    back(NOW + 100 + offset);
+    h.clock.now += 101;
+    await mail.tick();
+    expect(mail.get(original.id)!.state).toBe('sent');
+  });
+});
+
 describe('mail text', () => {
   it('headers parse back, and the footer the desk adds is not part of what was said', () => {
     const record = { id: 'm-1a2b3c4d', fromItemId: 'loom:a', fromTitle: 'Overview map', toItemId: 'loom:b', toTitle: 'Tile server', text: 'Which port is the tile server on?', expect: 'reply' as const, answer: '8080' };

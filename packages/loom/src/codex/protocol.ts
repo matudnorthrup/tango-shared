@@ -20,6 +20,7 @@ export interface Item {
   type: string;
   id: string;
   text?: string;
+  phase?: "commentary" | "partial_answer" | "final_answer" | null;
   command?: string;
   server?: string;
   tool?: string;

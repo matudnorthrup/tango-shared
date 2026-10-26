@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { viewForFlags, viewToQuery } from '../public/desk/query.js';
+import { normalizeRetiredView, viewToQuery } from '../public/desk/query.js';
 import { itemInFeedScope, scopedFeedPosts } from '../public/desk/feed-scope.js';
 // @ts-expect-error browser module
 import { describeView } from '../public/desk/list-views.js';
@@ -19,7 +19,7 @@ const rows = [row('discord:unstaged', 'discord'), row('loom:unstaged', 'loom'), 
 const ids = (items: any[]) => items.map((i) => i.id).sort();
 const base = { id: 'top', name: 'Top', status: ['active'], group: 'stage', sort: 'recent', fold: false };
 
-describe('saved stage filters follow the stage labels flag', () => {
+describe('retired saved view compatibility', () => {
   it.each([
     { stage: ['discovery', 'building'] },
     { where: { stage: { in: ['discovery', 'building'] } } },
@@ -27,38 +27,37 @@ describe('saved stage filters follow the stage labels flag', () => {
   ])('covers list rows, counts, search, feed, spaces and descriptions: %j', (filter) => {
     const view = { ...base, ...filter };
     const original = JSON.stringify(view);
-    for (const stageLabels of [false, true, false]) {
-      const flags = { stageLabels };
-      const expected = stageLabels ? ['loom:building'] : ids(rows);
+    {
+
+      const expected = ids(rows);
       const state = {
-        flags, listViews: [view], spaceViews: [view], projects: [], now: Date.now(),
+        listViews: [view], spaceViews: [view], projects: [], now: Date.now(),
         lists: { active: { items: rows, loaded: true }, snoozed: { items: [], loaded: true }, history: { items: [], loaded: true } },
         nextRoute: { page: 'inbox', view: 'top' }, search: { tab: 'top' },
       };
       const shown = inboxViews(state).find((v: any) => v.view.id === 'top');
       expect(ids(shown.items)).toEqual(expected);
-      expect(shown.view.group).toBe(stageLabels ? 'stage' : 'live');
+      expect(shown.view.group).toBe('live');
       const report = nextListReport(state);
       expect(ids(report.rows)).toEqual(expected);
       expect(report.tabs.find((t: any) => t.id === 'top').count).toBe(expected.length);
-      expect(searchOptions(state).where.stage).toEqual(stageLabels ? viewToQuery(view).where.stage : undefined);
-      expect(ids(filterHits(rows.map((row) => ({ row })), { view, flags }).map((h: any) => h.row))).toEqual(expected);
-      const ctx = { flags, listViews: [view] };
+      expect(searchOptions(state).where.stage).toEqual(undefined);
+      expect(ids(filterHits(rows.map((row) => ({ row })), { view }).map((h: any) => h.row))).toEqual(expected);
+      const ctx = { listViews: [view] };
       expect(ids(rows.filter((r) => itemInFeedScope(r, 'tab:top', ctx)))).toEqual(expected);
       expect(scopedFeedPosts(rows.map((r) => ({ itemId: r.id })), Object.fromEntries(rows.map((r) => [r.id, r])), 'tab:top', ctx).map((p) => p.itemId).sort()).toEqual(expected);
       expect(needsYouCount(state.lists, state.now, 'tab:top', ctx)).toBe(expected.length);
       // Space views store filters in where, with the same effective stage predicate.
       const spaces = shownSpaceViews({ ...state, spaceViews: [{ ...view, where: viewToQuery(view).where }] });
       expect(ids(spaceViews(rows, [], spaces)[0].items)).toEqual(expected);
-      expect(spaces[0].group).toBe(stageLabels ? 'stage' : 'status');
-      expect(describeView(view, {}, flags).toLowerCase().includes('stage')).toBe(stageLabels);
+      expect(spaces[0].group).toBe('status');
+      expect(describeView(view).toLowerCase().includes('stage')).toBe(false);
       expect(JSON.stringify(view)).toBe(original);
     }
   });
 
-  it('defaults off and preserves unrelated narrowing predicates', () => {
+  it('preserves unrelated narrowing predicates', () => {
     const view = { ...base, stage: ['building'], where: { stage: { in: ['discovery'] }, source: { in: ['discord'] } } };
-    expect(viewToQuery(viewForFlags(view)).where).toEqual({ disposition: { in: ['active'] }, source: { in: ['discord'] } });
-    expect(viewForFlags(view, { stageLabels: true })).toBe(view);
+    expect(viewToQuery(normalizeRetiredView(view)).where).toEqual({ disposition: { in: ['active'] }, source: { in: ['discord'] } });
   });
 });

@@ -6,13 +6,7 @@
 import { personaId, itemRepo } from './query-identity.js';
 import { STALL_MS, isFresh, toMs, unansweredSince } from './util.js';
 
-// Stage and type are the owner's, kept on the desk (facts.stage, facts.type); Loom titles no longer
-// carry them. Legacy title prefixes ("epic: …") were read once to seed them and are only stripped from names.
-export const STAGES = [
-  ['discovery', 'Discovery'],
-  ['building', 'Building'],
-  ['feedback', 'Feedback'],
-];
+// Types belong to the owner and are kept on the desk.
 // The `project` type reads Epic: the bigger pieces of work. Projects are the owner's folders (projectOf).
 export const TYPES = [
   ['project', 'Epic', 'Epics'],
@@ -23,31 +17,24 @@ export const TYPES = [
   ['ops', 'Ops', 'Ops'],
   ['skill', 'Skill', 'Skills'],
 ];
-const STAGE_KEYS = STAGES.map(([key]) => key);
 const TYPE_KEYS = TYPES.map(([key]) => key);
 /** The old Loom title prefixes, stripped from a thread's name wherever a title still has one. */
 const OLD_PREFIX_RE = /^(epic|disc|bug|fix|feat|enh|chore|ops|skill|watch|hold):\s*/i;
 
-export const stageName = (key) => STAGES.find(([k]) => k === key)?.[1] ?? key;
 export const typeName = (key) => TYPES.find(([k]) => k === key)?.[1] ?? key;
-export const stageOf = (item) => (STAGE_KEYS.includes(item?.facts?.stage) ? item.facts.stage : null);
 export const typeOf = (item) => (TYPE_KEYS.includes(item?.facts?.type) ? item.facts.type : null);
-export const MENU_STAGES = STAGE_KEYS;
 export const MENU_TYPES = TYPE_KEYS;
 
-/**
- * The stage sections the owner puts in order (Settings → Stage order): each stage, then Chats
- * (Discord with no stage) and No stage. Pinned isn't one of them: it stays on top.
- */
-export const SECTION_KEYS = [...STAGE_KEYS, 'chat', 'none'];
+/** Remaining list sections; pinned always stays on top. */
+export const SECTION_KEYS = ['chat', 'none'];
 
-/** A section's heading: "Discovery", "Chats", "No stage", or a type's plural when grouped by type. */
+/** A section heading or a type plural. */
 export function sectionName(key) {
   if (key === 'pinned') return 'Pinned';
   if (key === 'chat') return 'Chats';
-  if (key === 'none') return 'No stage';
+  if (key === 'none') return 'Conversations';
   if (key === 'untyped') return 'No type';
-  return STAGES.find(([k]) => k === key)?.[1] ?? TYPES.find(([k]) => k === key)?.[2] ?? key;
+  return TYPES.find(([k]) => k === key)?.[2] ?? key;
 }
 
 /** The owner's order, completed: unknown names dropped, a section it doesn't name after it in the default order. */
@@ -78,7 +65,6 @@ export function knownTab(tab) {
 }
 
 export const GROUPINGS = [
-  ['stage', 'Stage'],
   ['project', 'Project'],
   ['workspace', 'Workspace'],
   ['live', 'Live state'],
@@ -88,9 +74,9 @@ export const GROUPINGS = [
 /** Live-state sections, in the order they matter to the owner. */
 const LIVE_NAMES = { failed: 'Failed', stuck: 'Stuck', needs: 'Needs you', finished: 'Finished', working: 'Working', waiting: 'Waiting', idle: 'Idle', unknown: 'Unknown' };
 
-/** A grouping saved by an earlier List ('label') groups by stage. ('project' meant workspaces before projects: see viewsOf.) */
+/** Unknown or retired groupings fall back to live state. */
 export function knownGrouping(grouping) {
-  return GROUPINGS.some(([key]) => key === grouping) ? grouping : 'stage';
+  return GROUPINGS.some(([key]) => key === grouping) ? grouping : 'live';
 }
 
 // A coding thread (Loom): titled by its place, grouped by its repo's workspace.
@@ -276,13 +262,7 @@ export function sortRows(items, tab, { oldest = false } = {}) {
   );
 }
 
-/**
- * The sections, in order, under Pinned whatever the grouping. By stage: Discovery, Building, Feedback,
- * Chats (Discord with no stage) and No stage in the owner's order (Settings). By type: each type, then
- * No type. By project: each of the owner's projects in their order, then No project. By workspace: each
- * repository or agent, or each workspace then one Tango agents section (`agentsTogether`). None: one
- * section (headed Everything else under Pinned).
- */
+/** Sections under Pinned, grouped by repository, project, live state or type. */
 export function sectionsOf(items, grouping, tab, labelOrder, { agentsTogether = false, projects = [], oldest = false } = {}) {
   const g = tab === 'active' ? 'live' : knownGrouping(grouping);
   const pinned = g === 'live' ? [] : items.filter(isPinned);
@@ -296,7 +276,6 @@ export function sectionsOf(items, grouping, tab, labelOrder, { agentsTogether = 
     // No live state is only a message the owner just sent, waiting for a run to start.
     live: (item) => liveState(item) ?? 'sent',
     type: (item) => typeOf(item) || 'untyped',
-    stage: (item) => stageOf(item) || (isLoom(item) ? 'none' : 'chat'),
   }[g];
   const nameOf = (key) => (g === 'workspace' ? (key === AGENTS_KEY ? 'Tango agents' : key.slice(2)) : g === 'project' ? (projects.find((p) => p.id === key)?.name ?? 'No project') : g === 'live' ? LIVE_NAMES[key] : sectionName(key));
   const order = g === 'workspace' ? null : g === 'project' ? [...projects.map((p) => p.id), NO_PROJECT] : g === 'live' ? Object.keys(LIVE_NAMES) : g === 'type' ? [...TYPE_KEYS, 'untyped'] : labelOrderOf(labelOrder);

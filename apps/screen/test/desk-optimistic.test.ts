@@ -130,10 +130,7 @@ describe('predict: what a command does to its item', () => {
     // Activity isn't an agent post (only the server knows those): still predicted held.
     expect(predict('project', row('a', { lastActivityAt: 5 }), { projectId: 'p2' }, { projects }).disposition).toBe('parked');
     expect(predict('project', row('a', { disposition: 'parked', heldBy: 'p2', facts: { projectId: 'p2' } }), { projectId: null }, { projects })).toMatchObject({ disposition: 'active', heldBy: null });
-    expect(predict('tag', row('a'), { stage: 'feedback' })).toMatchObject({ disposition: 'parked', facts: { stage: 'feedback' } });
     expect(predict('tag', row('a'), { type: 'bug' })).toMatchObject({ disposition: 'active', facts: { type: 'bug' } });
-    // To Feedback from a project's hold: the owner's own park now.
-    expect(predict('tag', row('a', { disposition: 'parked', heldBy: 'p1', seen: 'new' }), { stage: 'feedback' })).toMatchObject({ disposition: 'parked', heldBy: null, seen: 'seen' });
     // Keep in the sweep: still held by its project.
     expect(predict('sweep', row('a', { disposition: 'parked', heldBy: 'p1' }), { decision: 'keep' })).toMatchObject({ disposition: 'parked', heldBy: 'p1' });
   });

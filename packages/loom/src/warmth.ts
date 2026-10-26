@@ -4,6 +4,7 @@ import { freemem, totalmem } from "node:os";
 import { statfs } from "node:fs/promises";
 import { join } from "node:path";
 import { isLiveHost, readHostLedgers } from "./host-ledger.js";
+import { stall } from "./stall.js";
 
 const exec = promisify(execFile);
 const GB = 1024 ** 3;
@@ -30,7 +31,9 @@ export async function readPressure(home: string): Promise<Pressure> {
   const totalBytes = totalmem();
   let freePct = freemem() / totalBytes * 100;
   try {
-    const { stdout } = await exec("memory_pressure", ["-Q"], { timeout: 5000 });
+    // A 5 ms probe from a shell: what it takes here is the stall signal's spawn reading.
+    const started = performance.now();
+    const { stdout } = await exec("memory_pressure", ["-Q"], { timeout: 5000 }).finally(() => stall.noteSpawn("memory_pressure", performance.now() - started));
     const match = stdout.match(/free percentage:\s*([\d.]+)%/i);
     if (!match) throw new Error("Missing memory pressure percentage");
     freePct = Number(match[1]);

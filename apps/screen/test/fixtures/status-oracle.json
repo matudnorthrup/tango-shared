@@ -584,7 +584,6 @@
      "pinned": false,
      "background": null,
      "tagsSeeded": true,
-     "stage": "feedback",
      "linkedPullRequests": null,
      "prReviews": null,
      "prReview": null,
@@ -770,8 +769,7 @@
      "linkedPullRequests": null,
      "prChecks": null,
      "prChecksAll": null,
-     "prWatches": null,
-     "stage": "feedback"
+     "prWatches": null
     },
     "summary": {
      "title": "x",
@@ -1370,7 +1368,6 @@
      "lastGoodStep": null,
      "background": null,
      "tagsSeeded": true,
-     "stage": "building",
      "type": "feat",
      "linkedPullRequests": [
       {
@@ -1545,7 +1542,6 @@
      "setup": null,
      "lastGoodStep": null,
      "tagsSeeded": true,
-     "stage": "building",
      "type": "enh",
      "linkedPullRequests": [
       {
@@ -1685,7 +1681,6 @@
      "setup": null,
      "lastGoodStep": null,
      "type": "feat",
-     "stage": "building",
      "linkedPullRequests": [
       {
        "url": "https://example.invalid/pr",
@@ -1878,8 +1873,7 @@
        "by": "x",
        "wokeFor": null
       }
-     ],
-     "stage": "feedback"
+     ]
     },
     "summary": {
      "title": "x",
@@ -2064,7 +2058,6 @@
       "unconfirmed": false
      },
      "type": "project",
-     "stage": "discovery",
      "projectId": "x",
      "projectPickedUpAt": null,
      "lastAgentWords": {
@@ -2190,7 +2183,6 @@
       "unconfirmed": false
      },
      "type": "project",
-     "stage": "building",
      "lastMailInAt": 1792328287161,
      "lastAgentWords": {
       "text": "x",
@@ -2307,8 +2299,7 @@
       "applied": true,
       "unconfirmed": false
      },
-     "type": "ops",
-     "stage": "building"
+     "type": "ops"
     },
     "summary": {
      "title": "x",
@@ -2482,8 +2473,7 @@
       "applied": true,
       "unconfirmed": false
      },
-     "type": "ops",
-     "stage": "building"
+     "type": "ops"
     },
     "summary": {
      "title": "x",
@@ -2636,8 +2626,7 @@
       "applied": true,
       "unconfirmed": true
      },
-     "type": "ops",
-     "stage": "building"
+     "type": "ops"
     },
     "summary": {
      "title": "x",
@@ -2717,7 +2706,6 @@
       "unconfirmed": false
      },
      "type": "ops",
-     "stage": "building",
      "openAsk": null
     },
     "summary": {
@@ -2806,7 +2794,6 @@
       "unconfirmed": true
      },
      "type": "ops",
-     "stage": "building",
      "openAsk": null
     },
     "summary": {
@@ -2906,8 +2893,7 @@
       "applied": true,
       "unconfirmed": true
      },
-     "type": "ops",
-     "stage": "building"
+     "type": "ops"
     },
     "summary": {
      "title": "x",
@@ -2987,7 +2973,6 @@
       "unconfirmed": false
      },
      "type": "feat",
-     "stage": "discovery",
      "openAsk": {
       "text": "ask",
       "at": 1792336008224
@@ -3084,7 +3069,6 @@
       "unconfirmed": false
      },
      "type": "ops",
-     "stage": "building",
      "lastOwnerRequest": {
       "at": 1792335976744,
       "filedAt": 1792335976789,
@@ -3185,7 +3169,6 @@
       "unconfirmed": false
      },
      "type": "ops",
-     "stage": "building",
      "role": "default"
     },
     "summary": {
@@ -3278,8 +3261,7 @@
       "applied": true,
       "unconfirmed": false
      },
-     "type": "ops",
-     "stage": "building"
+     "type": "ops"
     },
     "summary": {
      "title": "x",
@@ -3372,8 +3354,7 @@
       "applied": true,
       "unconfirmed": true
      },
-     "type": "ops",
-     "stage": "building"
+     "type": "ops"
     },
     "summary": {
      "title": "x",
@@ -3751,7 +3732,6 @@
       "unconfirmed": false
      },
      "type": "ops",
-     "stage": "discovery",
      "lastAgentWords": {
       "text": "x",
       "at": 1792335740235,
@@ -3848,7 +3828,6 @@
       "unconfirmed": false
      },
      "type": "enh",
-     "stage": "discovery",
      "lastAgentWords": {
       "text": "x",
       "at": 1792332328544,
@@ -3958,7 +3937,6 @@
      },
      "pinned": false,
      "tagsSeeded": true,
-     "stage": "feedback",
      "background": null,
      "setup": null,
      "linkedPullRequests": null
@@ -4069,7 +4047,6 @@
      "pinned": false,
      "background": null,
      "tagsSeeded": true,
-     "stage": "discovery",
      "type": "project",
      "linkedPullRequests": [
       {
@@ -4183,7 +4160,6 @@
      "setup": null,
      "background": null,
      "tagsSeeded": true,
-     "stage": "discovery",
      "type": "project",
      "linkedPullRequests": null,
      "projectId": "x"
@@ -4375,7 +4351,6 @@
      "background": null,
      "prReview": null,
      "tagsSeeded": true,
-     "stage": "feedback",
      "type": "feat",
      "prReviews": null,
      "linkedPullRequests": null,
@@ -4471,7 +4446,6 @@
       "unconfirmed": false
      },
      "type": "project",
-     "stage": "discovery",
      "projectPickedUpAt": null,
      "background": null,
      "openAsk": {
@@ -4653,7 +4627,6 @@
       "applied": false,
       "unconfirmed": false
      },
-     "stage": "discovery",
      "lastMailInAt": 1792335863533
     },
     "summary": {

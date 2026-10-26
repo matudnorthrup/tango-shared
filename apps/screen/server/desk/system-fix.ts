@@ -103,6 +103,7 @@ export function fixPrompt(ctx: FixContext, redact: (text: string) => string): st
   const out: string[] = [];
   out.push(`Fix System incident #${i.id}: ${r(i.title, 200)}`);
   out.push('');
+  out.push('If this needs an owner errand, keep one explicit owner ask on this repair thread. Link other checks you diagnose as the same cause with tango-system owner-wait <incident-id> <this loom:item-id>; this suppresses repeat asks while preserving retries and each check’s recovery evidence. Do not mark a check recovered merely because you acknowledged it.');
   out.push('The owner tapped Fix on this incident on the Agent Desk’s System page. You are a cleanup worker in the Tango project: find out why it is happening and clean it up. The system ledger, its incidents and their commands are described in docs/specs/system-visibility.md; read it first.');
   out.push('');
   out.push('## The incident');

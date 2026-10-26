@@ -135,6 +135,20 @@ Only the tick sends notifications, so there is exactly one sender.
 - The desk shows **critical** open incidents as items (`system:incident:<id>`,
   `facts.failed`) so they surface as Needs you, and settles them when they
   resolve.
+- Repeated observations update the count and evidence but do not refresh a
+  critical row's attention or voice-knock identity. New incidents, reopening a
+  held row, and severity escalation still renew attention.
+- When a Fix worker has an explicit owner ask, its conversation carries the
+  ask instead of a second System row. Other repair workers link diagnosed
+  checks with `tango-system owner-wait <incident-id> <loom:item-id>`; several
+  related checks can link to one conversation. The link uses the check's
+  fingerprint, so regression does not repeat the ask while the errand remains
+  open. Opened/regressed/reminder notifications are suppressed; escalation and
+  recorded recovery remain visible. Missing conversation readings preserve
+  suppression; an answered request restores still-open incidents. Independently
+  recovering checks retain separate incident history rather than claiming that
+  a successful check proves another check healthy.
+- Acknowledging also cancels a reminder already queued for delivery.
 - `#system-log` is retired: the scheduler stops posting run lines.
 
 ## Writers

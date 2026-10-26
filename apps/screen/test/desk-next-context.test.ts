@@ -36,30 +36,17 @@ const labels = (items: Array<string | { label: string }>) => items.map((it) => (
 
 describe('right-click menus', () => {
   it('a thread row gets Open, then the thread ⋯ menu', () => {
-    const store = storeWith({ flags: { stageLabels: true } });
+    const store = storeWith({});
     const menu = contextItems({ kind: 'thread', id: 't1' }, store);
     expect(labels(menu.items).slice(0, 5)).toEqual(['Open', 'Select', '—', 'Reply', '—']);
-    expect(labels(menu.items)).toEqual(expect.arrayContaining(['Snooze…', 'Park', 'Done', 'Move to project', 'Stage', 'Pin', 'Rename…']));
+    expect(labels(menu.items)).toEqual(expect.arrayContaining(['Snooze…', 'Park', 'Done', 'Move to project', 'Pin', 'Rename…']));
     expect(labels(menu.items)).not.toContain('Type');
     menu.items.find((it: { label?: string }) => it !== 'sep' && it.label === 'Reply').onSelect();
     expect(store.nextOpen).toHaveBeenCalledWith('t1');
     expect(store.openReply).toHaveBeenCalledWith('t1');
   });
 
-  it('a thread row changes its stage from the Stage flyout', () => {
-    const store = { ...storeWith({ flags: { stageLabels: true } }), setTags: vi.fn() };
-    const menu = contextItems({ kind: 'thread', id: 't1' }, store);
-    const stage = menu.items.find((it: { label?: string }) => it !== 'sep' && it.label === 'Stage');
-    expect(labels(stage.sub).at(-1)).toBe('No stage');
-    stage.sub[0].onSelect();
-    expect(store.setTags).toHaveBeenCalledWith('t1', { stage: expect.any(String) });
-    stage.sub.at(-1).onSelect();
-    expect(store.setTags).toHaveBeenLastCalledWith('t1', { stage: null });
-  });
 
-  it('a thread row has no Stage while the stage labels flag is off', () => {
-    expect(labels(contextItems({ kind: 'thread', id: 't1' }, storeWith()).items)).not.toContain('Stage');
-  });
 
   it("the open thread's title leaves out Open, and Reply stays put", () => {
     const store = storeWith({ presentation: { view: 'conversation', itemId: 't1' } });

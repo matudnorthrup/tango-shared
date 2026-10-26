@@ -16,6 +16,7 @@ const USAGE = `usage:
   tango-system status [--json]
   tango-system jobs [--all] [--runner <runner>] [--json]
   tango-system action <job-id> <run|pause|resume|restart|retire|restore> [--force] [--reason "<text>"]
+  tango-system owner-wait <incident-id> <loom:item-id>
   tango-system stop <job-id>
   tango-system wait-keeper [--dry-run] [--json]`;
 
@@ -46,6 +47,17 @@ export async function runSystemCli(argv: string[], out: (s: string) => void = (s
     return cmd ? 0 : 64;
   }
   const sys = await import("../index.js");
+
+  if (cmd === "owner-wait") {
+    const id = Number(argv[1]);
+    if (!Number.isSafeInteger(id) || id < 1 || !argv[2]) throw new Error("owner-wait requires an incident id and Loom item id");
+    const l = sys.openLedger();
+    try {
+      sys.linkIncidentOwnerWait(l, id, argv[2]);
+      out(`Incident ${id} uses the owner request on ${argv[2]}. Retries and recovery checks continue.\n`);
+    } finally { l.close(); }
+    return 0;
+  }
 
   if (cmd === "tick") {
     // Schedule configs layer repo defaults under the profile by cwd; run from the checkout this CLI ships in.

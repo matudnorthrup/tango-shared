@@ -1,11 +1,12 @@
 import { mkdir, readdir, readFile } from "node:fs/promises";
-import { reclaimCall, reclaimMutation, reclaimTransaction, reclaimRecovery, reclaimRemove } from "./reclaim-io.js";
+import { inReclaimScope, reclaimCall, reclaimMutation, reclaimTransaction, reclaimRecovery, reclaimRemove } from "./reclaim-io.js";
 import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { killGroup } from "./proc.js";
+import { stall } from "./stall.js";
 
 /**
  * A thin git wrapper. Three rules from running T3 Code's worktrees for months:
@@ -43,7 +44,11 @@ export async function git(
   args: string[],
   options: { cwd: string; timeoutMs?: number; env?: NodeJS.ProcessEnv } = { cwd: process.cwd() },
 ): Promise<{ stdout: string; stderr: string }> {
+  // Reclaim is maintenance: repository hooks may install, build or modify tracked files.
+  if (inReclaimScope()) args = ["-c", "core.hooksPath=/dev/null", ...args];
   const timeoutMs = options.timeoutMs ?? 30_000;
+  // Timed from before spawn(): creating the process is part of what a slow start costs (Codex review on #1135).
+  const spawnedAt = performance.now();
   const child = spawn("git", args, {
     cwd: options.cwd,
     detached: true,
@@ -57,6 +62,7 @@ export async function git(
       GCM_INTERACTIVE: "never",
     },
   });
+  child.once("spawn", () => stall.noteSpawn(`git ${args[0] ?? ""}`, performance.now() - spawnedAt));
   let stdout = "";
   let stderr = "";
   child.stdout!.on("data", (d) => (stdout += d));
@@ -243,6 +249,7 @@ async function dependencyDirs(cwd: string): Promise<string[]> {
  * Returns false when the pool is full; failures roll back the move and reject.
  */
 export async function parkWorktree(root: string, from: string, reposDir: string, ref: string, check: () => void = () => {}, remove: (path: string) => Promise<void> = path => reclaimRemove(path, { recursive: true, force: true })): Promise<boolean> {
+  const maintenanceGit: typeof git = (args, options) => git(["-c", "core.hooksPath=/dev/null", ...args], options);
   return reclaimTransaction(async () => {
     check();
     const pool = join(reposDir, POOL_DIR);
@@ -253,9 +260,10 @@ export async function parkWorktree(root: string, from: string, reposDir: string,
     if (entries.length >= POOL_SIZE) return false;
     await reclaimMutation(() => mkdir(pool, { recursive: true }));
     const slot = join(pool, `w-${Date.now().toString(36)}`);
-    const run: typeof git = (args, options) => reclaimMutation(() => git(args, options));
-    const head = (await reclaimCall(() => git(["rev-parse", "HEAD"], { cwd: from }))).stdout.trim();
-    const branch = (await reclaimCall(() => git(["symbolic-ref", "--quiet", "--short", "HEAD"], { cwd: from })).catch(error => {
+    // Maintenance checkout and compensation must never run install/build hooks.
+    const run: typeof git = (args, options) => reclaimMutation(() => maintenanceGit(args, options));
+    const head = (await reclaimCall(() => maintenanceGit(["rev-parse", "HEAD"], { cwd: from }))).stdout.trim();
+    const branch = (await reclaimCall(() => maintenanceGit(["symbolic-ref", "--quiet", "--short", "HEAD"], { cwd: from })).catch(error => {
       if (error instanceof GitError && error.code === 1) return null;
       throw error;
     }))?.stdout.trim();
@@ -265,7 +273,7 @@ export async function parkWorktree(root: string, from: string, reposDir: string,
       // Record completion inside the issued operation, before the cancellation
       // check: even an expired pass must know a late move needs compensation.
       await reclaimMutation(async () => {
-        await git(["worktree", "move", from, slot], { cwd: root, timeoutMs: 120_000 });
+        await maintenanceGit(["worktree", "move", from, slot], { cwd: root, timeoutMs: 120_000 });
         moved = true;
       });
       check();
@@ -280,7 +288,7 @@ export async function parkWorktree(root: string, from: string, reposDir: string,
         if (content !== null) { lock = name + ":" + createHash("sha256").update(content).digest("hex"); break; }
       }
       if (lock === null || stamped !== lock) {
-        const manifests = (await reclaimCall(() => git(["ls-files", "-z", "--", "package.json", "**/package.json"], { cwd: slot }))).stdout.split("\0").filter(Boolean);
+        const manifests = (await reclaimCall(() => maintenanceGit(["ls-files", "-z", "--", "package.json", "**/package.json"], { cwd: slot }))).stdout.split("\0").filter(Boolean);
         for (const d of new Set(["node_modules", ...manifests.map(m => join(dirname(m), "node_modules"))])) { check(); await remove(join(slot, d)); }
       }
       check();
@@ -289,6 +297,13 @@ export async function parkWorktree(root: string, from: string, reposDir: string,
       checkoutStarted = true;
       await run(["checkout", "-f", "--detach", ref], { cwd: slot, timeoutMs: 300_000 });
       check();
+      // Delete untracked payload incrementally; git clean alone hides all progress
+      // behind one potentially multi-gigabyte operation. Git lists files without
+      // following nested repositories (directory entries), which clean -f preserves.
+      const untracked = (await reclaimCall(() => maintenanceGit(["ls-files", "--others", "-z", "--exclude=node_modules"], { cwd: slot }))).stdout;
+      for (const file of untracked.split("\0").filter(Boolean)) {
+        if (!file.endsWith("/")) { check(); await reclaimRemove(join(slot, file), { force: true }); }
+      }
       await cleanForReuse(slot, run);
       return true;
     } catch (error) {

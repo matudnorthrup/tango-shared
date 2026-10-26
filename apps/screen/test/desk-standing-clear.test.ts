@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { deskStatus } from '../server/desk/status.js';
-import { AGENT, cid, makeHarness, msg, NOW, type Harness } from './desk-harness.js';
+import { AGENT, cid, makeHarness as createHarness, msg, NOW, type Harness } from './desk-harness.js';
+// These cases exercise Clear/Undo state transitions, never reopen a database.
+// Use real SQLite without making each state write wait for the shared CI disk.
+const makeHarness = (options: Parameters<typeof createHarness>[0] = {}) => createHarness(options, {}, 'memory');
 let h: Harness;
 beforeEach(() => { h = makeHarness(); });
 afterEach(() => h.close());
